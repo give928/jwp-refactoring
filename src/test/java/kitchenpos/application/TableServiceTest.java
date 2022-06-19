@@ -31,26 +31,26 @@ class TableServiceTest {
     @InjectMocks
     private TableService tableService;
 
-    private OrderTable orderTable1;
+    private OrderTable savedOrderTable;
 
     @BeforeEach
     void setUp() {
-        orderTable1 = new OrderTable(1L, null, 0, true);
+        savedOrderTable = new OrderTable(1L, null, 0, true);
     }
 
     @DisplayName("주문 테이블을 등록하고 등록한 주문 테이블을 반환한다.")
     @Test
     void create() {
         // given
-        OrderTable orderTable = new OrderTable(orderTable1.getNumberOfGuests(), orderTable1.isEmpty());
+        OrderTable orderTable = new OrderTable(savedOrderTable.getNumberOfGuests(), savedOrderTable.isEmpty());
 
-        given(orderTableDao.save(orderTable)).willReturn(orderTable1);
+        given(orderTableDao.save(orderTable)).willReturn(savedOrderTable);
 
         // when
         OrderTable savedOrderTable = tableService.create(orderTable);
 
         // then
-        assertThat(savedOrderTable).isEqualTo(orderTable1);
+        assertThat(savedOrderTable).isEqualTo(this.savedOrderTable);
     }
 
     @DisplayName("주문 테이블 전체 목록을 조회한다.")
@@ -58,7 +58,7 @@ class TableServiceTest {
     void list() {
         // given
         OrderTable orderTable2 = new OrderTable(2L, null, 2, true);
-        List<OrderTable> orderTables = Arrays.asList(orderTable1, orderTable2);
+        List<OrderTable> orderTables = Arrays.asList(savedOrderTable, orderTable2);
 
         given(orderTableDao.findAll()).willReturn(orderTables);
 
@@ -73,19 +73,19 @@ class TableServiceTest {
     @Test
     void changeEmpty() {
         // given
-        orderTable1.setEmpty(false);
-        OrderTable orderTable = new OrderTable(orderTable1.getId(), orderTable1.getTableGroupId(),
-                                               orderTable1.getNumberOfGuests(), true);
+        savedOrderTable.setEmpty(false);
+        OrderTable orderTable = new OrderTable(savedOrderTable.getId(), savedOrderTable.getTableGroupId(),
+                                               savedOrderTable.getNumberOfGuests(), true);
 
-        given(orderTableDao.findById(orderTable.getId())).willReturn(Optional.of(orderTable1));
-        given(orderDao.existsByOrderTableIdAndOrderStatusIn(orderTable1.getId(),
+        given(orderTableDao.findById(orderTable.getId())).willReturn(Optional.of(savedOrderTable));
+        given(orderDao.existsByOrderTableIdAndOrderStatusIn(savedOrderTable.getId(),
                                                             Arrays.asList(OrderStatus.COOKING.name(),
                                                                           OrderStatus.MEAL.name())))
                 .willReturn(false);
-        given(orderTableDao.save(orderTable1)).willReturn(orderTable);
+        given(orderTableDao.save(savedOrderTable)).willReturn(orderTable);
 
         // when
-        OrderTable changedOrderTable = tableService.changeEmpty(orderTable1.getId(), orderTable);
+        OrderTable changedOrderTable = tableService.changeEmpty(savedOrderTable.getId(), orderTable);
 
         // then
         assertThat(changedOrderTable.isEmpty()).isTrue();
@@ -111,12 +111,12 @@ class TableServiceTest {
     @Test
     void cannotChangeEmptyCookingOrMeal() {
         // given
-        orderTable1.setEmpty(false);
-        OrderTable orderTable = new OrderTable(orderTable1.getId(), orderTable1.getTableGroupId(),
-                                               orderTable1.getNumberOfGuests(), true);
+        savedOrderTable.setEmpty(false);
+        OrderTable orderTable = new OrderTable(savedOrderTable.getId(), savedOrderTable.getTableGroupId(),
+                                               savedOrderTable.getNumberOfGuests(), true);
 
-        given(orderTableDao.findById(orderTable.getId())).willReturn(Optional.of(orderTable1));
-        given(orderDao.existsByOrderTableIdAndOrderStatusIn(orderTable1.getId(),
+        given(orderTableDao.findById(orderTable.getId())).willReturn(Optional.of(savedOrderTable));
+        given(orderDao.existsByOrderTableIdAndOrderStatusIn(savedOrderTable.getId(),
                                                             Arrays.asList(OrderStatus.COOKING.name(),
                                                                           OrderStatus.MEAL.name())))
                 .willReturn(true);
@@ -134,15 +134,15 @@ class TableServiceTest {
     void changeNumberOfGuests() {
         // given
         int numberOfGuests = 1;
-        orderTable1.setEmpty(false);
-        OrderTable orderTable = new OrderTable(orderTable1.getId(), orderTable1.getTableGroupId(),
-                                               numberOfGuests, orderTable1.isEmpty());
+        savedOrderTable.setEmpty(false);
+        OrderTable orderTable = new OrderTable(savedOrderTable.getId(), savedOrderTable.getTableGroupId(),
+                                               numberOfGuests, savedOrderTable.isEmpty());
 
-        given(orderTableDao.findById(orderTable.getId())).willReturn(Optional.of(orderTable1));
-        given(orderTableDao.save(orderTable1)).willReturn(orderTable);
+        given(orderTableDao.findById(orderTable.getId())).willReturn(Optional.of(savedOrderTable));
+        given(orderTableDao.save(savedOrderTable)).willReturn(orderTable);
 
         // when
-        OrderTable changedOrderTable = tableService.changeNumberOfGuests(orderTable1.getId(), orderTable);
+        OrderTable changedOrderTable = tableService.changeNumberOfGuests(savedOrderTable.getId(), orderTable);
 
         // then
         assertThat(changedOrderTable.getNumberOfGuests()).isEqualTo(numberOfGuests);
@@ -153,8 +153,8 @@ class TableServiceTest {
     void invalidNumberOfGuests() {
         // given
         int numberOfGuests = 0;
-        OrderTable orderTable = new OrderTable(orderTable1.getId(), orderTable1.getTableGroupId(),
-                                               numberOfGuests, orderTable1.isEmpty());
+        OrderTable orderTable = new OrderTable(savedOrderTable.getId(), savedOrderTable.getTableGroupId(),
+                                               numberOfGuests, savedOrderTable.isEmpty());
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeNumberOfGuests(orderTable.getId(),
@@ -168,10 +168,10 @@ class TableServiceTest {
     @Test
     void cannotChangeNumberOfGuestsEmptyTable() {
         // given
-        OrderTable orderTable = new OrderTable(orderTable1.getId(), orderTable1.getTableGroupId(),
+        OrderTable orderTable = new OrderTable(savedOrderTable.getId(), savedOrderTable.getTableGroupId(),
                                                1, true);
 
-        given(orderTableDao.findById(orderTable.getId())).willReturn(Optional.of(orderTable1));
+        given(orderTableDao.findById(orderTable.getId())).willReturn(Optional.of(savedOrderTable));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeNumberOfGuests(orderTable.getId(),

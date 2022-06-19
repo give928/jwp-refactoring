@@ -5,7 +5,6 @@ import kitchenpos.annotation.MockMvcEncodingConfiguration;
 import kitchenpos.application.TableGroupService;
 import kitchenpos.domain.OrderTable;
 import kitchenpos.domain.TableGroup;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,15 +41,17 @@ class TableGroupRestControllerTest {
     @Test
     void create() throws Exception {
         // given
-        Long tableGroupId1 = 1L;
-        OrderTable orderTable1 = new OrderTable(1L, tableGroupId1, 1, false);
-        OrderTable orderTable2 = new OrderTable(2L, tableGroupId1, 2, false);
-        TableGroup tableGroup1 = new TableGroup(tableGroupId1, LocalDateTime.now(), Arrays.asList(orderTable1, orderTable2));
+        Long savedTableGroupId = 1L;
+        OrderTable savedOrderTable1 = new OrderTable(1L, savedTableGroupId, 1, false);
+        OrderTable savedOrderTable2 = new OrderTable(2L, savedTableGroupId, 2, false);
+        TableGroup savedTableGroup = new TableGroup(savedTableGroupId, LocalDateTime.now(),
+                                                    Arrays.asList(savedOrderTable1, savedOrderTable2));
 
-        TableGroup tableGroup = new TableGroup(tableGroup1.getCreatedDate(), Arrays.asList(new OrderTable(1L, null, 1, true),
-                                                                                           new OrderTable(2L, null, 2, true)));
+        TableGroup tableGroup = new TableGroup(savedTableGroup.getCreatedDate(),
+                                               Arrays.asList(new OrderTable(1L, null, 1, true),
+                                                             new OrderTable(2L, null, 2, true)));
 
-        given(tableGroupService.create(tableGroup)).willReturn(tableGroup1);
+        given(tableGroupService.create(tableGroup)).willReturn(savedTableGroup);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -60,7 +61,7 @@ class TableGroupRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(tableGroup1)));
+                .andExpect(content().string(objectMapper.writeValueAsString(savedTableGroup)));
     }
 
     @DisplayName("단체 지정을 해제한다.")

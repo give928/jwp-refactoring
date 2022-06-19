@@ -37,20 +37,20 @@ class MenuGroupRestControllerTest {
     @MockBean
     private MenuGroupService menuGroupService;
 
-    private MenuGroup menuGroup1;
+    private MenuGroup savedMenuGroup;
 
     @BeforeEach
     void setUp() {
-        menuGroup1 = new MenuGroup(1L, "메뉴그룹1");
+        savedMenuGroup = new MenuGroup(1L, "메뉴그룹1");
     }
 
     @DisplayName("메뉴 그룹을 등록하고 등록한 메뉴 그룹을 반환한다.")
     @Test
     void create() throws Exception {
         // given
-        MenuGroup menuGroup = new MenuGroup(menuGroup1.getName());
+        MenuGroup menuGroup = new MenuGroup(savedMenuGroup.getName());
 
-        given(menuGroupService.create(menuGroup)).willReturn(menuGroup1);
+        given(menuGroupService.create(menuGroup)).willReturn(savedMenuGroup);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -60,14 +60,14 @@ class MenuGroupRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(menuGroup1)));
+                .andExpect(content().string(objectMapper.writeValueAsString(savedMenuGroup)));
     }
 
     @DisplayName("메뉴 그룹의 전체 목록을 조회한다.")
     @Test
     void list() throws Exception {
         // given
-        List<MenuGroup> menuGroups = Arrays.asList(menuGroup1, new MenuGroup(2L, "메뉴그룹2"));
+        List<MenuGroup> menuGroups = Arrays.asList(savedMenuGroup, new MenuGroup(2L, "메뉴그룹2"));
 
         given(menuGroupService.list()).willReturn(menuGroups);
 

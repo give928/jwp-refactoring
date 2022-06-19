@@ -30,7 +30,7 @@ class ProductServiceTest {
     @InjectMocks
     private ProductService productService;
 
-    private Product product1;
+    private Product savedProduct;
 
     public static Stream<BigDecimal> invalidPriceParameter() {
         return Stream.of(null, BigDecimal.valueOf(-1));
@@ -38,22 +38,22 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        product1 = new Product(1L, "음식1", BigDecimal.ONE);
+        savedProduct = new Product(1L, "음식1", BigDecimal.ONE);
     }
 
     @DisplayName("상품을 등록하고 등록한 상품을 반환한다.")
     @Test
     void create() {
         // given
-        Product product = new Product(product1.getName(), product1.getPrice());
+        Product product = new Product(savedProduct.getName(), savedProduct.getPrice());
 
-        given(productDao.save(product)).willReturn(product1);
+        given(productDao.save(product)).willReturn(savedProduct);
 
         // when
         Product savedProduct = productService.create(product);
 
         // then
-        assertThat(savedProduct).isEqualTo(product1);
+        assertThat(savedProduct).isEqualTo(this.savedProduct);
     }
 
     @DisplayName("상품의 가격은 필수로 입력해야 하고, 0원 이상만 가능하다.")
@@ -71,7 +71,7 @@ class ProductServiceTest {
     @Test
     void list() {
         // given
-        List<Product> products = Arrays.asList(product1, new Product(2L, "음식2", BigDecimal.ONE));
+        List<Product> products = Arrays.asList(savedProduct, new Product(2L, "음식2", BigDecimal.ONE));
 
         given(productDao.findAll()).willReturn(products);
 

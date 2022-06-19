@@ -42,12 +42,12 @@ class OrderServiceTest {
     @InjectMocks
     private OrderService orderService;
 
-    private Menu menu1;
-    private Menu menu2;
-    private OrderTable orderTable1;
-    private OrderLineItem orderLineItem1;
-    private OrderLineItem orderLineItem2;
-    private Order order1;
+    private Menu savedMenu1;
+    private Menu savedMenu2;
+    private OrderTable savedOrderTable;
+    private OrderLineItem savedOrderLineItem1;
+    private OrderLineItem savedOrderLineItem2;
+    private Order savedOrder;
 
     public static Stream<List<OrderLineItem>> invalidOrderLineItemsParameter() {
         return Stream.of(null, Collections.emptyList());
@@ -61,7 +61,7 @@ class OrderServiceTest {
         MenuGroup menuGroup1 = new MenuGroup(1L, "메뉴그룹1");
         MenuProduct menuProduct1 = new MenuProduct(1L, menuId1, product1.getId(), 1);
         MenuProduct menuProduct2 = new MenuProduct(2L, menuId1, product2.getId(), 1);
-        menu1 = new Menu(menuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup1.getId(), Arrays.asList(menuProduct1, menuProduct2));
+        savedMenu1 = new Menu(menuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup1.getId(), Arrays.asList(menuProduct1, menuProduct2));
 
         Long menuId2 = 2L;
         Product product3 = new Product(3L, "음식3", BigDecimal.ONE);
@@ -69,34 +69,35 @@ class OrderServiceTest {
         MenuGroup menuGroup2 = new MenuGroup(2L, "메뉴그룹2");
         MenuProduct menuProduct3 = new MenuProduct(3L, menuId2, product3.getId(), 1);
         MenuProduct menuProduct4 = new MenuProduct(4L, menuId2, product4.getId(), 1);
-        menu2 = new Menu(menuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup2.getId(), Arrays.asList(menuProduct3, menuProduct4));
+        savedMenu2 = new Menu(menuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup2.getId(), Arrays.asList(menuProduct3, menuProduct4));
 
         Long orderId1 = 1L;
-        orderTable1 = new OrderTable(1L, null, 1, false);
-        orderLineItem1 = new OrderLineItem(1L, orderId1, menu1.getId(), 1);
-        orderLineItem2 = new OrderLineItem(2L, orderId1, menu2.getId(), 1);
-        order1 = new Order(1L, orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), Arrays.asList(orderLineItem1, orderLineItem2));
+        savedOrderTable = new OrderTable(1L, null, 1, false);
+        savedOrderLineItem1 = new OrderLineItem(1L, orderId1, savedMenu1.getId(), 1);
+        savedOrderLineItem2 = new OrderLineItem(2L, orderId1, savedMenu2.getId(), 1);
+        savedOrder = new Order(1L, savedOrderTable.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), Arrays.asList(
+                savedOrderLineItem1, savedOrderLineItem2));
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")
     @Test
     void create() {
         // given
-        OrderLineItem orderLineItem1 = new OrderLineItem(this.orderLineItem1.getMenuId(), this.orderLineItem1.getQuantity());
-        OrderLineItem orderLineItem2 = new OrderLineItem(this.orderLineItem2.getMenuId(), this.orderLineItem2.getQuantity());
-        Order order = new Order(orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), Arrays.asList(orderLineItem1, orderLineItem2));
+        OrderLineItem orderLineItem1 = new OrderLineItem(savedOrderLineItem1.getMenuId(), savedOrderLineItem1.getQuantity());
+        OrderLineItem orderLineItem2 = new OrderLineItem(savedOrderLineItem2.getMenuId(), savedOrderLineItem2.getQuantity());
+        Order order = new Order(savedOrderTable.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), Arrays.asList(orderLineItem1, orderLineItem2));
 
-        given(menuDao.countByIdIn(Arrays.asList(menu1.getId(), menu2.getId()))).willReturn(Long.valueOf(order.getOrderLineItems().size()));
-        given(orderTableDao.findById(order.getOrderTableId())).willReturn(Optional.of(orderTable1));
-        given(orderDao.save(order)).willReturn(order1);
-        given(orderLineItemDao.save(orderLineItem1)).willReturn(this.orderLineItem1);
-        given(orderLineItemDao.save(orderLineItem2)).willReturn(this.orderLineItem2);
+        given(menuDao.countByIdIn(Arrays.asList(savedMenu1.getId(), savedMenu2.getId()))).willReturn(Long.valueOf(order.getOrderLineItems().size()));
+        given(orderTableDao.findById(order.getOrderTableId())).willReturn(Optional.of(savedOrderTable));
+        given(orderDao.save(order)).willReturn(savedOrder);
+        given(orderLineItemDao.save(orderLineItem1)).willReturn(savedOrderLineItem1);
+        given(orderLineItemDao.save(orderLineItem2)).willReturn(savedOrderLineItem2);
 
         // when
         Order savedOrder = orderService.create(order);
 
         // then
-        assertThat(savedOrder).isEqualTo(order1);
+        assertThat(savedOrder).isEqualTo(this.savedOrder);
     }
 
     @DisplayName("주문 항목을 1개 이상 입력해야 한다.")
@@ -104,7 +105,7 @@ class OrderServiceTest {
     @MethodSource("invalidOrderLineItemsParameter")
     void invalidOrderLineItems(List<OrderLineItem> orderLineItems) {
         // given
-        Order order = new Order(orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), orderLineItems);
+        Order order = new Order(savedOrderTable.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), orderLineItems);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(order);
@@ -118,7 +119,7 @@ class OrderServiceTest {
     void invalidMenuIdOfOrderLineItem() {
         // given
         Long menuId = 0L;
-        Order order = new Order(orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(),
+        Order order = new Order(savedOrderTable.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(),
                                 Collections.singletonList(new OrderLineItem(0L, 0L, menuId, 0)));
 
         given(menuDao.countByIdIn(Collections.singletonList(menuId))).willReturn(0L);
@@ -134,10 +135,10 @@ class OrderServiceTest {
     @Test
     void notExistsOrderTable() {
         // given
-        List<OrderLineItem> orderLineItems = Arrays.asList(orderLineItem1, orderLineItem2);
+        List<OrderLineItem> orderLineItems = Arrays.asList(savedOrderLineItem1, savedOrderLineItem2);
         Order order = new Order(0L, OrderStatus.COOKING.name(), LocalDateTime.now(), orderLineItems);
 
-        given(menuDao.countByIdIn(Arrays.asList(orderLineItem1.getMenuId(), orderLineItem2.getMenuId())))
+        given(menuDao.countByIdIn(Arrays.asList(savedOrderLineItem1.getMenuId(), savedOrderLineItem2.getMenuId())))
                 .willReturn(Long.valueOf(orderLineItems.size()));
         given(orderTableDao.findById(order.getOrderTableId())).willReturn(Optional.empty());
 
@@ -153,10 +154,10 @@ class OrderServiceTest {
     void cannotEmptyOrderTable() {
         // given
         OrderTable orderTable1 = new OrderTable(1L, null, 1, true);
-        List<OrderLineItem> orderLineItems = Arrays.asList(orderLineItem1, orderLineItem2);
+        List<OrderLineItem> orderLineItems = Arrays.asList(savedOrderLineItem1, savedOrderLineItem2);
         Order order = new Order(orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), orderLineItems);
 
-        given(menuDao.countByIdIn(Arrays.asList(orderLineItem1.getMenuId(), orderLineItem2.getMenuId())))
+        given(menuDao.countByIdIn(Arrays.asList(savedOrderLineItem1.getMenuId(), savedOrderLineItem2.getMenuId())))
                 .willReturn(Long.valueOf(orderLineItems.size()));
         given(orderTableDao.findById(order.getOrderTableId())).willReturn(Optional.of(orderTable1));
 
@@ -175,10 +176,10 @@ class OrderServiceTest {
         List<OrderLineItem> orderLineItems2 = Arrays.asList(new OrderLineItem(3L, orderId2, 3L, 1),
                                                            new OrderLineItem(4L, orderId2, 4L, 1));
         Order order2 = new Order(orderId2, 2L, OrderStatus.MEAL.name(), LocalDateTime.now(), Collections.emptyList());
-        List<Order> orders = Arrays.asList(order1, order2);
+        List<Order> orders = Arrays.asList(savedOrder, order2);
 
         given(orderDao.findAll()).willReturn(orders);
-        given(orderLineItemDao.findAllByOrderId(order1.getId())).willReturn(order1.getOrderLineItems());
+        given(orderLineItemDao.findAllByOrderId(savedOrder.getId())).willReturn(savedOrder.getOrderLineItems());
         given(orderLineItemDao.findAllByOrderId(order2.getId())).willReturn(orderLineItems2);
 
         // when
@@ -192,13 +193,13 @@ class OrderServiceTest {
     @Test
     void changeOrderStatus() {
         // given
-        Order order = new Order(order1.getId(), order1.getOrderTableId(), OrderStatus.MEAL.name(), order1.getOrderedTime(), order1.getOrderLineItems());
+        Order order = new Order(savedOrder.getId(), savedOrder.getOrderTableId(), OrderStatus.MEAL.name(), savedOrder.getOrderedTime(), savedOrder.getOrderLineItems());
 
-        given(orderDao.findById(order1.getId())).willReturn(Optional.of(order1));
-        given(orderLineItemDao.findAllByOrderId(order1.getId())).willReturn(order1.getOrderLineItems());
+        given(orderDao.findById(savedOrder.getId())).willReturn(Optional.of(savedOrder));
+        given(orderLineItemDao.findAllByOrderId(savedOrder.getId())).willReturn(savedOrder.getOrderLineItems());
 
         // when
-        Order savedOrder = orderService.changeOrderStatus(order1.getId(), order);
+        Order savedOrder = orderService.changeOrderStatus(order.getId(), order);
 
         // then
         assertThat(savedOrder.getOrderStatus()).isEqualTo(OrderStatus.MEAL.name());

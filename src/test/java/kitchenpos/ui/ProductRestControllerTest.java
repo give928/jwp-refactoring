@@ -38,20 +38,20 @@ class ProductRestControllerTest {
     @MockBean
     private ProductService productService;
 
-    private Product product1;
+    private Product savedProduct;
 
     @BeforeEach
     void setUp() {
-        product1 = new Product(1L, "음식1", BigDecimal.ONE);
+        savedProduct = new Product(1L, "음식1", BigDecimal.ONE);
     }
 
     @DisplayName("상품을 등록하고 등록한 상품을 반환한다.")
     @Test
     void create() throws Exception {
         // given
-        Product product = new Product(product1.getName(), product1.getPrice());
+        Product product = new Product(savedProduct.getName(), savedProduct.getPrice());
 
-        given(productService.create(product)).willReturn(product1);
+        given(productService.create(product)).willReturn(savedProduct);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -61,14 +61,14 @@ class ProductRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(product1)));
+                .andExpect(content().string(objectMapper.writeValueAsString(savedProduct)));
     }
 
     @DisplayName("상품의 전체 목록을 조회한다.")
     @Test
     void list() throws Exception {
         // given
-        List<Product> products = Arrays.asList(product1, new Product(2L, "음식2", BigDecimal.ONE));
+        List<Product> products = Arrays.asList(savedProduct, new Product(2L, "음식2", BigDecimal.ONE));
 
         given(productService.list()).willReturn(products);
 

@@ -24,11 +24,11 @@ class MenuGroupServiceTest {
     @InjectMocks
     private MenuGroupService menuGroupService;
 
-    private MenuGroup menuGroup1;
+    private MenuGroup savedMenuGroup;
 
     @BeforeEach
     void setUp() {
-        menuGroup1 = new MenuGroup(1L, "메뉴그룹1");
+        savedMenuGroup = new MenuGroup(1L, "메뉴그룹1");
     }
 
     @DisplayName("메뉴 그룹을 등록하고 등록한 메뉴 그룹을 반환한다.")
@@ -37,20 +37,20 @@ class MenuGroupServiceTest {
         // given
         MenuGroup menuGroup = new MenuGroup("메뉴그룹1");
 
-        given(menuGroupDao.save(menuGroup)).willReturn(menuGroup1);
+        given(menuGroupDao.save(menuGroup)).willReturn(savedMenuGroup);
 
         // when
         MenuGroup savedMenuGroup = menuGroupService.create(menuGroup);
 
         // then
-        assertThat(savedMenuGroup).isEqualTo(menuGroup1);
+        assertThat(savedMenuGroup).isEqualTo(this.savedMenuGroup);
     }
 
     @DisplayName("메뉴 그룹의 전체 목록을 조회한다.")
     @Test
     void list() {
         // given
-        List<MenuGroup> menuGroups = Arrays.asList(menuGroup1, new MenuGroup(2L, "메뉴그룹2"));
+        List<MenuGroup> menuGroups = Arrays.asList(savedMenuGroup, new MenuGroup(2L, "메뉴그룹2"));
 
         given(menuGroupDao.findAll()).willReturn(menuGroups);
 

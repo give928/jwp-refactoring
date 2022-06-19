@@ -39,9 +39,9 @@ class OrderRestControllerTest {
     @MockBean
     private OrderService orderService;
 
-    private Menu menu1;
-    private Menu menu2;
-    private Order order1;
+    private Menu savedMenu1;
+    private Menu savedMenu2;
+    private Order savedOrder;
 
     @BeforeEach
     void setUp() {
@@ -51,7 +51,7 @@ class OrderRestControllerTest {
         MenuGroup menuGroup1 = new MenuGroup(1L, "메뉴그룹1");
         MenuProduct menuProduct1 = new MenuProduct(1L, menuId1, product1.getId(), 1);
         MenuProduct menuProduct2 = new MenuProduct(2L, menuId1, product2.getId(), 1);
-        menu1 = new Menu(menuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup1.getId(), Arrays.asList(menuProduct1, menuProduct2));
+        savedMenu1 = new Menu(menuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup1.getId(), Arrays.asList(menuProduct1, menuProduct2));
 
         Long menuId2 = 2L;
         Product product3 = new Product(3L, "음식3", BigDecimal.ONE);
@@ -59,24 +59,24 @@ class OrderRestControllerTest {
         MenuGroup menuGroup2 = new MenuGroup(2L, "메뉴그룹2");
         MenuProduct menuProduct3 = new MenuProduct(3L, menuId2, product3.getId(), 1);
         MenuProduct menuProduct4 = new MenuProduct(4L, menuId2, product4.getId(), 1);
-        menu2 = new Menu(menuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup2.getId(), Arrays.asList(menuProduct3, menuProduct4));
+        savedMenu2 = new Menu(menuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup2.getId(), Arrays.asList(menuProduct3, menuProduct4));
 
         Long orderId1 = 1L;
         OrderTable orderTable1 = new OrderTable(1L, null, 1, false);
-        OrderLineItem orderLineItem1 = new OrderLineItem(1L, orderId1, menu1.getId(), 1);
-        OrderLineItem orderLineItem2 = new OrderLineItem(2L, orderId1, menu2.getId(), 1);
-        order1 = new Order(1L, orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), Arrays.asList(orderLineItem1, orderLineItem2));
+        OrderLineItem orderLineItem1 = new OrderLineItem(1L, orderId1, savedMenu1.getId(), 1);
+        OrderLineItem orderLineItem2 = new OrderLineItem(2L, orderId1, savedMenu2.getId(), 1);
+        savedOrder = new Order(1L, orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), Arrays.asList(orderLineItem1, orderLineItem2));
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")
     @Test
     void create() throws Exception {
         // given
-        OrderLineItem orderLineItem1 = new OrderLineItem(menu1.getId(), 1);
-        OrderLineItem orderLineItem2 = new OrderLineItem(menu2.getId(), 1);
-        Order order = new Order(order1.getOrderTableId(), order1.getOrderStatus(), order1.getOrderedTime(), Arrays.asList(orderLineItem1, orderLineItem2));
+        OrderLineItem orderLineItem1 = new OrderLineItem(savedMenu1.getId(), 1);
+        OrderLineItem orderLineItem2 = new OrderLineItem(savedMenu2.getId(), 1);
+        Order order = new Order(savedOrder.getOrderTableId(), savedOrder.getOrderStatus(), savedOrder.getOrderedTime(), Arrays.asList(orderLineItem1, orderLineItem2));
 
-        given(orderService.create(order)).willReturn(order1);
+        given(orderService.create(order)).willReturn(savedOrder);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -86,7 +86,7 @@ class OrderRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(order1)));
+                .andExpect(content().string(objectMapper.writeValueAsString(savedOrder)));
     }
 
     @DisplayName("주문과 주문 항목의 전체 목록을 조회한다.")
@@ -96,7 +96,7 @@ class OrderRestControllerTest {
         Order order2 = new Order(2L, 2L, OrderStatus.COOKING.name(), LocalDateTime.now(),
                                  Arrays.asList(new OrderLineItem(3L, 2L, 3L, 1),
                                                new OrderLineItem(4L, 2L, 4L, 1)));
-        List<Order> orders = Arrays.asList(order1, order2);
+        List<Order> orders = Arrays.asList(savedOrder, order2);
 
         given(orderService.list()).willReturn(orders);
 
@@ -113,12 +113,12 @@ class OrderRestControllerTest {
     @Test
     void changeOrderStatus() throws Exception {
         // given
-        Order order = new Order(order1.getId(), order1.getOrderTableId(), OrderStatus.MEAL.name(), order1.getOrderedTime(), order1.getOrderLineItems());
+        Order order = new Order(savedOrder.getId(), savedOrder.getOrderTableId(), OrderStatus.MEAL.name(), savedOrder.getOrderedTime(), savedOrder.getOrderLineItems());
 
-        given(orderService.changeOrderStatus(order1.getId(), order)).willReturn(order);
+        given(orderService.changeOrderStatus(savedOrder.getId(), order)).willReturn(order);
 
         // when
-        ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.put(URL + String.format("/%d/order-status", order1.getId()))
+        ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.put(URL + String.format("/%d/order-status", savedOrder.getId()))
                                                               .contentType(MediaType.APPLICATION_JSON)
                                                               .content(objectMapper.writeValueAsBytes(order)))
                 .andDo(print());

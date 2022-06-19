@@ -44,12 +44,12 @@ class MenuServiceTest {
     @InjectMocks
     private MenuService menuService;
 
-    private Product product1;
-    private Product product2;
-    private MenuGroup menuGroup1;
-    private MenuProduct menuProduct1;
-    private MenuProduct menuProduct2;
-    private Menu menu1;
+    private Product savedProduct1;
+    private Product savedProduct2;
+    private MenuGroup savedMenuGroup;
+    private MenuProduct savedMenuProduct1;
+    private MenuProduct savedMenuProduct2;
+    private Menu savedMenu;
 
     public static Stream<BigDecimal> invalidPriceParameter() {
         return Stream.of(null, BigDecimal.valueOf(-1));
@@ -61,35 +61,40 @@ class MenuServiceTest {
 
     @BeforeEach
     void setUp() {
-        Long menuId1 = 1L;
-        product1 = new Product(1L, "음식1", BigDecimal.ONE);
-        product2 = new Product(2L, "음식2", BigDecimal.ONE);
-        menuGroup1 = new MenuGroup(1L, "메뉴그룹1");
-        menuProduct1 = new MenuProduct(1L, menuId1, product1.getId(), 1);
-        menuProduct2 = new MenuProduct(2L, menuId1, product2.getId(), 1);
-        menu1 = new Menu(1L, "메뉴1", BigDecimal.valueOf(2L), menuGroup1.getId(), Arrays.asList(menuProduct1, menuProduct2));
+        Long savedMenuId = 1L;
+        savedProduct1 = new Product(1L, "음식1", BigDecimal.ONE);
+        savedProduct2 = new Product(2L, "음식2", BigDecimal.ONE);
+        savedMenuGroup = new MenuGroup(1L, "메뉴그룹1");
+        savedMenuProduct1 = new MenuProduct(1L, savedMenuId, savedProduct1.getId(), 1);
+        savedMenuProduct2 = new MenuProduct(2L, savedMenuId, savedProduct2.getId(), 1);
+        savedMenu = new Menu(savedMenuId, "메뉴1", BigDecimal.valueOf(2L), savedMenuGroup.getId(),
+                             Arrays.asList(savedMenuProduct1, savedMenuProduct2));
     }
 
     @DisplayName("메뉴를 등록하고 등록한 메뉴와 메뉴 상품을 반환한다.")
     @Test
     void create() {
         // given
-        MenuProduct menuProduct1 = new MenuProduct(this.menuProduct1.getProductId(), this.menuProduct1.getQuantity());
-        MenuProduct menuProduct2 = new MenuProduct(this.menuProduct2.getProductId(), this.menuProduct2.getQuantity());
-        Menu menu = new Menu("메뉴1", BigDecimal.valueOf(2L), menuGroup1.getId(), Arrays.asList(menuProduct1, menuProduct2));
+        MenuProduct menuProduct1 = new MenuProduct(savedMenuProduct1.getProductId(),
+                                                   savedMenuProduct1.getQuantity());
+        MenuProduct menuProduct2 = new MenuProduct(savedMenuProduct2.getProductId(),
+                                                   savedMenuProduct2.getQuantity());
+        Menu menu = new Menu("메뉴1", BigDecimal.valueOf(2L), savedMenuGroup.getId(),
+                             Arrays.asList(menuProduct1, menuProduct2));
 
-        given(menuGroupDao.existsById(menu.getMenuGroupId())).willReturn(Optional.ofNullable(menuGroup1).isPresent());
-        given(productDao.findById(menuProduct1.getProductId())).willReturn(Optional.of(product1));
-        given(productDao.findById(menuProduct2.getProductId())).willReturn(Optional.of(product2));
-        given(menuDao.save(menu)).willReturn(menu1);
-        given(menuProductDao.save(menuProduct1)).willReturn(this.menuProduct1);
-        given(menuProductDao.save(menuProduct2)).willReturn(this.menuProduct2);
+        given(menuGroupDao.existsById(menu.getMenuGroupId())).willReturn(
+                Optional.ofNullable(savedMenuGroup).isPresent());
+        given(productDao.findById(menuProduct1.getProductId())).willReturn(Optional.of(savedProduct1));
+        given(productDao.findById(menuProduct2.getProductId())).willReturn(Optional.of(savedProduct2));
+        given(menuDao.save(menu)).willReturn(savedMenu);
+        given(menuProductDao.save(menuProduct1)).willReturn(savedMenuProduct1);
+        given(menuProductDao.save(menuProduct2)).willReturn(savedMenuProduct2);
 
         // when
         Menu savedMenu = menuService.create(menu);
 
         // then
-        assertThat(savedMenu).isEqualTo(menu1);
+        assertThat(savedMenu).isEqualTo(this.savedMenu);
     }
 
     @DisplayName("메뉴의 가격은 필수로 입력해야 하고, 0원 이상만 가능하다.")
@@ -126,13 +131,16 @@ class MenuServiceTest {
     @Test
     void invalidAmount() {
         // given
-        MenuProduct menuProduct1 = new MenuProduct(this.menuProduct1.getProductId(), this.menuProduct1.getQuantity());
-        MenuProduct menuProduct2 = new MenuProduct(this.menuProduct2.getProductId(), this.menuProduct2.getQuantity());
-        Menu menu = new Menu("메뉴1", BigDecimal.valueOf(3L), menuGroup1.getId(), Arrays.asList(menuProduct1, menuProduct2));
+        MenuProduct menuProduct1 = new MenuProduct(savedMenuProduct1.getProductId(),
+                                                   savedMenuProduct1.getQuantity());
+        MenuProduct menuProduct2 = new MenuProduct(savedMenuProduct2.getProductId(),
+                                                   savedMenuProduct2.getQuantity());
+        Menu menu = new Menu("메뉴1", BigDecimal.valueOf(3L), savedMenuGroup.getId(),
+                             Arrays.asList(menuProduct1, menuProduct2));
 
-        given(menuGroupDao.existsById(menu.getMenuGroupId())).willReturn(Optional.ofNullable(menuGroup1).isPresent());
-        given(productDao.findById(menuProduct1.getProductId())).willReturn(Optional.of(product1));
-        given(productDao.findById(menuProduct2.getProductId())).willReturn(Optional.of(product2));
+        given(menuGroupDao.existsById(menu.getMenuGroupId())).willReturn(Optional.ofNullable(savedMenuGroup).isPresent());
+        given(productDao.findById(menuProduct1.getProductId())).willReturn(Optional.of(savedProduct1));
+        given(productDao.findById(menuProduct2.getProductId())).willReturn(Optional.of(savedProduct2));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menu);
@@ -147,10 +155,12 @@ class MenuServiceTest {
         // given
         Product product3 = new Product(3L, "음식1", BigDecimal.ONE);
         Product product4 = new Product(4L, "음식2", BigDecimal.ONE);
-        List<MenuProduct> menuProducts1 = Arrays.asList(new MenuProduct(product1.getId(), 1), new MenuProduct(product2.getId(), 1));
-        Menu menu1 = new Menu("메뉴1", BigDecimal.valueOf(2L), menuGroup1.getId(), Collections.emptyList());
-        List<MenuProduct> menuProducts2 = Arrays.asList(new MenuProduct(product3.getId(), 1), new MenuProduct(product4.getId(), 1));
-        Menu menu2 = new Menu("메뉴1", BigDecimal.valueOf(2L), menuGroup1.getId(), Collections.emptyList());
+        List<MenuProduct> menuProducts1 = Arrays.asList(new MenuProduct(savedProduct1.getId(), 1),
+                                                        new MenuProduct(savedProduct2.getId(), 1));
+        Menu menu1 = new Menu("메뉴1", BigDecimal.valueOf(2L), savedMenuGroup.getId(), Collections.emptyList());
+        List<MenuProduct> menuProducts2 = Arrays.asList(new MenuProduct(product3.getId(), 1),
+                                                        new MenuProduct(product4.getId(), 1));
+        Menu menu2 = new Menu("메뉴1", BigDecimal.valueOf(2L), savedMenuGroup.getId(), Collections.emptyList());
         List<Menu> menus = Arrays.asList(menu1, menu2);
 
         given(menuDao.findAll()).willReturn(menus);
