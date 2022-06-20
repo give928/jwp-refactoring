@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
 import kitchenpos.product.application.ProductService;
 import kitchenpos.product.domain.Product;
-import kitchenpos.product.ui.ProductRestController;
+import kitchenpos.product.dto.ProductRequest;
+import kitchenpos.product.dto.ProductResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -39,39 +41,43 @@ class ProductRestControllerTest {
     @MockBean
     private ProductService productService;
 
-    private Product savedProduct;
+    private Product product1;
+    private Product product2;
 
     @BeforeEach
     void setUp() {
-        savedProduct = new Product(1L, "음식1", BigDecimal.ONE);
+        product1 = new Product(1L, "음식1", BigDecimal.ONE);
+        product2 = new Product(2L, "음식2", BigDecimal.valueOf(2));
     }
 
     @DisplayName("상품을 등록하고 등록한 상품을 반환한다.")
     @Test
     void create() throws Exception {
         // given
-        Product product = new Product(savedProduct.getName(), savedProduct.getPrice());
+        ProductRequest productRequest = new ProductRequest(product1.getName(), product1.getPrice());
+        ProductResponse productResponse = ProductResponse.from(product1);
 
-        given(productService.create(product)).willReturn(savedProduct);
+        given(productService.create(any())).willReturn(productResponse);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
                                                               .contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsBytes(product)))
+                                                              .content(objectMapper.writeValueAsBytes(productRequest)))
                 .andDo(print());
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(savedProduct)));
+                .andExpect(content().string(objectMapper.writeValueAsString(productResponse)));
     }
 
     @DisplayName("상품의 전체 목록을 조회한다.")
     @Test
     void list() throws Exception {
         // given
-        List<Product> products = Arrays.asList(savedProduct, new Product(2L, "음식2", BigDecimal.ONE));
+        List<ProductResponse> productResponses = Arrays.asList(ProductResponse.from(product1),
+                                                               ProductResponse.from(product2));
 
-        given(productService.list()).willReturn(products);
+        given(productService.list()).willReturn(productResponses);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get(URL))
@@ -79,6 +85,6 @@ class ProductRestControllerTest {
 
         // then
         resultActions.andExpect(status().isOk())
-                .andExpect(content().string(objectMapper.writeValueAsString(products)));
+                .andExpect(content().string(objectMapper.writeValueAsString(productResponses)));
     }
 }

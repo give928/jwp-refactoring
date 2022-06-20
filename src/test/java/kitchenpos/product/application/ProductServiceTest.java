@@ -1,8 +1,9 @@
 package kitchenpos.product.application;
 
-import kitchenpos.product.application.ProductService;
 import kitchenpos.product.dao.ProductDao;
 import kitchenpos.product.domain.Product;
+import kitchenpos.product.dto.ProductRequest;
+import kitchenpos.product.dto.ProductResponse;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +32,8 @@ class ProductServiceTest {
     @InjectMocks
     private ProductService productService;
 
-    private Product savedProduct;
+    private Product product1;
+    private Product product2;
 
     public static Stream<BigDecimal> invalidPriceParameter() {
         return Stream.of(null, BigDecimal.valueOf(-1));
@@ -39,30 +41,36 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        savedProduct = new Product(1L, "음식1", BigDecimal.ONE);
+        product1 = new Product(1L, "음식1", BigDecimal.ONE);
+        product2 = new Product(2L, "음식2", BigDecimal.valueOf(2));
     }
 
     @DisplayName("상품을 등록하고 등록한 상품을 반환한다.")
     @Test
     void create() {
         // given
-        Product product = new Product(savedProduct.getName(), savedProduct.getPrice());
+        ProductRequest productRequest = new ProductRequest(product1.getName(), product1.getPrice());
 
-        given(productDao.save(product)).willReturn(savedProduct);
+        given(productDao.save(productRequest.toProduct())).willReturn(product1);
 
         // when
-        Product savedProduct = productService.create(product);
+        ProductResponse productResponse = productService.create(productRequest);
 
         // then
-        assertThat(savedProduct).isEqualTo(this.savedProduct);
+        assertThat(productResponse.getId()).isEqualTo(product1.getId());
+        assertThat(productResponse.getName()).isEqualTo(product1.getName());
+        assertThat(productResponse.getPrice()).isEqualTo(product1.getPrice());
     }
 
     @DisplayName("상품의 가격은 필수로 입력해야 하고, 0원 이상만 가능하다.")
     @ParameterizedTest
     @MethodSource("invalidPriceParameter")
     void invalidPrice(BigDecimal price) {
+        // given
+        ProductRequest productRequest = new ProductRequest(product1.getName(), price);
+
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> productService.create(new Product("음식1", price));
+        ThrowableAssert.ThrowingCallable throwingCallable = () -> productService.create(productRequest);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
@@ -72,14 +80,14 @@ class ProductServiceTest {
     @Test
     void list() {
         // given
-        List<Product> products = Arrays.asList(savedProduct, new Product(2L, "음식2", BigDecimal.ONE));
-
-        given(productDao.findAll()).willReturn(products);
+        given(productDao.findAll()).willReturn(Arrays.asList(product1, product2));
 
         // when
-        List<Product> findProducts = productService.list();
+        List<ProductResponse> productResponses = productService.list();
 
         // then
-        assertThat(findProducts).containsExactlyElementsOf(products);
+        assertThat(productResponses).extracting("id").containsExactly(product1.getId(), product2.getId());
+        assertThat(productResponses).extracting("name").containsExactly(product1.getName(), product2.getName());
+        assertThat(productResponses).extracting("price").containsExactly(product1.getPrice(), product2.getPrice());
     }
 }
