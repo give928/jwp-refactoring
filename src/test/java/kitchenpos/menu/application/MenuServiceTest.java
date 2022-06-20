@@ -73,14 +73,15 @@ class MenuServiceTest {
         menuProduct1 = new MenuProduct(1L, savedMenuId1, product1.getId(), 1);
         menuProduct2 = new MenuProduct(2L, savedMenuId1, product2.getId(), 1);
         menu1 = new Menu(savedMenuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup.getId(),
-                         Arrays.asList(menuProduct1, menuProduct2));
+                         Stream.of(menuProduct1, menuProduct2).collect(Collectors.toList()));
 
         Long savedMenuId2 = 2L;
         Product product3 = new Product(3L, "음식1", BigDecimal.ONE);
         Product product4 = new Product(4L, "음식2", BigDecimal.ONE);
         menuProduct3 = new MenuProduct(3L, savedMenuId2, product3.getId(), 1);
         menuProduct4 = new MenuProduct(4L, savedMenuId2, product4.getId(), 1);
-        menu2 = new Menu(savedMenuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup.getId(), Arrays.asList(menuProduct3, menuProduct4));
+        menu2 = new Menu(savedMenuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup.getId(),
+                         Stream.of(menuProduct3, menuProduct4).collect(Collectors.toList()));
     }
 
     @DisplayName("메뉴를 등록하고 등록한 메뉴와 메뉴 상품을 반환한다.")
@@ -169,8 +170,8 @@ class MenuServiceTest {
     @Test
     void list() {
         // given
-        Menu menu1 = new Menu(1L, this.menu1.getName(), this.menu1.getPrice(), this.menu1.getMenuGroupId(), Collections.emptyList());
-        Menu menu2 = new Menu(2L, this.menu2.getName(), this.menu2.getPrice(), this.menu2.getMenuGroupId(), Collections.emptyList());
+        Menu menu1 = new Menu(1L, this.menu1.getName(), this.menu1.getPrice(), this.menu1.getMenuGroupId());
+        Menu menu2 = new Menu(2L, this.menu2.getName(), this.menu2.getPrice(), this.menu2.getMenuGroupId());
         List<Menu> menus = Arrays.asList(menu1, menu2);
 
         given(menuDao.findAll()).willReturn(menus);

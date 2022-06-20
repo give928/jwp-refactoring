@@ -69,14 +69,14 @@ class OrderServiceTest {
         Long orderId1 = 1L;
         orderLineItem1 = new OrderLineItem(1L, orderId1, menuId1, 1);
         orderLineItem2 = new OrderLineItem(2L, orderId1, menuId2, 2);
-        order1 = new Order(orderId1, orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), Arrays.asList(
-                orderLineItem1, orderLineItem2));
+        order1 = new Order(orderId1, orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(),
+                           Stream.of(orderLineItem1, orderLineItem2).collect(Collectors.toList()));
 
         Long orderId2 = 2L;
         OrderLineItem orderLineItem3 = new OrderLineItem(3L, orderId2, menuId1, 3);
         OrderLineItem orderLineItem4 = new OrderLineItem(4L, orderId2, menuId2, 4);
-        order2 = new Order(orderId2, orderTable2.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(), Arrays.asList(
-                orderLineItem3, orderLineItem4));
+        order2 = new Order(orderId2, orderTable2.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(),
+                           Stream.of(orderLineItem3, orderLineItem4).collect(Collectors.toList()));
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")
@@ -186,8 +186,8 @@ class OrderServiceTest {
     @Test
     void list() {
         // given
-        Order order1 = new Order(this.order1.getId(), this.order1.getOrderTableId(), this.order1.getOrderStatus(), this.order1.getOrderedTime(), Collections.emptyList());
-        Order order2 = new Order(this.order2.getId(), this.order2.getOrderTableId(), this.order2.getOrderStatus(), this.order2.getOrderedTime(), Collections.emptyList());
+        Order order1 = new Order(this.order1.getId(), this.order1.getOrderTableId(), this.order1.getOrderStatus(), this.order1.getOrderedTime());
+        Order order2 = new Order(this.order2.getId(), this.order2.getOrderTableId(), this.order2.getOrderStatus(), this.order2.getOrderedTime());
 
         given(orderDao.findAll()).willReturn(Arrays.asList(order1, order2));
         given(orderLineItemDao.findAllByOrderId(order1.getId())).willReturn(this.order1.getOrderLineItems());

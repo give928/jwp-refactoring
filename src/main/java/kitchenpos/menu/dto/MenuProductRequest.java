@@ -25,4 +25,8 @@ public class MenuProductRequest {
     public MenuProduct toMenuProduct() {
         return new MenuProduct(productId, quantity);
     }
+
+    public MenuProduct toMenuProduct(Long menuId) {
+        return new MenuProduct(null, menuId, productId, quantity);
+    }
 }

@@ -1,6 +1,7 @@
 package kitchenpos.order.domain;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,16 +15,15 @@ public class Order {
     public Order() {
     }
 
-    public Order(Long orderTableId, String orderStatus, LocalDateTime orderedTime,
-                 List<OrderLineItem> orderLineItems) {
-        this.orderTableId = orderTableId;
-        this.orderStatus = orderStatus;
-        this.orderedTime = orderedTime;
-        this.orderLineItems = orderLineItems;
+    public Order(Long orderTableId, String orderStatus, LocalDateTime orderedTime, List<OrderLineItem> orderLineItems) {
+        this(null, orderTableId, orderStatus, orderedTime, orderLineItems);
     }
 
-    public Order(Long id, Long orderTableId, String orderStatus, LocalDateTime orderedTime,
-                 List<OrderLineItem> orderLineItems) {
+    public Order(Long id, Long orderTableId, String orderStatus, LocalDateTime orderedTime) {
+        this(id, orderTableId, orderStatus, orderedTime, new ArrayList<>());
+    }
+
+    public Order(Long id, Long orderTableId, String orderStatus, LocalDateTime orderedTime, List<OrderLineItem> orderLineItems) {
         this.id = id;
         this.orderTableId = orderTableId;
         this.orderStatus = orderStatus;
@@ -35,40 +35,32 @@ public class Order {
         return id;
     }
 
-    public void setId(final Long id) {
-        this.id = id;
-    }
-
     public Long getOrderTableId() {
         return orderTableId;
-    }
-
-    public void setOrderTableId(final Long orderTableId) {
-        this.orderTableId = orderTableId;
     }
 
     public String getOrderStatus() {
         return orderStatus;
     }
 
-    public void setOrderStatus(final String orderStatus) {
-        this.orderStatus = orderStatus;
-    }
-
     public LocalDateTime getOrderedTime() {
         return orderedTime;
-    }
-
-    public void setOrderedTime(final LocalDateTime orderedTime) {
-        this.orderedTime = orderedTime;
     }
 
     public List<OrderLineItem> getOrderLineItems() {
         return orderLineItems;
     }
 
-    public void setOrderLineItems(final List<OrderLineItem> orderLineItems) {
-        this.orderLineItems = orderLineItems;
+    public void changeOrderStatus(String orderStatus) {
+        this.orderStatus = orderStatus;
+    }
+
+    public void addOrderLineItem(OrderLineItem orderLineItem) {
+        this.orderLineItems.add(orderLineItem);
+    }
+
+    public void addOrderLineItems(List<OrderLineItem> orderLineItems) {
+        this.orderLineItems.addAll(orderLineItems);
     }
 
     @Override

@@ -25,4 +25,8 @@ public class OrderLineItemRequest {
     public OrderLineItem toOrderLineItem() {
         return new OrderLineItem(menuId, quantity);
     }
+
+    public OrderLineItem toOrderLineItem(Long orderId) {
+        return new OrderLineItem(null, orderId, menuId, quantity);
+    }
 }

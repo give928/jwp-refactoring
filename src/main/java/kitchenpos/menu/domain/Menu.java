@@ -1,6 +1,7 @@
 package kitchenpos.menu.domain;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,10 +16,11 @@ public class Menu {
     }
 
     public Menu(String name, BigDecimal price, Long menuGroupId, List<MenuProduct> menuProducts) {
-        this.name = name;
-        this.price = price;
-        this.menuGroupId = menuGroupId;
-        this.menuProducts = menuProducts;
+        this(null, name, price, menuGroupId, menuProducts);
+    }
+
+    public Menu(Long id, String name, BigDecimal price, Long menuGroupId) {
+        this(id, name, price, menuGroupId, new ArrayList<>());
     }
 
     public Menu(Long id, String name, BigDecimal price, Long menuGroupId, List<MenuProduct> menuProducts) {
@@ -33,40 +35,28 @@ public class Menu {
         return id;
     }
 
-    public void setId(final Long id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
     }
 
     public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(final BigDecimal price) {
-        this.price = price;
-    }
-
     public Long getMenuGroupId() {
         return menuGroupId;
-    }
-
-    public void setMenuGroupId(final Long menuGroupId) {
-        this.menuGroupId = menuGroupId;
     }
 
     public List<MenuProduct> getMenuProducts() {
         return menuProducts;
     }
 
-    public void setMenuProducts(final List<MenuProduct> menuProducts) {
-        this.menuProducts = menuProducts;
+    public void addMenuProduct(MenuProduct menuProduct) {
+        this.menuProducts.add(menuProduct);
+    }
+
+    public void addMenuProducts(List<MenuProduct> menuProducts) {
+        this.menuProducts.addAll(menuProducts);
     }
 
     @Override
@@ -78,8 +68,7 @@ public class Menu {
             return false;
         }
         Menu menu = (Menu) o;
-        return Objects.equals(getId(), menu.getId()) && Objects.equals(getName(),
-                                                                       menu.getName()) && Objects.equals(
+        return Objects.equals(getId(), menu.getId()) && Objects.equals(getName(), menu.getName()) && Objects.equals(
                 getPrice(), menu.getPrice()) && Objects.equals(getMenuGroupId(),
                                                                menu.getMenuGroupId()) && Objects.equals(
                 getMenuProducts(), menu.getMenuProducts());
@@ -88,16 +77,5 @@ public class Menu {
     @Override
     public int hashCode() {
         return Objects.hash(getId(), getName(), getPrice(), getMenuGroupId(), getMenuProducts());
-    }
-
-    @Override
-    public String toString() {
-        return "Menu{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", price=" + price +
-                ", menuGroupId=" + menuGroupId +
-                ", menuProducts=" + menuProducts +
-                '}';
     }
 }

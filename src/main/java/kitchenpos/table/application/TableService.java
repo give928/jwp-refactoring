@@ -29,7 +29,7 @@ public class TableService {
     @Transactional
     public OrderTableResponse create(final OrderTableRequest orderTableRequest) {
         OrderTable orderTable = orderTableRequest.toOrderTable();
-        orderTable.setTableGroupId(null);
+        orderTable.clearTableGroupId();
 
         return OrderTableResponse.from(orderTableDao.save(orderTable));
     }
@@ -54,7 +54,7 @@ public class TableService {
             throw new IllegalArgumentException();
         }
 
-        savedOrderTable.setEmpty(orderTableChangeEmptyRequest.isEmpty());
+        savedOrderTable.changeEmpty(orderTableChangeEmptyRequest.isEmpty());
 
         return OrderTableResponse.from(orderTableDao.save(savedOrderTable));
     }
@@ -74,7 +74,7 @@ public class TableService {
             throw new IllegalArgumentException();
         }
 
-        savedOrderTable.setNumberOfGuests(numberOfGuests);
+        savedOrderTable.changeNumberOfGuests(numberOfGuests);
 
         return OrderTableResponse.from(orderTableDao.save(savedOrderTable));
     }

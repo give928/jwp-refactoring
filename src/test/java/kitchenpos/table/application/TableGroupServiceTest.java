@@ -24,12 +24,14 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,7 +66,8 @@ class TableGroupServiceTest {
         Long tableGroupId1 = 1L;
         orderTable1 = new OrderTable(1L, tableGroupId1, 2, false);
         orderTable2 = new OrderTable(2L, tableGroupId1, 4, false);
-        tableGroup1 = new TableGroup(tableGroupId1, LocalDateTime.now(), Arrays.asList(orderTable1, orderTable2));
+        tableGroup1 = new TableGroup(tableGroupId1, LocalDateTime.now(),
+                                     Stream.of(orderTable1, orderTable2).collect(Collectors.toList()));
     }
 
     @DisplayName("주문 테이블을 단체 지정을 등록하고 등록한 단체 지정을 반환한다.")
@@ -73,6 +76,7 @@ class TableGroupServiceTest {
         // given
         OrderTable orderTable1 = new OrderTable(1L, null, 0, true);
         OrderTable orderTable2 = new OrderTable(2L, null, 0, true);
+        TableGroup tableGroup = new TableGroup(tableGroup1.getId(), tableGroup1.getCreatedDate());
         TableGroupRequest tableGroupRequest = new TableGroupRequest(Arrays.asList(new OrderTableGroupRequest(orderTable1.getId()),
                                                                                   new OrderTableGroupRequest(orderTable2.getId())));
 
@@ -80,15 +84,18 @@ class TableGroupServiceTest {
                                                   .mapToLong(OrderTableGroupRequest::getId)
                                                   .boxed()
                                                   .collect(Collectors.toList()))).willReturn(Arrays.asList(orderTable1, orderTable2));
-        given(tableGroupDao.save(any())).willReturn(tableGroup1);
-        given(orderTableDao.save(any())).willReturn(any());
+        given(tableGroupDao.save(any())).willReturn(tableGroup);
+        given(orderTableDao.save(argThat(argument -> argument != null && Objects.equals(argument.getId(), orderTable1.getId()))))
+                .willReturn(new OrderTable(orderTable1.getId(), tableGroup.getId(), orderTable1.getNumberOfGuests(), false));
+        given(orderTableDao.save(argThat(argument -> argument != null && Objects.equals(argument.getId(), orderTable2.getId()))))
+                .willReturn(new OrderTable(orderTable2.getId(), tableGroup.getId(), orderTable2.getNumberOfGuests(), false));
 
         // when
         TableGroupResponse tableGroupResponse = tableGroupService.create(tableGroupRequest);
 
         // then
         assertThat(tableGroupResponse.getOrderTables()).extracting("tableGroupId")
-                .containsExactly(this.tableGroup1.getId(), this.tableGroup1.getId());
+                .containsExactly(tableGroup.getId(), tableGroup.getId());
         assertThat(tableGroupResponse.getOrderTables()).extracting("empty")
                 .containsExactly(false, false);
     }

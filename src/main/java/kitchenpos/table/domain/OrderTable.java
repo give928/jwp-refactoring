@@ -31,31 +31,31 @@ public class OrderTable {
         return id;
     }
 
-    public void setId(final Long id) {
-        this.id = id;
-    }
-
     public Long getTableGroupId() {
         return tableGroupId;
-    }
-
-    public void setTableGroupId(final Long tableGroupId) {
-        this.tableGroupId = tableGroupId;
     }
 
     public int getNumberOfGuests() {
         return numberOfGuests;
     }
 
-    public void setNumberOfGuests(final int numberOfGuests) {
-        this.numberOfGuests = numberOfGuests;
-    }
-
     public boolean isEmpty() {
         return empty;
     }
 
-    public void setEmpty(final boolean empty) {
+    public void clearTableGroupId() {
+        this.tableGroupId = null;
+    }
+
+    public void changeTableGroupId(Long tableGroupId) {
+        this.tableGroupId = tableGroupId;
+    }
+
+    public void changeNumberOfGuests(int numberOfGuests) {
+        this.numberOfGuests = numberOfGuests;
+    }
+
+    public void changeEmpty(boolean empty) {
         this.empty = empty;
     }
 

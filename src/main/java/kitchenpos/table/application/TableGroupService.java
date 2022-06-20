@@ -33,19 +33,19 @@ public class TableGroupService {
 
     @Transactional
     public TableGroupResponse create(final TableGroupRequest tableGroupRequest) {
-        final List<OrderTableGroupRequest> orderTables = tableGroupRequest.getOrderTables();
+        final List<OrderTableGroupRequest> orderTableGroupRequests = tableGroupRequest.getOrderTables();
 
-        if (CollectionUtils.isEmpty(orderTables) || orderTables.size() < 2) {
+        if (CollectionUtils.isEmpty(orderTableGroupRequests) || orderTableGroupRequests.size() < 2) {
             throw new IllegalArgumentException();
         }
 
-        final List<Long> orderTableIds = orderTables.stream()
+        final List<Long> orderTableIds = orderTableGroupRequests.stream()
                 .map(OrderTableGroupRequest::getId)
                 .collect(Collectors.toList());
 
         final List<OrderTable> savedOrderTables = orderTableDao.findAllByIdIn(orderTableIds);
 
-        if (orderTables.size() != savedOrderTables.size()) {
+        if (orderTableGroupRequests.size() != savedOrderTables.size()) {
             throw new IllegalArgumentException();
         }
 
@@ -55,18 +55,15 @@ public class TableGroupService {
             }
         }
 
-        TableGroup tableGroup = tableGroupRequest.toTableGroup();
-        tableGroup.setCreatedDate(LocalDateTime.now());
-
+        TableGroup tableGroup = new TableGroup(LocalDateTime.now());
         final TableGroup savedTableGroup = tableGroupDao.save(tableGroup);
 
         final Long tableGroupId = savedTableGroup.getId();
         for (final OrderTable savedOrderTable : savedOrderTables) {
-            savedOrderTable.setTableGroupId(tableGroupId);
-            savedOrderTable.setEmpty(false);
-            orderTableDao.save(savedOrderTable);
+            savedOrderTable.changeTableGroupId(tableGroupId);
+            savedOrderTable.changeEmpty(false);
+            savedTableGroup.addOrderTable(orderTableDao.save(savedOrderTable));
         }
-        savedTableGroup.setOrderTables(savedOrderTables);
 
         return TableGroupResponse.from(savedTableGroup);
     }
@@ -85,7 +82,7 @@ public class TableGroupService {
         }
 
         for (final OrderTable orderTable : orderTables) {
-            orderTable.setTableGroupId(null);
+            orderTable.clearTableGroupId();
             orderTableDao.save(orderTable);
         }
     }
