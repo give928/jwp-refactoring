@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
 import kitchenpos.menu.application.MenuGroupService;
 import kitchenpos.menu.domain.MenuGroup;
-import kitchenpos.menu.ui.MenuGroupRestController;
+import kitchenpos.menu.dto.MenuGroupRequest;
+import kitchenpos.menu.dto.MenuGroupResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -38,37 +40,41 @@ class MenuGroupRestControllerTest {
     @MockBean
     private MenuGroupService menuGroupService;
 
-    private MenuGroup savedMenuGroup;
+    private MenuGroup menuGroup1;
+    private MenuGroup menuGroup2;
 
     @BeforeEach
     void setUp() {
-        savedMenuGroup = new MenuGroup(1L, "메뉴그룹1");
+        menuGroup1 = new MenuGroup(1L, "메뉴그룹1");
+        menuGroup2 = new MenuGroup(2L, "메뉴그룹2");
     }
 
     @DisplayName("메뉴 그룹을 등록하고 등록한 메뉴 그룹을 반환한다.")
     @Test
     void create() throws Exception {
         // given
-        MenuGroup menuGroup = new MenuGroup(savedMenuGroup.getName());
+        MenuGroupRequest menuGroupRequest = new MenuGroupRequest(menuGroup1.getName());
+        MenuGroupResponse menuGroupResponse = MenuGroupResponse.from(menuGroup1);
 
-        given(menuGroupService.create(menuGroup)).willReturn(savedMenuGroup);
+        given(menuGroupService.create(any())).willReturn(menuGroupResponse);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
                                                               .contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsBytes(menuGroup)))
+                                                              .content(objectMapper.writeValueAsBytes(menuGroupRequest)))
                 .andDo(print());
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(savedMenuGroup)));
+                .andExpect(content().string(objectMapper.writeValueAsString(menuGroupResponse)));
     }
 
     @DisplayName("메뉴 그룹의 전체 목록을 조회한다.")
     @Test
     void list() throws Exception {
         // given
-        List<MenuGroup> menuGroups = Arrays.asList(savedMenuGroup, new MenuGroup(2L, "메뉴그룹2"));
+        List<MenuGroupResponse> menuGroups = Arrays.asList(MenuGroupResponse.from(menuGroup1),
+                                                           MenuGroupResponse.from(menuGroup2));
 
         given(menuGroupService.list()).willReturn(menuGroups);
 
