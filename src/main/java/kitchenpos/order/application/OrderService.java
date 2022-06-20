@@ -27,12 +27,8 @@ public class OrderService {
     private final OrderLineItemDao orderLineItemDao;
     private final OrderTableDao orderTableDao;
 
-    public OrderService(
-            final MenuDao menuDao,
-            final OrderDao orderDao,
-            final OrderLineItemDao orderLineItemDao,
-            final OrderTableDao orderTableDao
-    ) {
+    public OrderService(final MenuDao menuDao, final OrderDao orderDao, final OrderLineItemDao orderLineItemDao,
+                        final OrderTableDao orderTableDao) {
         this.menuDao = menuDao;
         this.orderDao = orderDao;
         this.orderLineItemDao = orderLineItemDao;
@@ -83,15 +79,13 @@ public class OrderService {
             order.addOrderLineItems(orderLineItemDao.findAllByOrderId(order.getId()));
         }
 
-        return orders.stream()
-                .map(OrderResponse::from)
-                .collect(Collectors.toList());
+        return orders.stream().map(OrderResponse::from).collect(Collectors.toList());
     }
 
     @Transactional
-    public OrderResponse changeOrderStatus(final Long orderId, final OrderStatusChangeRequest orderStatusChangeRequest) {
-        final Order savedOrder = orderDao.findById(orderId)
-                .orElseThrow(IllegalArgumentException::new);
+    public OrderResponse changeOrderStatus(final Long orderId,
+                                           final OrderStatusChangeRequest orderStatusChangeRequest) {
+        final Order savedOrder = orderDao.findById(orderId).orElseThrow(IllegalArgumentException::new);
 
         if (Objects.equals(OrderStatus.COMPLETION.name(), savedOrder.getOrderStatus())) {
             throw new IllegalArgumentException();

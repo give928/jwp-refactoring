@@ -24,12 +24,8 @@ public class MenuService {
     private final MenuProductDao menuProductDao;
     private final ProductDao productDao;
 
-    public MenuService(
-            final MenuDao menuDao,
-            final MenuGroupDao menuGroupDao,
-            final MenuProductDao menuProductDao,
-            final ProductDao productDao
-    ) {
+    public MenuService(final MenuDao menuDao, final MenuGroupDao menuGroupDao, final MenuProductDao menuProductDao,
+                       final ProductDao productDao) {
         this.menuDao = menuDao;
         this.menuGroupDao = menuGroupDao;
         this.menuProductDao = menuProductDao;
@@ -75,8 +71,6 @@ public class MenuService {
             menu.addMenuProducts(menuProductDao.findAllByMenuId(menu.getId()));
         }
 
-        return menus.stream()
-                .map(MenuResponse::from)
-                .collect(Collectors.toList());
+        return menus.stream().map(MenuResponse::from).collect(Collectors.toList());
     }
 }
