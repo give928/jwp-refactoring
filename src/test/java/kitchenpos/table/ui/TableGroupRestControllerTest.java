@@ -5,7 +5,9 @@ import kitchenpos.annotation.MockMvcEncodingConfiguration;
 import kitchenpos.table.application.TableGroupService;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.domain.TableGroup;
-import kitchenpos.table.ui.TableGroupRestController;
+import kitchenpos.table.dto.OrderTableGroupRequest;
+import kitchenpos.table.dto.TableGroupRequest;
+import kitchenpos.table.dto.TableGroupResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -42,17 +46,16 @@ class TableGroupRestControllerTest {
     @Test
     void create() throws Exception {
         // given
-        Long savedTableGroupId = 1L;
-        OrderTable savedOrderTable1 = new OrderTable(1L, savedTableGroupId, 1, false);
-        OrderTable savedOrderTable2 = new OrderTable(2L, savedTableGroupId, 2, false);
-        TableGroup savedTableGroup = new TableGroup(savedTableGroupId, LocalDateTime.now(),
-                                                    Arrays.asList(savedOrderTable1, savedOrderTable2));
+        Long tableGroupId1 = 1L;
+        TableGroup tableGroup = new TableGroup(tableGroupId1, LocalDateTime.now(),
+                                               Arrays.asList(new OrderTable(1L, tableGroupId1, 0, true),
+                                                             new OrderTable(2L, tableGroupId1, 0, true)));
+        TableGroupRequest tableGroupRequest = new TableGroupRequest(tableGroup.getOrderTables().stream()
+                                                                            .map(orderTable -> new OrderTableGroupRequest(orderTable.getId()))
+                                                                            .collect(Collectors.toList()));
+        TableGroupResponse tableGroupResponse = TableGroupResponse.from(tableGroup);
 
-        TableGroup tableGroup = new TableGroup(savedTableGroup.getCreatedDate(),
-                                               Arrays.asList(new OrderTable(1L, null, 1, true),
-                                                             new OrderTable(2L, null, 2, true)));
-
-        given(tableGroupService.create(tableGroup)).willReturn(savedTableGroup);
+        given(tableGroupService.create(any())).willReturn(tableGroupResponse);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -62,7 +65,7 @@ class TableGroupRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(savedTableGroup)));
+                .andExpect(content().string(objectMapper.writeValueAsString(tableGroupResponse)));
     }
 
     @DisplayName("단체 지정을 해제한다.")
