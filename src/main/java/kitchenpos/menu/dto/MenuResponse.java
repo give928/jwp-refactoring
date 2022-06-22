@@ -7,11 +7,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MenuResponse {
-    private final Long id;
-    private final String name;
-    private final BigDecimal price;
-    private final Long menuGroupId;
-    private final List<MenuProductResponse> menuProducts;
+    private Long id;
+    private String name;
+    private BigDecimal price;
+    private Long menuGroupId;
+    private List<MenuProductResponse> menuProducts;
+
+    protected MenuResponse() {
+    }
 
     private MenuResponse(Long id, String name, BigDecimal price, Long menuGroupId,
                          List<MenuProductResponse> menuProducts) {
@@ -23,7 +26,7 @@ public class MenuResponse {
     }
 
     public static MenuResponse from(Menu menu) {
-        return new MenuResponse(menu.getId(), menu.getName(), menu.getPrice(), menu.getMenuGroupId(),
+        return new MenuResponse(menu.getId(), menu.getName(), menu.getPrice(), menu.getMenuGroup().getId(),
                                 menu.getMenuProducts().stream()
                                         .map(MenuProductResponse::from)
                                         .collect(Collectors.toList()));

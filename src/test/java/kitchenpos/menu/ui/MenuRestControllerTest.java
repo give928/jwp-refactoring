@@ -52,34 +52,33 @@ class MenuRestControllerTest {
     @BeforeEach
     void setUp() {
         Long savedMenuId1 = 1L;
-        Product product1 = new Product(1L, "음식1", BigDecimal.ONE);
-        Product product2 = new Product(2L, "음식2", BigDecimal.ONE);
-        MenuGroup menuGroup = new MenuGroup(1L, "메뉴그룹1");
-        MenuProduct menuProduct1 = new MenuProduct(1L, savedMenuId1, product1.getId(), 1);
-        MenuProduct menuProduct2 = new MenuProduct(2L, savedMenuId1, product2.getId(), 1);
-        menu1 = new Menu(savedMenuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup.getId(),
-                         Arrays.asList(menuProduct1, menuProduct2));
+        Product product1 = Product.of(1L, "음식1", BigDecimal.ONE);
+        Product product2 = Product.of(2L, "음식2", BigDecimal.ONE);
+        MenuGroup menuGroup = MenuGroup.of(1L, "메뉴그룹1");
+        menu1 = Menu.of(savedMenuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup,
+                        Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
+                                      MenuProduct.of(2L, menu1, product2, 1)));
 
         Long savedMenuId2 = 2L;
-        Product product3 = new Product(3L, "음식1", BigDecimal.ONE);
-        Product product4 = new Product(4L, "음식2", BigDecimal.ONE);
-        MenuProduct menuProduct3 = new MenuProduct(3L, savedMenuId2, product3.getId(), 1);
-        MenuProduct menuProduct4 = new MenuProduct(4L, savedMenuId2, product4.getId(), 1);
-        menu2 = new Menu(savedMenuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup.getId(), Arrays.asList(menuProduct3,
-                                                                                                       menuProduct4));
+        Product product3 = Product.of(3L, "음식1", BigDecimal.ONE);
+        Product product4 = Product.of(4L, "음식2", BigDecimal.ONE);
+        menu2 = Menu.of(savedMenuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup,
+                        Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
+                                      MenuProduct.of(4L, menu2, product4, 1)));
     }
 
     @DisplayName("메뉴를 등록하고 등록한 메뉴와 메뉴 상품을 반환한다.")
     @Test
     void create() throws Exception {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menu1.getMenuGroupId(),
+        MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menu1.getMenuGroup().getId(),
                                                   menu1.getMenuProducts().stream()
                                                           .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProductId(), menuProduct.getQuantity()))
+                                                                  menuProduct.getProduct().getId(), menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
+        MenuResponse menuResponse = MenuResponse.from(menu1);
 
-        given(menuService.create(any())).willReturn(MenuResponse.from(menu1));
+        given(menuService.create(any())).willReturn(menuResponse);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -89,7 +88,7 @@ class MenuRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(menu1)));
+                .andExpect(content().string(objectMapper.writeValueAsString(menuResponse)));
     }
 
     @DisplayName("메뉴와 메뉴 상품의 전체 목록을 조회한다.")

@@ -2,6 +2,7 @@ package kitchenpos.order.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
+import kitchenpos.menu.domain.Menu;
 import kitchenpos.order.application.OrderService;
 import kitchenpos.order.domain.Order;
 import kitchenpos.order.domain.OrderLineItem;
@@ -23,8 +24,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -55,33 +57,31 @@ class OrderRestControllerTest {
 
     @BeforeEach
     void setUp() {
-        Long menuId1 = 1L;
-        Long menuId2 = 2L;
+        Menu menu1 = Menu.of(1L, "메뉴1", BigDecimal.ONE, null, Collections.emptyList());
+        Menu menu2 = Menu.of(2L, "메뉴2", BigDecimal.ONE, null, Collections.emptyList());
 
         Long orderId1 = 1L;
-        OrderTable orderTable1 = new OrderTable(1L, null, 1, false);
-        orderLineItem1 = new OrderLineItem(1L, orderId1, menuId1, 1);
-        orderLineItem2 = new OrderLineItem(2L, orderId1, menuId2, 1);
-        order1 = new Order(orderId1, orderTable1.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(),
-                           Arrays.asList(orderLineItem1, orderLineItem2));
+        OrderTable orderTable1 = OrderTable.of(1L, null, 1, false);
+        orderLineItem1 = OrderLineItem.of(1L, null, menu1, 1);
+        orderLineItem2 = OrderLineItem.of(2L, null, menu2, 1);
+        order1 = Order.of(orderId1, orderTable1, orderLineItem1, orderLineItem2);
 
         Long orderId2 = 2L;
-        OrderTable orderTable2 = new OrderTable(1L, null, 1, false);
-        OrderLineItem orderLineItem3 = new OrderLineItem(1L, orderId2, menuId1, 2);
-        OrderLineItem orderLineItem4 = new OrderLineItem(2L, orderId2, menuId2, 2);
-        order2 = new Order(orderId2, orderTable2.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(),
-                           Arrays.asList(orderLineItem3, orderLineItem4));
+        OrderTable orderTable2 = OrderTable.of(2L, null, 1, false);
+        order2 = Order.of(orderId2, orderTable2, OrderLineItem.of(3L, null, menu1, 2),
+                          OrderLineItem.of(4L, null, menu2, 2));
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")
     @Test
     void create() throws Exception {
         // given
-        OrderRequest orderRequest = new OrderRequest(order1.getOrderTableId(),
-                                                     Arrays.asList(new OrderLineItemRequest(orderLineItem1.getMenuId(), orderLineItem1.getQuantity()),
-                                                                   new OrderLineItemRequest(orderLineItem2.getMenuId(), orderLineItem2.getQuantity())));
+        OrderRequest orderRequest = new OrderRequest(order1.getOrderTable().getId(),
+                                                     Arrays.asList(new OrderLineItemRequest(orderLineItem1.getMenu().getId(), orderLineItem1.getQuantity()),
+                                                                   new OrderLineItemRequest(orderLineItem2.getMenu().getId(), orderLineItem2.getQuantity())));
+        OrderResponse orderResponse = OrderResponse.from(order1);
 
-        given(orderService.create(any())).willReturn(OrderResponse.from(order1));
+        given(orderService.create(any())).willReturn(orderResponse);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -91,7 +91,7 @@ class OrderRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(order1)));
+                .andExpect(content().string(objectMapper.writeValueAsString(orderResponse)));
     }
 
     @DisplayName("주문과 주문 항목의 전체 목록을 조회한다.")
@@ -115,22 +115,23 @@ class OrderRestControllerTest {
     @Test
     void changeOrderStatus() throws Exception {
         // given
-        String nextOrderStatus = OrderStatus.MEAL.name();
-        OrderStatusChangeRequest orderStatusChangeRequest = new OrderStatusChangeRequest(nextOrderStatus);
-        Order order = new Order(order1.getId(), order1.getOrderTableId(), nextOrderStatus, order1.getOrderedTime(), order1.getOrderLineItems());
+        OrderStatus nextOrderStatus = OrderStatus.MEAL;
+        OrderStatusChangeRequest orderStatusChangeRequest = new OrderStatusChangeRequest(nextOrderStatus.name());
+        order1.changeOrderStatus(nextOrderStatus);
+        OrderResponse orderResponse = OrderResponse.from(order1);
 
         given(orderService.changeOrderStatus(ArgumentMatchers.eq(order1.getId()),
-                                             ArgumentMatchers.argThat(argument -> argument != null && Objects.equals(argument.getOrderStatus(), nextOrderStatus))))
-                .willReturn(OrderResponse.from(order));
+                                             ArgumentMatchers.argThat(argument -> argument != null && Objects.equals(argument.getOrderStatus(), nextOrderStatus.name()))))
+                .willReturn(orderResponse);
 
         // when
-        ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.put(URL + String.format("/%d/order-status", order.getId()))
+        ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.put(URL + String.format("/%d/order-status", order1.getId()))
                                                               .contentType(MediaType.APPLICATION_JSON)
                                                               .content(objectMapper.writeValueAsBytes(orderStatusChangeRequest)))
                 .andDo(print());
 
         // then
         resultActions.andExpect(status().isOk())
-                .andExpect(content().string(objectMapper.writeValueAsString(order)));
+                .andExpect(content().string(objectMapper.writeValueAsString(orderResponse)));
     }
 }

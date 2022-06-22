@@ -7,14 +7,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class OrderResponse {
-    private final Long id;
-    private final Long orderTableId;
-    private final String orderStatus;
-    private final LocalDateTime orderedTime;
-    private final List<OrderLineItemResponse> orderLineItems;
+    private Long id;
+    private Long orderTableId;
+    private String orderStatus;
+    private LocalDateTime orderedTime;
+    private List<OrderLineItemResponse> orderLineItems;
+
+    protected OrderResponse() {
+    }
 
     private OrderResponse(Long id, Long orderTableId, String orderStatus, LocalDateTime orderedTime,
-                         List<OrderLineItemResponse> orderLineItems) {
+                          List<OrderLineItemResponse> orderLineItems) {
         this.id = id;
         this.orderTableId = orderTableId;
         this.orderStatus = orderStatus;
@@ -23,7 +26,7 @@ public class OrderResponse {
     }
 
     public static OrderResponse from(Order order) {
-        return new OrderResponse(order.getId(), order.getOrderTableId(), order.getOrderStatus(), order.getOrderedTime(),
+        return new OrderResponse(order.getId(), order.getOrderTable().getId(), order.getOrderStatus().name(), order.getOrderedTime(),
                                  order.getOrderLineItems().stream()
                                          .map(OrderLineItemResponse::from)
                                          .collect(Collectors.toList()));

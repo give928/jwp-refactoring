@@ -1,38 +1,46 @@
 package kitchenpos.table.domain;
 
+import javax.persistence.*;
 import java.util.Objects;
 
+@Entity
 public class OrderTable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long tableGroupId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "table_group_id", foreignKey = @ForeignKey(name = "fk_order_table_table_group"))
+    private TableGroup tableGroup;
+
     private int numberOfGuests;
+
     private boolean empty;
 
-    public OrderTable() {
+    protected OrderTable() {
     }
 
-    public OrderTable(Long id) {
+    private OrderTable(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty) {
         this.id = id;
-    }
-
-    public OrderTable(int numberOfGuests, boolean empty) {
+        this.tableGroup = tableGroup;
         this.numberOfGuests = numberOfGuests;
         this.empty = empty;
     }
 
-    public OrderTable(Long id, Long tableGroupId, int numberOfGuests, boolean empty) {
-        this.id = id;
-        this.tableGroupId = tableGroupId;
-        this.numberOfGuests = numberOfGuests;
-        this.empty = empty;
+    public static OrderTable of(int numberOfGuests, boolean empty) {
+        return of(null, null, numberOfGuests, empty);
+    }
+
+    public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty) {
+        return new OrderTable(id, tableGroup, numberOfGuests, empty);
     }
 
     public Long getId() {
         return id;
     }
 
-    public Long getTableGroupId() {
-        return tableGroupId;
+    public TableGroup getTableGroup() {
+        return tableGroup;
     }
 
     public int getNumberOfGuests() {
@@ -43,12 +51,12 @@ public class OrderTable {
         return empty;
     }
 
-    public void clearTableGroupId() {
-        this.tableGroupId = null;
+    public void clearTableGroup() {
+        this.tableGroup = null;
     }
 
-    public void changeTableGroupId(Long tableGroupId) {
-        this.tableGroupId = tableGroupId;
+    public void changeTableGroup(TableGroup tableGroup) {
+        this.tableGroup = tableGroup;
     }
 
     public void changeNumberOfGuests(int numberOfGuests) {
@@ -68,12 +76,14 @@ public class OrderTable {
             return false;
         }
         OrderTable that = (OrderTable) o;
-        return getNumberOfGuests() == that.getNumberOfGuests() && isEmpty() == that.isEmpty() && Objects.equals(
-                getId(), that.getId()) && Objects.equals(getTableGroupId(), that.getTableGroupId());
+        return getNumberOfGuests() == that.getNumberOfGuests()
+                && isEmpty() == that.isEmpty()
+                && Objects.equals(getId(), that.getId())
+                && Objects.equals(getTableGroup(), that.getTableGroup());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getTableGroupId(), getNumberOfGuests(), isEmpty());
+        return Objects.hash(getId(), getTableGroup(), getNumberOfGuests(), isEmpty());
     }
 }

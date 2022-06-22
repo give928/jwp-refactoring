@@ -46,8 +46,8 @@ class ProductRestControllerTest {
 
     @BeforeEach
     void setUp() {
-        product1 = new Product(1L, "음식1", BigDecimal.ONE);
-        product2 = new Product(2L, "음식2", BigDecimal.valueOf(2));
+        product1 = Product.of(1L, "음식1", BigDecimal.ONE);
+        product2 = Product.of(2L, "음식2", BigDecimal.valueOf(2));
     }
 
     @DisplayName("상품을 등록하고 등록한 상품을 반환한다.")

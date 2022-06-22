@@ -45,8 +45,8 @@ class MenuGroupRestControllerTest {
 
     @BeforeEach
     void setUp() {
-        menuGroup1 = new MenuGroup(1L, "메뉴그룹1");
-        menuGroup2 = new MenuGroup(2L, "메뉴그룹2");
+        menuGroup1 = MenuGroup.of(1L, "메뉴그룹1");
+        menuGroup2 = MenuGroup.of(2L, "메뉴그룹2");
     }
 
     @DisplayName("메뉴 그룹을 등록하고 등록한 메뉴 그룹을 반환한다.")

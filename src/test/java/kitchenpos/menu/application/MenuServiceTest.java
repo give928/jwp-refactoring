@@ -1,16 +1,11 @@
 package kitchenpos.menu.application;
 
-import kitchenpos.menu.dao.MenuDao;
-import kitchenpos.menu.dao.MenuGroupDao;
-import kitchenpos.menu.dao.MenuProductDao;
-import kitchenpos.menu.domain.Menu;
-import kitchenpos.menu.domain.MenuGroup;
-import kitchenpos.menu.domain.MenuProduct;
+import kitchenpos.menu.domain.*;
 import kitchenpos.menu.dto.MenuProductRequest;
 import kitchenpos.menu.dto.MenuRequest;
 import kitchenpos.menu.dto.MenuResponse;
-import kitchenpos.product.dao.ProductDao;
 import kitchenpos.product.domain.Product;
+import kitchenpos.product.domain.ProductRepository;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,25 +18,26 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class MenuServiceTest {
     @Mock
-    private MenuDao menuDao;
+    private MenuRepository menuRepository;
     @Mock
-    private MenuGroupDao menuGroupDao;
+    private MenuGroupRepository menuGroupRepository;
     @Mock
-    private MenuProductDao menuProductDao;
-    @Mock
-    private ProductDao productDao;
+    private ProductRepository productRepository;
 
     @InjectMocks
     private MenuService menuService;
@@ -49,11 +45,7 @@ class MenuServiceTest {
     private Product product1;
     private Product product2;
     private MenuGroup menuGroup;
-    private MenuProduct menuProduct1;
-    private MenuProduct menuProduct2;
     private Menu menu1;
-    private MenuProduct menuProduct3;
-    private MenuProduct menuProduct4;
     private Menu menu2;
 
     public static Stream<BigDecimal> invalidPriceParameter() {
@@ -66,43 +58,37 @@ class MenuServiceTest {
 
     @BeforeEach
     void setUp() {
-        Long savedMenuId1 = 1L;
-        product1 = new Product(1L, "음식1", BigDecimal.ONE);
-        product2 = new Product(2L, "음식2", BigDecimal.ONE);
-        menuGroup = new MenuGroup(1L, "메뉴그룹1");
-        menuProduct1 = new MenuProduct(1L, savedMenuId1, product1.getId(), 1);
-        menuProduct2 = new MenuProduct(2L, savedMenuId1, product2.getId(), 1);
-        menu1 = new Menu(savedMenuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup.getId(),
-                         Stream.of(menuProduct1, menuProduct2).collect(Collectors.toList()));
+        Long menuId1 = 1L;
+        product1 = Product.of(1L, "음식1", BigDecimal.ONE);
+        product2 = Product.of(2L, "음식2", BigDecimal.ONE);
+        menuGroup = MenuGroup.of(1L, "메뉴그룹1");
+        menu1 = Menu.of(menuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup,
+                        Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
+                                      MenuProduct.of(2L, menu1, product2, 1)));
 
-        Long savedMenuId2 = 2L;
-        Product product3 = new Product(3L, "음식1", BigDecimal.ONE);
-        Product product4 = new Product(4L, "음식2", BigDecimal.ONE);
-        menuProduct3 = new MenuProduct(3L, savedMenuId2, product3.getId(), 1);
-        menuProduct4 = new MenuProduct(4L, savedMenuId2, product4.getId(), 1);
-        menu2 = new Menu(savedMenuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup.getId(),
-                         Stream.of(menuProduct3, menuProduct4).collect(Collectors.toList()));
+        Long menuId2 = 2L;
+        Product product3 = Product.of(3L, "음식1", BigDecimal.ONE);
+        Product product4 = Product.of(4L, "음식2", BigDecimal.ONE);
+        menu2 = Menu.of(menuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup,
+                        Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
+                                      MenuProduct.of(4L, menu2, product4, 1)));
     }
 
     @DisplayName("메뉴를 등록하고 등록한 메뉴와 메뉴 상품을 반환한다.")
     @Test
     void create() {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menu1.getMenuGroupId(),
+        MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menu1.getMenuGroup().getId(),
                                                   menu1.getMenuProducts().stream()
                                                           .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProductId(), menuProduct.getQuantity()))
+                                                                  menuProduct.getProduct().getId(), menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
 
-        given(menuGroupDao.existsById(menu1.getMenuGroupId())).willReturn(
-                Optional.ofNullable(menuGroup).isPresent());
-        given(productDao.findById(product1.getId())).willReturn(Optional.of(product1));
-        given(productDao.findById(product2.getId())).willReturn(Optional.of(product2));
-        given(menuDao.save(menuRequest.toMenu())).willReturn(menu1);
-        given(menuProductDao.save(argThat(argument -> argument != null && Objects.equals(argument.getProductId(), menuProduct1.getProductId()))))
-                .willReturn(menuProduct1);
-        given(menuProductDao.save(argThat(argument -> argument != null && Objects.equals(argument.getProductId(), menuProduct2.getProductId()))))
-                .willReturn(menuProduct2);
+        given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
+                                                   .map(MenuProductRequest::getProductId)
+                                                   .collect(Collectors.toList()))).willReturn(Arrays.asList(product1, product2));
+        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
+        given(menuRepository.save(any())).willReturn(menu1);
 
         // when
         MenuResponse menuResponse = menuService.create(menuRequest);
@@ -111,7 +97,7 @@ class MenuServiceTest {
         assertThat(menuResponse.getId()).isEqualTo(menu1.getId());
         assertThat(menuResponse.getName()).isEqualTo(menu1.getName());
         assertThat(menuResponse.getPrice()).isEqualTo(menu1.getPrice());
-        assertThat(menuResponse.getMenuGroupId()).isEqualTo(menu1.getMenuGroupId());
+        assertThat(menuResponse.getMenuGroupId()).isEqualTo(menu1.getMenuGroup().getId());
         assertThat(menuResponse.getMenuProducts()).hasSameSizeAs(menu1.getMenuProducts());
     }
 
@@ -120,7 +106,7 @@ class MenuServiceTest {
     @MethodSource("invalidPriceParameter")
     void invalidPrice(BigDecimal price) {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), price, menu1.getMenuGroupId(), Collections.emptyList());
+        MenuRequest menuRequest = new MenuRequest(menu1.getName(), price, menu1.getMenuGroup().getId(), Collections.emptyList());
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
@@ -136,8 +122,6 @@ class MenuServiceTest {
         // given
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menuGroupId, Collections.emptyList());
 
-        given(menuGroupDao.existsById(menuGroupId)).willReturn(false);
-
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
 
@@ -149,15 +133,15 @@ class MenuServiceTest {
     @Test
     void invalidAmount() {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), BigDecimal.valueOf(3L), menu1.getMenuGroupId(),
+        MenuRequest menuRequest = new MenuRequest(menu1.getName(), BigDecimal.valueOf(3L), menu1.getMenuGroup().getId(),
                                                   menu1.getMenuProducts().stream()
                                                           .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProductId(), menuProduct.getQuantity()))
+                                                                  menuProduct.getProduct().getId(), menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
 
-        given(menuGroupDao.existsById(menu1.getMenuGroupId())).willReturn(Optional.ofNullable(menuGroup).isPresent());
-        given(productDao.findById(product1.getId())).willReturn(Optional.of(product1));
-        given(productDao.findById(product2.getId())).willReturn(Optional.of(product2));
+        given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
+                                                   .map(MenuProductRequest::getProductId)
+                                                   .collect(Collectors.toList()))).willReturn(Arrays.asList(product1, product2));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
@@ -170,13 +154,7 @@ class MenuServiceTest {
     @Test
     void list() {
         // given
-        Menu menu1 = new Menu(1L, this.menu1.getName(), this.menu1.getPrice(), this.menu1.getMenuGroupId());
-        Menu menu2 = new Menu(2L, this.menu2.getName(), this.menu2.getPrice(), this.menu2.getMenuGroupId());
-        List<Menu> menus = Arrays.asList(menu1, menu2);
-
-        given(menuDao.findAll()).willReturn(menus);
-        given(menuProductDao.findAllByMenuId(menu1.getId())).willReturn(Arrays.asList(menuProduct1, menuProduct2));
-        given(menuProductDao.findAllByMenuId(menu2.getId())).willReturn(Arrays.asList(menuProduct3, menuProduct4));
+        given(menuRepository.findAll()).willReturn(Arrays.asList(menu1, menu2));
 
         // when
         List<MenuResponse> menuResponses = menuService.list();

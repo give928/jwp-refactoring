@@ -1,9 +1,9 @@
 package kitchenpos.table.application;
 
-import kitchenpos.order.dao.OrderDao;
-import kitchenpos.table.dao.OrderTableDao;
+import kitchenpos.order.domain.OrderRepository;
 import kitchenpos.order.domain.OrderStatus;
 import kitchenpos.table.domain.OrderTable;
+import kitchenpos.table.domain.OrderTableRepository;
 import kitchenpos.table.dto.OrderTableChangeEmptyRequest;
 import kitchenpos.table.dto.OrderTableChangeNumberOfGuestRequest;
 import kitchenpos.table.dto.OrderTableRequest;
@@ -18,56 +18,55 @@ import java.util.stream.Collectors;
 
 @Service
 public class TableService {
-    private final OrderDao orderDao;
-    private final OrderTableDao orderTableDao;
+    private final OrderRepository orderRepository;
+    private final OrderTableRepository orderTableRepository;
 
-    public TableService(final OrderDao orderDao, final OrderTableDao orderTableDao) {
-        this.orderDao = orderDao;
-        this.orderTableDao = orderTableDao;
+    public TableService(final OrderRepository orderRepository, final OrderTableRepository orderTableRepository) {
+        this.orderRepository = orderRepository;
+        this.orderTableRepository = orderTableRepository;
     }
 
     @Transactional
     public OrderTableResponse create(final OrderTableRequest orderTableRequest) {
-        OrderTable orderTable = orderTableRequest.toOrderTable();
-        orderTable.clearTableGroupId();
+        OrderTable orderTable = OrderTable.of(orderTableRequest.getNumberOfGuests(), orderTableRequest.isEmpty());
+        orderTable.clearTableGroup();
 
-        return OrderTableResponse.from(orderTableDao.save(orderTable));
+        return OrderTableResponse.from(orderTableRepository.save(orderTable));
     }
 
     public List<OrderTableResponse> list() {
-        return orderTableDao.findAll().stream()
+        return orderTableRepository.findAll().stream()
                 .map(OrderTableResponse::from)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public OrderTableResponse changeEmpty(final Long orderTableId, final OrderTableChangeEmptyRequest orderTableChangeEmptyRequest) {
-        final OrderTable savedOrderTable = orderTableDao.findById(orderTableId)
+        final OrderTable savedOrderTable = orderTableRepository.findById(orderTableId)
                 .orElseThrow(IllegalArgumentException::new);
 
-        if (Objects.nonNull(savedOrderTable.getTableGroupId())) {
+        if (Objects.nonNull(savedOrderTable.getTableGroup())) {
             throw new IllegalArgumentException();
         }
 
-        if (orderDao.existsByOrderTableIdAndOrderStatusIn(
-                orderTableId, Arrays.asList(OrderStatus.COOKING.name(), OrderStatus.MEAL.name()))) {
+        if (orderRepository.existsByOrderTableIdAndOrderStatusIn(orderTableId, Arrays.asList(OrderStatus.COOKING,
+                                                                                             OrderStatus.MEAL))) {
             throw new IllegalArgumentException();
         }
 
         savedOrderTable.changeEmpty(orderTableChangeEmptyRequest.isEmpty());
 
-        return OrderTableResponse.from(orderTableDao.save(savedOrderTable));
+        return OrderTableResponse.from(savedOrderTable);
     }
 
     @Transactional
     public OrderTableResponse changeNumberOfGuests(final Long orderTableId, final OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest) {
         final int numberOfGuests = orderTableChangeNumberOfGuestRequest.getNumberOfGuests();
-
         if (numberOfGuests < 0) {
             throw new IllegalArgumentException();
         }
 
-        final OrderTable savedOrderTable = orderTableDao.findById(orderTableId)
+        final OrderTable savedOrderTable = orderTableRepository.findById(orderTableId)
                 .orElseThrow(IllegalArgumentException::new);
 
         if (savedOrderTable.isEmpty()) {
@@ -76,6 +75,6 @@ public class TableService {
 
         savedOrderTable.changeNumberOfGuests(numberOfGuests);
 
-        return OrderTableResponse.from(orderTableDao.save(savedOrderTable));
+        return OrderTableResponse.from(savedOrderTable);
     }
 }

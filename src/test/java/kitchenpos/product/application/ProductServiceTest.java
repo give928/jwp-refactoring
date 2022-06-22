@@ -1,7 +1,7 @@
 package kitchenpos.product.application;
 
-import kitchenpos.product.dao.ProductDao;
 import kitchenpos.product.domain.Product;
+import kitchenpos.product.domain.ProductRepository;
 import kitchenpos.product.dto.ProductRequest;
 import kitchenpos.product.dto.ProductResponse;
 import org.assertj.core.api.ThrowableAssert;
@@ -27,7 +27,7 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
     @Mock
-    private ProductDao productDao;
+    private ProductRepository productRepository;
 
     @InjectMocks
     private ProductService productService;
@@ -41,8 +41,8 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        product1 = new Product(1L, "음식1", BigDecimal.ONE);
-        product2 = new Product(2L, "음식2", BigDecimal.valueOf(2));
+        product1 = Product.of(1L, "음식1", BigDecimal.ONE);
+        product2 = Product.of(2L, "음식2", BigDecimal.valueOf(2));
     }
 
     @DisplayName("상품을 등록하고 등록한 상품을 반환한다.")
@@ -51,7 +51,7 @@ class ProductServiceTest {
         // given
         ProductRequest productRequest = new ProductRequest(product1.getName(), product1.getPrice());
 
-        given(productDao.save(productRequest.toProduct())).willReturn(product1);
+        given(productRepository.save(Product.of(productRequest.getName(), productRequest.getPrice()))).willReturn(product1);
 
         // when
         ProductResponse productResponse = productService.create(productRequest);
@@ -80,7 +80,7 @@ class ProductServiceTest {
     @Test
     void list() {
         // given
-        given(productDao.findAll()).willReturn(Arrays.asList(product1, product2));
+        given(productRepository.findAll()).willReturn(Arrays.asList(product1, product2));
 
         // when
         List<ProductResponse> productResponses = productService.list();

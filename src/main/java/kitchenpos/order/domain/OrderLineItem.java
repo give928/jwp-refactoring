@@ -1,42 +1,63 @@
 package kitchenpos.order.domain;
 
+import kitchenpos.menu.domain.Menu;
+
+import javax.persistence.*;
 import java.util.Objects;
 
+@Entity
 public class OrderLineItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seq;
-    private Long orderId;
-    private Long menuId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false, foreignKey = @ForeignKey(name = "fk_order_line_item_orders"))
+    private Order order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "menu_id", nullable = false, foreignKey = @ForeignKey(name = "fk_order_line_item_menu"))
+    private Menu menu;
+
+    @Column(nullable = false)
     private long quantity;
 
     public OrderLineItem() {
     }
 
-    public OrderLineItem(Long menuId, long quantity) {
-        this.menuId = menuId;
+    private OrderLineItem(Long seq, Order order, Menu menu, long quantity) {
+        this.seq = seq;
+        this.order = order;
+        this.menu = menu;
         this.quantity = quantity;
     }
 
-    public OrderLineItem(Long seq, Long orderId, Long menuId, long quantity) {
-        this.seq = seq;
-        this.orderId = orderId;
-        this.menuId = menuId;
-        this.quantity = quantity;
+    public static OrderLineItem of(Menu menu, long quantity) {
+        return of(null, null, menu, quantity);
+    }
+
+    public static OrderLineItem of(Long seq, Order order, Menu menu, long quantity) {
+        return new OrderLineItem(seq, order, menu, quantity);
     }
 
     public Long getSeq() {
         return seq;
     }
 
-    public Long getOrderId() {
-        return orderId;
+    public Order getOrder() {
+        return order;
     }
 
-    public Long getMenuId() {
-        return menuId;
+    public Menu getMenu() {
+        return menu;
     }
 
     public long getQuantity() {
         return quantity;
+    }
+
+    public void initOrder(Order order) {
+        this.order = order;
     }
 
     @Override
@@ -48,13 +69,14 @@ public class OrderLineItem {
             return false;
         }
         OrderLineItem that = (OrderLineItem) o;
-        return getQuantity() == that.getQuantity() && Objects.equals(getSeq(),
-                                                                     that.getSeq()) && Objects.equals(
-                getOrderId(), that.getOrderId()) && Objects.equals(getMenuId(), that.getMenuId());
+        return getQuantity() == that.getQuantity()
+                && Objects.equals(getSeq(), that.getSeq())
+                && Objects.equals(getOrder(), that.getOrder())
+                && Objects.equals(getMenu().getId(), that.getMenu().getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getSeq(), getOrderId(), getMenuId(), getQuantity());
+        return Objects.hash(getSeq(), getOrder(), getMenu().getId(), getQuantity());
     }
 }

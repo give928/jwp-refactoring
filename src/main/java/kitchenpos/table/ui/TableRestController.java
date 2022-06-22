@@ -33,13 +33,13 @@ public class TableRestController {
 
     @PutMapping("/api/tables/{orderTableId}/empty")
     public ResponseEntity<OrderTableResponse> changeEmpty(@PathVariable final Long orderTableId,
-                                                  @RequestBody final OrderTableChangeEmptyRequest orderTableChangeEmptyRequest) {
+                                                          @RequestBody final OrderTableChangeEmptyRequest orderTableChangeEmptyRequest) {
         return ResponseEntity.ok().body(tableService.changeEmpty(orderTableId, orderTableChangeEmptyRequest));
     }
 
     @PutMapping("/api/tables/{orderTableId}/number-of-guests")
     public ResponseEntity<OrderTableResponse> changeNumberOfGuests(@PathVariable final Long orderTableId,
-                                                           @RequestBody final OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest) {
+                                                                   @RequestBody final OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest) {
         return ResponseEntity.ok().body(tableService.changeNumberOfGuests(orderTableId, orderTableChangeNumberOfGuestRequest));
     }
 }

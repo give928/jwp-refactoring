@@ -48,8 +48,8 @@ class TableRestControllerTest {
 
     @BeforeEach
     void setUp() {
-        orderTable1 = new OrderTable(1L, null, 0, true);
-        orderTable2 = new OrderTable(2L, null, 0, true);
+        orderTable1 = OrderTable.of(1L, null, 0, true);
+        orderTable2 = OrderTable.of(2L, null, 0, true);
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")
@@ -57,8 +57,9 @@ class TableRestControllerTest {
     void create() throws Exception {
         // given
         OrderTableRequest orderTableRequest = new OrderTableRequest(orderTable1.getNumberOfGuests(), orderTable1.isEmpty());
+        OrderTableResponse orderTableResponse = OrderTableResponse.from(orderTable1);
 
-        given(tableService.create(any())).willReturn(OrderTableResponse.from(orderTable1));
+        given(tableService.create(any())).willReturn(orderTableResponse);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -68,7 +69,7 @@ class TableRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(orderTable1)));
+                .andExpect(content().string(objectMapper.writeValueAsString(orderTableResponse)));
     }
 
     @DisplayName("주문 테이블 전체 목록을 조회한다.")
@@ -94,11 +95,12 @@ class TableRestControllerTest {
     void changeEmpty() throws Exception {
         // given
         OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(false);
-        OrderTable orderTable = new OrderTable(orderTable1.getId(), orderTable1.getTableGroupId(),
+        OrderTable orderTable = OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
                                                orderTable1.getNumberOfGuests(), orderTableChangeEmptyRequest.isEmpty());
+        OrderTableResponse orderTableResponse = OrderTableResponse.from(orderTable);
 
         given(tableService.changeEmpty(eq(orderTable1.getId()), any()))
-                .willReturn(OrderTableResponse.from(orderTable));
+                .willReturn(orderTableResponse);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.put(URL + String.format("/%d/empty", orderTable1.getId()))
@@ -108,7 +110,7 @@ class TableRestControllerTest {
 
         // then
         resultActions.andExpect(status().isOk())
-                .andExpect(content().string(objectMapper.writeValueAsString(orderTable)));
+                .andExpect(content().string(objectMapper.writeValueAsString(orderTableResponse)));
     }
 
     @DisplayName("주문 테이블에 방문한 손님 수를 등록하고 등록한 주문 테이블을 반환한다.")
@@ -116,7 +118,7 @@ class TableRestControllerTest {
     void changeNumberOfGuests() throws Exception {
         // given
         OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest = new OrderTableChangeNumberOfGuestRequest(1);
-        OrderTableResponse orderTableResponse = OrderTableResponse.from(new OrderTable(orderTable1.getId(), orderTable1.getTableGroupId(),
+        OrderTableResponse orderTableResponse = OrderTableResponse.from(OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
                                                                        orderTableChangeNumberOfGuestRequest.getNumberOfGuests(), orderTable1.isEmpty()));
 
         given(tableService.changeNumberOfGuests(eq(orderTable1.getId()), any()))

@@ -3,10 +3,13 @@ package kitchenpos.menu.dto;
 import kitchenpos.menu.domain.MenuProduct;
 
 public class MenuProductResponse {
-    private final Long seq;
-    private final Long menuId;
-    private final Long productId;
-    private final long quantity;
+    private Long seq;
+    private Long menuId;
+    private Long productId;
+    private long quantity;
+
+    protected MenuProductResponse() {
+    }
 
     private MenuProductResponse(Long seq, Long menuId, Long productId, long quantity) {
         this.seq = seq;
@@ -16,7 +19,7 @@ public class MenuProductResponse {
     }
 
     public static MenuProductResponse from(MenuProduct menuProduct) {
-        return new MenuProductResponse(menuProduct.getSeq(), menuProduct.getMenuId(), menuProduct.getProductId(), menuProduct.getQuantity());
+        return new MenuProductResponse(menuProduct.getSeq(), menuProduct.getMenu().getId(), menuProduct.getProduct().getId(), menuProduct.getQuantity());
     }
 
     public Long getSeq() {

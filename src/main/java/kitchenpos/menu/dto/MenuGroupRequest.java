@@ -17,6 +17,6 @@ public class MenuGroupRequest {
     }
 
     public MenuGroup toMenuGroup() {
-        return new MenuGroup(name);
+        return MenuGroup.of(name);
     }
 }

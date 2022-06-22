@@ -1,38 +1,36 @@
 package kitchenpos.order.application;
 
-import kitchenpos.menu.dao.MenuDao;
-import kitchenpos.order.dao.OrderDao;
-import kitchenpos.order.dao.OrderLineItemDao;
+import kitchenpos.menu.domain.Menu;
+import kitchenpos.menu.domain.MenuRepository;
 import kitchenpos.order.domain.Order;
+import kitchenpos.order.domain.OrderLineItem;
+import kitchenpos.order.domain.OrderRepository;
 import kitchenpos.order.domain.OrderStatus;
 import kitchenpos.order.dto.OrderLineItemRequest;
 import kitchenpos.order.dto.OrderRequest;
 import kitchenpos.order.dto.OrderResponse;
 import kitchenpos.order.dto.OrderStatusChangeRequest;
-import kitchenpos.table.dao.OrderTableDao;
 import kitchenpos.table.domain.OrderTable;
+import kitchenpos.table.domain.OrderTableRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
-    private final MenuDao menuDao;
-    private final OrderDao orderDao;
-    private final OrderLineItemDao orderLineItemDao;
-    private final OrderTableDao orderTableDao;
+    private final MenuRepository menuRepository;
+    private final OrderRepository orderRepository;
+    private final OrderTableRepository orderTableRepository;
 
-    public OrderService(final MenuDao menuDao, final OrderDao orderDao, final OrderLineItemDao orderLineItemDao,
-                        final OrderTableDao orderTableDao) {
-        this.menuDao = menuDao;
-        this.orderDao = orderDao;
-        this.orderLineItemDao = orderLineItemDao;
-        this.orderTableDao = orderTableDao;
+    public OrderService(final MenuRepository menuRepository, final OrderRepository orderRepository,
+                        final OrderTableRepository orderTableRepository) {
+        this.menuRepository = menuRepository;
+        this.orderRepository = orderRepository;
+        this.orderTableRepository = orderTableRepository;
     }
 
     @Transactional
@@ -47,56 +45,54 @@ public class OrderService {
                 .map(OrderLineItemRequest::getMenuId)
                 .collect(Collectors.toList());
 
-        if (orderLineItemRequests.size() != menuDao.countByIdIn(menuIds)) {
+        List<Menu> menus = menuRepository.findByIdIn(menuIds);
+        if (orderLineItemRequests.size() != menus.size()) {
             throw new IllegalArgumentException();
         }
 
-        final OrderTable orderTable = orderTableDao.findById(orderRequest.getOrderTableId())
+        final OrderTable orderTable = orderTableRepository.findById(orderRequest.getOrderTableId())
                 .orElseThrow(IllegalArgumentException::new);
 
         if (orderTable.isEmpty()) {
             throw new IllegalArgumentException();
         }
 
-        Order order = new Order(orderTable.getId(), OrderStatus.COOKING.name(), LocalDateTime.now(),
-                                orderRequest.getOrderLineItems().stream()
-                                        .map(OrderLineItemRequest::toOrderLineItem)
-                                        .collect(Collectors.toList()));
+        Order order = Order.of(orderTable);
 
-        final Order savedOrder = orderDao.save(order);
+        orderRequest.getOrderLineItems()
+                .forEach(orderLineItemRequest -> order.addOrderLineItem(OrderLineItem.of(menus.stream()
+                                                                                                 .filter(menu -> menu.getId().equals(
+                                                                                                         orderLineItemRequest.getMenuId()))
+                                                                                                 .findAny()
+                                                                                                 .orElseThrow(IllegalArgumentException::new),
+                                                                                         orderLineItemRequest.getQuantity())));
 
-        for (final OrderLineItemRequest orderLineItemRequest : orderRequest.getOrderLineItems()) {
-            savedOrder.addOrderLineItem(orderLineItemDao.save(orderLineItemRequest.toOrderLineItem(savedOrder.getId())));
-        }
+        final Order savedOrder = orderRepository.save(order);
 
         return OrderResponse.from(savedOrder);
     }
 
     public List<OrderResponse> list() {
-        final List<Order> orders = orderDao.findAll();
-
-        for (final Order order : orders) {
-            order.addOrderLineItems(orderLineItemDao.findAllByOrderId(order.getId()));
-        }
-
-        return orders.stream().map(OrderResponse::from).collect(Collectors.toList());
+        final List<Order> orders = orderRepository.findAll();
+        return orders.stream()
+                .map(OrderResponse::from)
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public OrderResponse changeOrderStatus(final Long orderId,
                                            final OrderStatusChangeRequest orderStatusChangeRequest) {
-        final Order savedOrder = orderDao.findById(orderId).orElseThrow(IllegalArgumentException::new);
+        final Order savedOrder = orderRepository.findById(orderId)
+                .orElseThrow(IllegalArgumentException::new);
 
-        if (Objects.equals(OrderStatus.COMPLETION.name(), savedOrder.getOrderStatus())) {
+        if (Objects.equals(OrderStatus.COMPLETION, savedOrder.getOrderStatus())) {
             throw new IllegalArgumentException();
         }
 
         final OrderStatus orderStatus = OrderStatus.valueOf(orderStatusChangeRequest.getOrderStatus());
-        savedOrder.changeOrderStatus(orderStatus.name());
+        savedOrder.changeOrderStatus(orderStatus);
 
-        orderDao.save(savedOrder);
-
-        savedOrder.addOrderLineItems(orderLineItemDao.findAllByOrderId(orderId));
+        orderRepository.save(savedOrder);
 
         return OrderResponse.from(savedOrder);
     }
