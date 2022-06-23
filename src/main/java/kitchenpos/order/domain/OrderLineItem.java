@@ -69,14 +69,11 @@ public class OrderLineItem {
             return false;
         }
         OrderLineItem that = (OrderLineItem) o;
-        return getQuantity() == that.getQuantity()
-                && Objects.equals(getSeq(), that.getSeq())
-                && Objects.equals(getOrder(), that.getOrder())
-                && Objects.equals(getMenu().getId(), that.getMenu().getId());
+        return Objects.equals(getSeq(), that.getSeq());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getSeq(), getOrder(), getMenu().getId(), getQuantity());
+        return Objects.hash(getSeq());
     }
 }

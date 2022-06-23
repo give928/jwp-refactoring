@@ -1,6 +1,10 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.order.domain.Order;
+
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -17,14 +21,18 @@ public class OrderTable {
 
     private boolean empty;
 
+    @OneToMany(mappedBy = "orderTable", orphanRemoval = true)
+    private List<Order> orders;
+
     protected OrderTable() {
     }
 
-    private OrderTable(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty) {
+    private OrderTable(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, List<Order> orders) {
         this.id = id;
         this.tableGroup = tableGroup;
         this.numberOfGuests = numberOfGuests;
         this.empty = empty;
+        this.orders = orders;
     }
 
     public static OrderTable of(int numberOfGuests, boolean empty) {
@@ -32,7 +40,11 @@ public class OrderTable {
     }
 
     public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty) {
-        return new OrderTable(id, tableGroup, numberOfGuests, empty);
+        return of(id, tableGroup, numberOfGuests, empty, new ArrayList<>());
+    }
+
+    public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, List<Order> orders) {
+        return new OrderTable(id, tableGroup, numberOfGuests, empty, orders);
     }
 
     public Long getId() {
@@ -52,19 +64,61 @@ public class OrderTable {
     }
 
     public void clearTableGroup() {
+        validateIfOrdersInCookingOrMeal();
         this.tableGroup = null;
     }
 
     public void changeTableGroup(TableGroup tableGroup) {
+        validateIfEmpty(Boolean.FALSE);
+        changeEmpty(Boolean.FALSE);
         this.tableGroup = tableGroup;
     }
 
-    public void changeNumberOfGuests(int numberOfGuests) {
+    public OrderTable changeNumberOfGuests(int numberOfGuests) {
+        validateNumberOfGuests(numberOfGuests);
         this.numberOfGuests = numberOfGuests;
+        return this;
     }
 
-    public void changeEmpty(boolean empty) {
+    public OrderTable changeEmpty(boolean empty) {
+        validateChangeEmpty();
         this.empty = empty;
+        return this;
+    }
+
+    public void addOrder(Order order) {
+        this.orders.add(order);
+        order.initOrderTable(this);
+    }
+
+    private void validateNumberOfGuests(int numberOfGuests) {
+        if (numberOfGuests < 0) {
+            throw new IllegalArgumentException();
+        }
+        validateIfEmpty(Boolean.TRUE);
+    }
+
+    private void validateIfEmpty(boolean empty) {
+        if (isEmpty() == empty) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    private void validateChangeEmpty() {
+        validateIfNotNullTableGroup();
+        validateIfOrdersInCookingOrMeal();
+    }
+
+    private void validateIfOrdersInCookingOrMeal() {
+        if (orders.stream().anyMatch(Order::isCookingOrMeal)) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    private void validateIfNotNullTableGroup() {
+        if (Objects.nonNull(getTableGroup())) {
+            throw new IllegalArgumentException();
+        }
     }
 
     @Override
@@ -76,14 +130,11 @@ public class OrderTable {
             return false;
         }
         OrderTable that = (OrderTable) o;
-        return getNumberOfGuests() == that.getNumberOfGuests()
-                && isEmpty() == that.isEmpty()
-                && Objects.equals(getId(), that.getId())
-                && Objects.equals(getTableGroup(), that.getTableGroup());
+        return Objects.equals(getId(), that.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getTableGroup(), getNumberOfGuests(), isEmpty());
+        return Objects.hash(getId());
     }
 }

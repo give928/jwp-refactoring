@@ -1,5 +1,7 @@
 package kitchenpos.menu.domain;
 
+import kitchenpos.common.domain.Price;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,8 +16,8 @@ public class Menu {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private BigDecimal price;
+    @Embedded
+    private Price price;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "menu_group_id", nullable = false, foreignKey = @ForeignKey(name = "fk_menu_menu_group"))
@@ -27,7 +29,8 @@ public class Menu {
     protected Menu() {
     }
 
-    private Menu(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
+    private Menu(Long id, String name, Price price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
+        validate(price, menuProducts);
         this.id = id;
         this.name = name;
         this.price = price;
@@ -41,7 +44,23 @@ public class Menu {
     }
 
     public static Menu of(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
-        return new Menu(id, name, price, menuGroup, menuProducts);
+        return new Menu(id, name, Price.from(price), menuGroup, menuProducts);
+    }
+
+    private static void validate(Price price, List<MenuProduct> menuProducts) {
+        if (price == null) {
+            throw new IllegalArgumentException();
+        }
+        if (price.get().compareTo(calculateMenuProductsPrice(menuProducts)) > 0) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    private static BigDecimal calculateMenuProductsPrice(List<MenuProduct> menuProducts) {
+        return menuProducts.stream()
+                .map(menuProduct -> menuProduct.getProduct().getPrice()
+                        .multiply(BigDecimal.valueOf(menuProduct.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public Long getId() {
@@ -53,7 +72,7 @@ public class Menu {
     }
 
     public BigDecimal getPrice() {
-        return price;
+        return price.get();
     }
 
     public MenuGroup getMenuGroup() {
@@ -62,11 +81,6 @@ public class Menu {
 
     public List<MenuProduct> getMenuProducts() {
         return menuProducts;
-    }
-
-    public void addMenuProduct(MenuProduct menuProduct) {
-        this.menuProducts.add(menuProduct);
-        menuProduct.initMenu(this);
     }
 
     @Override
@@ -78,15 +92,11 @@ public class Menu {
             return false;
         }
         Menu menu = (Menu) o;
-        return Objects.equals(getId(), menu.getId())
-                && Objects.equals(getName(), menu.getName())
-                && Objects.equals(getPrice(), menu.getPrice())
-                && Objects.equals(getMenuGroup(), menu.getMenuGroup())
-                && Objects.equals(getMenuProducts(), menu.getMenuProducts());
+        return Objects.equals(getId(), menu.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getPrice(), getMenuGroup(), getMenuProducts());
+        return Objects.hash(getId());
     }
 }

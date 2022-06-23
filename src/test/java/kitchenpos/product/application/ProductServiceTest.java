@@ -51,7 +51,7 @@ class ProductServiceTest {
         // given
         ProductRequest productRequest = new ProductRequest(product1.getName(), product1.getPrice());
 
-        given(productRepository.save(Product.of(productRequest.getName(), productRequest.getPrice()))).willReturn(product1);
+        given(productRepository.save(productRequest.toProduct())).willReturn(product1);
 
         // when
         ProductResponse productResponse = productService.create(productRequest);

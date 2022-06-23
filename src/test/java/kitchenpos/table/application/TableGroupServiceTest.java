@@ -1,5 +1,7 @@
 package kitchenpos.table.application;
 
+import kitchenpos.order.domain.Order;
+import kitchenpos.order.domain.OrderLineItem;
 import kitchenpos.order.domain.OrderRepository;
 import kitchenpos.order.domain.OrderStatus;
 import kitchenpos.table.domain.OrderTable;
@@ -23,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,8 +36,6 @@ import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class TableGroupServiceTest {
-    @Mock
-    private OrderRepository orderRepository;
     @Mock
     private OrderTableRepository orderTableRepository;
     @Mock
@@ -60,26 +61,24 @@ class TableGroupServiceTest {
 
     @BeforeEach
     void setUp() {
-        Long tableGroupId1 = 1L;
-        orderTable1 = OrderTable.of(1L, tableGroup1, 2, false);
-        orderTable2 = OrderTable.of(2L, tableGroup1, 4, false);
-        tableGroup1 = TableGroup.of(tableGroupId1, orderTable1, orderTable2);
+        orderTable1 = OrderTable.of(1L, tableGroup1, 0, true);
+        orderTable2 = OrderTable.of(2L, tableGroup1, 0, true);
+        tableGroup1 = TableGroup.of(1L, Arrays.asList(orderTable1, orderTable2));
     }
 
     @DisplayName("주문 테이블을 단체 지정을 등록하고 등록한 단체 지정을 반환한다.")
     @Test
     void create() {
         // given
-        OrderTable orderTable1 = OrderTable.of(1L, null, 0, true);
-        OrderTable orderTable2 = OrderTable.of(2L, null, 0, true);
-        TableGroup tableGroup = TableGroup.of(tableGroup1.getId());
         TableGroupRequest tableGroupRequest = new TableGroupRequest(Arrays.asList(new OrderTableGroupRequest(orderTable1.getId()),
                                                                                   new OrderTableGroupRequest(orderTable2.getId())));
 
         given(orderTableRepository.findAllByIdIn(tableGroupRequest.getOrderTables().stream()
                                                   .mapToLong(OrderTableGroupRequest::getId)
                                                   .boxed()
-                                                  .collect(Collectors.toList()))).willReturn(Arrays.asList(orderTable1, orderTable2));
+                                                  .collect(Collectors.toList())))
+                .willReturn(Arrays.asList(OrderTable.of(1L, null, 0, true),
+                                          OrderTable.of(2L, null, 0, true)));
         given(tableGroupRepository.save(any())).willReturn(tableGroup1);
 
         // when
@@ -87,7 +86,7 @@ class TableGroupServiceTest {
 
         // then
         assertThat(tableGroupResponse.getOrderTables()).extracting("tableGroupId")
-                .containsExactly(tableGroup.getId(), tableGroup.getId());
+                .containsExactly(tableGroup1.getId(), tableGroup1.getId());
         assertThat(tableGroupResponse.getOrderTables()).extracting("empty")
                 .containsExactly(false, false);
     }
@@ -143,13 +142,7 @@ class TableGroupServiceTest {
     @Test
     void ungroup() {
         // given
-        given(orderTableRepository.findAllByTableGroupId(tableGroup1.getId())).willReturn(tableGroup1.getOrderTables());
-        given(orderRepository.existsByOrderTableIdInAndOrderStatusIn(
-                tableGroup1.getOrderTables().stream()
-                        .mapToLong(OrderTable::getId)
-                        .boxed()
-                        .collect(Collectors.toList()),
-                Arrays.asList(OrderStatus.COOKING, OrderStatus.MEAL))).willReturn(false);
+        given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));
 
         // when
         tableGroupService.ungroup(tableGroup1.getId());
@@ -158,17 +151,13 @@ class TableGroupServiceTest {
         assertThat(tableGroup1.getOrderTables()).extracting("tableGroup").containsExactly(null, null);
     }
 
-    @DisplayName("주문 상태가 조리중이거나 식사인 경우에는 변경할 수 없다.")
+    @DisplayName("주문 상태가 조리중이거나 식사인 경우에는 단체 지정을 해제할 수 없다.")
     @Test
     void invalidOrderStatus() {
         // given
-        given(orderTableRepository.findAllByTableGroupId(tableGroup1.getId())).willReturn(tableGroup1.getOrderTables());
-        given(orderRepository.existsByOrderTableIdInAndOrderStatusIn(
-                tableGroup1.getOrderTables().stream()
-                        .mapToLong(OrderTable::getId)
-                        .boxed()
-                        .collect(Collectors.toList()),
-                Arrays.asList(OrderStatus.COOKING, OrderStatus.MEAL))).willReturn(true);
+        orderTable1.addOrder(Order.of(null, Collections.emptyList()));
+
+        given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.ungroup(tableGroup1.getId());

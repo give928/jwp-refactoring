@@ -45,11 +45,11 @@ public class MenuGroup {
             return false;
         }
         MenuGroup menuGroup = (MenuGroup) o;
-        return Objects.equals(getId(), menuGroup.getId()) && Objects.equals(getName(), menuGroup.getName());
+        return Objects.equals(getId(), menuGroup.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName());
+        return Objects.hash(getId());
     }
 }

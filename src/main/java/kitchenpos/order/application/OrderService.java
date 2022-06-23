@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,46 +34,45 @@ public class OrderService {
 
     @Transactional
     public OrderResponse create(final OrderRequest orderRequest) {
-        List<OrderLineItemRequest> orderLineItemRequests = orderRequest.getOrderLineItems();
+        final OrderTable orderTable = orderTableRepository.findById(orderRequest.getOrderTableId())
+                .orElseThrow(IllegalArgumentException::new);
+        List<OrderLineItem> orderLineItems = mapOrderLineItems(orderRequest);
 
+        return OrderResponse.from(orderRepository.save(Order.of(orderTable, orderLineItems)));
+    }
+
+    private List<OrderLineItem> mapOrderLineItems(OrderRequest orderRequest) {
+        List<Menu> menus = findMenus(orderRequest.getOrderLineItems());
+
+        return orderRequest.getOrderLineItems().stream()
+                .map(orderLineItemRequest ->
+                             OrderLineItem.of(findMenu(menus, orderLineItemRequest.getMenuId()),
+                                              orderLineItemRequest.getQuantity()))
+                .collect(Collectors.toList());
+    }
+
+    private List<Menu> findMenus(List<OrderLineItemRequest> orderLineItemRequests) {
+        validateOrderLineItemRequests(orderLineItemRequests);
+        return menuRepository.findByIdIn(orderLineItemRequests.stream()
+                                                 .map(OrderLineItemRequest::getMenuId)
+                                                 .collect(Collectors.toList()));
+    }
+
+    private Menu findMenu(List<Menu> menus, Long menuId) {
+        return menus.stream()
+                .filter(menu -> menu.getId().equals(menuId))
+                .findAny()
+                .orElseThrow(IllegalArgumentException::new);
+    }
+
+    private void validateOrderLineItemRequests(List<OrderLineItemRequest> orderLineItemRequests) {
         if (CollectionUtils.isEmpty(orderLineItemRequests)) {
             throw new IllegalArgumentException();
         }
-
-        final List<Long> menuIds = orderLineItemRequests.stream()
-                .map(OrderLineItemRequest::getMenuId)
-                .collect(Collectors.toList());
-
-        List<Menu> menus = menuRepository.findByIdIn(menuIds);
-        if (orderLineItemRequests.size() != menus.size()) {
-            throw new IllegalArgumentException();
-        }
-
-        final OrderTable orderTable = orderTableRepository.findById(orderRequest.getOrderTableId())
-                .orElseThrow(IllegalArgumentException::new);
-
-        if (orderTable.isEmpty()) {
-            throw new IllegalArgumentException();
-        }
-
-        Order order = Order.of(orderTable);
-
-        orderRequest.getOrderLineItems()
-                .forEach(orderLineItemRequest -> order.addOrderLineItem(OrderLineItem.of(menus.stream()
-                                                                                                 .filter(menu -> menu.getId().equals(
-                                                                                                         orderLineItemRequest.getMenuId()))
-                                                                                                 .findAny()
-                                                                                                 .orElseThrow(IllegalArgumentException::new),
-                                                                                         orderLineItemRequest.getQuantity())));
-
-        final Order savedOrder = orderRepository.save(order);
-
-        return OrderResponse.from(savedOrder);
     }
 
     public List<OrderResponse> list() {
-        final List<Order> orders = orderRepository.findAll();
-        return orders.stream()
+        return orderRepository.findAll().stream()
                 .map(OrderResponse::from)
                 .collect(Collectors.toList());
     }
@@ -84,16 +82,7 @@ public class OrderService {
                                            final OrderStatusChangeRequest orderStatusChangeRequest) {
         final Order savedOrder = orderRepository.findById(orderId)
                 .orElseThrow(IllegalArgumentException::new);
-
-        if (Objects.equals(OrderStatus.COMPLETION, savedOrder.getOrderStatus())) {
-            throw new IllegalArgumentException();
-        }
-
-        final OrderStatus orderStatus = OrderStatus.valueOf(orderStatusChangeRequest.getOrderStatus());
-        savedOrder.changeOrderStatus(orderStatus);
-
-        orderRepository.save(savedOrder);
-
-        return OrderResponse.from(savedOrder);
+        return OrderResponse.from(
+                savedOrder.changeOrderStatus(OrderStatus.valueOf(orderStatusChangeRequest.getOrderStatus())));
     }
 }

@@ -69,14 +69,11 @@ public class MenuProduct {
             return false;
         }
         MenuProduct that = (MenuProduct) o;
-        return getQuantity() == that.getQuantity()
-                && Objects.equals(getSeq(), that.getSeq())
-                && Objects.equals(getMenu().getId(), that.getMenu().getId())
-                && Objects.equals(getProduct().getId(), that.getProduct().getId());
+        return Objects.equals(getSeq(), that.getSeq());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getSeq(), getMenu().getId(), getProduct().getId(), getQuantity());
+        return Objects.hash(getSeq());
     }
 }

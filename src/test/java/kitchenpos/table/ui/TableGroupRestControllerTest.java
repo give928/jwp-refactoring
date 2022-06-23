@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -45,8 +46,8 @@ class TableGroupRestControllerTest {
     void create() throws Exception {
         // given
         Long tableGroupId1 = 1L;
-        TableGroup tableGroup = TableGroup.of(tableGroupId1, OrderTable.of(1L, null, 0, true),
-                                               OrderTable.of(2L, null, 0, true));
+        TableGroup tableGroup = TableGroup.of(tableGroupId1, Arrays.asList(OrderTable.of(1L, null, 0, true),
+                                                                           OrderTable.of(2L, null, 0, true)));
         TableGroupRequest tableGroupRequest = new TableGroupRequest(tableGroup.getOrderTables().stream()
                                                                             .map(orderTable -> new OrderTableGroupRequest(orderTable.getId()))
                                                                             .collect(Collectors.toList()));

@@ -1,6 +1,6 @@
 package kitchenpos.table.application;
 
-import kitchenpos.order.domain.OrderRepository;
+import kitchenpos.order.domain.Order;
 import kitchenpos.order.domain.OrderStatus;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.domain.OrderTableRepository;
@@ -18,7 +18,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,8 +30,6 @@ import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class TableServiceTest {
-    @Mock
-    private OrderRepository orderRepository;
     @Mock
     private OrderTableRepository orderTableRepository;
 
@@ -86,9 +86,6 @@ class TableServiceTest {
         OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(false);
 
         given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
-        given(orderRepository.existsByOrderTableIdAndOrderStatusIn(orderTable1.getId(),
-                                                                   Arrays.asList(OrderStatus.COOKING, OrderStatus.MEAL)))
-                .willReturn(false);
 
         // when
         OrderTableResponse orderTableResponse = tableService.changeEmpty(orderTable1.getId(), orderTableChangeEmptyRequest);
@@ -101,7 +98,7 @@ class TableServiceTest {
     @Test
     void cannotChangeEmptyTableGroup() {
         // given
-        OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(false);
+        OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(true);
         OrderTable orderTable = OrderTable.of(1L, new TableGroup(), 1, false);
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
@@ -118,12 +115,14 @@ class TableServiceTest {
     @Test
     void cannotChangeEmptyCookingOrMeal() {
         // given
-        OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(false);
+        OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(true);
+        OrderTable orderTable = OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
+                                              orderTable1.getNumberOfGuests(), false,
+                                              Collections.singletonList(
+                                                      Order.of(1L, null, OrderStatus.COOKING, LocalDateTime.now(),
+                                                               Collections.emptyList())));
 
-        given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
-        given(orderRepository.existsByOrderTableIdAndOrderStatusIn(orderTable1.getId(),
-                                                                   Arrays.asList(OrderStatus.COOKING, OrderStatus.MEAL)))
-                .willReturn(true);
+        given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeEmpty(orderTable1.getId(),

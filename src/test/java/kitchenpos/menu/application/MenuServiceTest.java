@@ -84,10 +84,10 @@ class MenuServiceTest {
                                                                   menuProduct.getProduct().getId(), menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
 
+        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
         given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
                                                    .map(MenuProductRequest::getProductId)
                                                    .collect(Collectors.toList()))).willReturn(Arrays.asList(product1, product2));
-        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
         given(menuRepository.save(any())).willReturn(menu1);
 
         // when
@@ -108,6 +108,11 @@ class MenuServiceTest {
         // given
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), price, menu1.getMenuGroup().getId(), Collections.emptyList());
 
+        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
+        given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
+                                                   .map(MenuProductRequest::getProductId)
+                                                   .collect(Collectors.toList()))).willReturn(Arrays.asList(product1, product2));
+
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
 
@@ -121,6 +126,8 @@ class MenuServiceTest {
     void invalidMenuGroup(Long menuGroupId) {
         // given
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menuGroupId, Collections.emptyList());
+
+        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.empty());
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
@@ -139,6 +146,7 @@ class MenuServiceTest {
                                                                   menuProduct.getProduct().getId(), menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
 
+        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
         given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
                                                    .map(MenuProductRequest::getProductId)
                                                    .collect(Collectors.toList()))).willReturn(Arrays.asList(product1, product2));

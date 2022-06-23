@@ -62,8 +62,8 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        menu1 = Menu.of(1L, "메뉴1", BigDecimal.ONE, null, Collections.emptyList());
-        menu2 = Menu.of(2L, "메뉴2", BigDecimal.ONE, null, Collections.emptyList());
+        menu1 = Menu.of(1L, "메뉴1", BigDecimal.ZERO, null, Collections.emptyList());
+        menu2 = Menu.of(2L, "메뉴2", BigDecimal.ZERO, null, Collections.emptyList());
 
         orderTable1 = OrderTable.of(1L, null, 1, false);
         OrderTable orderTable2 = OrderTable.of(2L, null, 1, false);
@@ -71,12 +71,12 @@ class OrderServiceTest {
         Long orderId1 = 1L;
         orderLineItem1 = OrderLineItem.of(1L, order1, menu1, 1);
         orderLineItem2 = OrderLineItem.of(2L, order1, menu2, 2);
-        order1 = Order.of(orderId1, orderTable1, orderLineItem1, orderLineItem2);
+        order1 = Order.of(orderId1, orderTable1, Arrays.asList(orderLineItem1, orderLineItem2));
 
         Long orderId2 = 2L;
         OrderLineItem orderLineItem3 = OrderLineItem.of(3L, order2, menu1, 3);
         OrderLineItem orderLineItem4 = OrderLineItem.of(4L, order2, menu2, 4);
-        order2 = Order.of(orderId2, orderTable2, orderLineItem3, orderLineItem4);
+        order2 = Order.of(orderId2, orderTable2, Arrays.asList(orderLineItem3, orderLineItem4));
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")
@@ -126,8 +126,6 @@ class OrderServiceTest {
         Long menuId = 0L;
         OrderRequest orderRequest = new OrderRequest(order1.getOrderTable().getId(), Collections.singletonList(new OrderLineItemRequest(menuId, 1)));
 
-        given(menuRepository.findByIdIn(Collections.singletonList(menuId))).willReturn(Collections.emptyList());
-
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
 
@@ -143,11 +141,6 @@ class OrderServiceTest {
                 new OrderLineItemRequest(orderLineItem1.getMenu().getId(), orderLineItem1.getQuantity()),
                 new OrderLineItemRequest(orderLineItem2.getMenu().getId(), orderLineItem2.getQuantity())));
 
-        given(menuRepository.findByIdIn(orderRequest.getOrderLineItems().stream()
-                                                .mapToLong(OrderLineItemRequest::getMenuId)
-                                                .boxed()
-                                                .collect(Collectors.toList())))
-                .willReturn(Arrays.asList(menu1, menu2));
         given(orderTableRepository.findById(orderRequest.getOrderTableId())).willReturn(Optional.empty());
 
         // when
@@ -184,8 +177,8 @@ class OrderServiceTest {
     @Test
     void list() {
         // given
-        Order order1 = Order.of(this.order1.getId(), this.order1.getOrderTable());
-        Order order2 = Order.of(this.order2.getId(), this.order2.getOrderTable());
+        Order order1 = Order.of(this.order1.getId(), this.order1.getOrderTable(), Collections.emptyList());
+        Order order2 = Order.of(this.order2.getId(), this.order2.getOrderTable(), Collections.emptyList());
 
         given(orderRepository.findAll()).willReturn(Arrays.asList(order1, order2));
 

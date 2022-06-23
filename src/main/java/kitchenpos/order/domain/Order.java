@@ -5,8 +5,6 @@ import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,31 +30,37 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     private List<OrderLineItem> orderLineItems;
 
-    public Order() {
+    protected Order() {
     }
 
     private Order(Long id, OrderTable orderTable, OrderStatus orderStatus, LocalDateTime orderedTime,
                   List<OrderLineItem> orderLineItems) {
+        validateOrderTable(orderTable);
         this.id = id;
         this.orderTable = orderTable;
         this.orderStatus = orderStatus;
         this.orderedTime = orderedTime;
         this.orderLineItems = orderLineItems;
+        this.orderLineItems.forEach(orderLineItem -> orderLineItem.initOrder(this));
     }
 
-    public static Order of(OrderTable orderTable, OrderLineItem... orderLineItems) {
-        return of(null, orderTable, orderLineItems);
+    private void validateOrderTable(OrderTable orderTable) {
+        if (orderTable != null && orderTable.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
     }
 
-    public static Order of(Long id, OrderTable orderTable, OrderLineItem... orderLineItems) {
+    public static Order of(OrderTable orderTable, List<OrderLineItem> orderLineItems) {
+        return of(null, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
+    }
+
+    public static Order of(Long id, OrderTable orderTable, List<OrderLineItem> orderLineItems) {
         return of(id, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
     }
 
     public static Order of(Long id, OrderTable orderTable, OrderStatus orderStatus, LocalDateTime orderedTime,
-                           OrderLineItem... orderLineItems) {
-        Order order = new Order(id, orderTable, orderStatus, orderedTime, new ArrayList<>());
-        Arrays.asList(orderLineItems).forEach(order::addOrderLineItem);
-        return order;
+                           List<OrderLineItem> orderLineItems) {
+        return new Order(id, orderTable, orderStatus, orderedTime, orderLineItems);
     }
 
     public Long getId() {
@@ -79,13 +83,24 @@ public class Order {
         return orderLineItems;
     }
 
-    public void changeOrderStatus(OrderStatus orderStatus) {
-        this.orderStatus = orderStatus;
+    public void initOrderTable(OrderTable orderTable) {
+        this.orderTable = orderTable;
     }
 
-    public void addOrderLineItem(OrderLineItem orderLineItem) {
-        this.orderLineItems.add(orderLineItem);
-        orderLineItem.initOrder(this);
+    public Order changeOrderStatus(OrderStatus orderStatus) {
+        validateIfOrderStatusCompletion();
+        this.orderStatus = orderStatus;
+        return this;
+    }
+
+    private void validateIfOrderStatusCompletion() {
+        if (Objects.equals(OrderStatus.COMPLETION, getOrderStatus())) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public boolean isCookingOrMeal() {
+        return getOrderStatus().isCookingOrMeal();
     }
 
     @Override
@@ -97,15 +112,11 @@ public class Order {
             return false;
         }
         Order order = (Order) o;
-        return Objects.equals(getId(), order.getId())
-                && Objects.equals(getOrderTable(), order.getOrderTable())
-                && getOrderStatus() == order.getOrderStatus()
-                && Objects.equals(getOrderedTime(), order.getOrderedTime())
-                && Objects.equals(getOrderLineItems(), order.getOrderLineItems());
+        return Objects.equals(getId(), order.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getOrderTable(), getOrderStatus(), getOrderedTime(), getOrderLineItems());
+        return Objects.hash(getId());
     }
 }

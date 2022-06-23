@@ -1,6 +1,5 @@
 package kitchenpos.menu.application;
 
-import kitchenpos.menu.domain.MenuGroup;
 import kitchenpos.menu.domain.MenuGroupRepository;
 import kitchenpos.menu.dto.MenuGroupRequest;
 import kitchenpos.menu.dto.MenuGroupResponse;
@@ -20,7 +19,7 @@ public class MenuGroupService {
 
     @Transactional
     public MenuGroupResponse create(final MenuGroupRequest menuGroupRequest) {
-        return MenuGroupResponse.from(menuGroupRepository.save(MenuGroup.of(menuGroupRequest.getName())));
+        return MenuGroupResponse.from(menuGroupRepository.save(menuGroupRequest.toMenuGroup()));
     }
 
     public List<MenuGroupResponse> list() {

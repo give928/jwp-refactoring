@@ -2,17 +2,19 @@ package kitchenpos.table.domain;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.util.CollectionUtils;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 public class TableGroup {
+    public static final int MIN_ORDER_TABLES = 2;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,14 +30,18 @@ public class TableGroup {
     }
 
     private TableGroup(Long id, List<OrderTable> orderTables) {
+        validateOrderTables(orderTables);
         this.id = id;
         this.orderTables = orderTables;
+        this.orderTables.forEach(orderTable -> orderTable.changeTableGroup(this));
     }
 
-    public static TableGroup of(Long id, OrderTable... orderTables) {
-        TableGroup tableGroup = new TableGroup(id, new ArrayList<>());
-        Arrays.asList(orderTables).forEach(tableGroup::addOrderTable);
-        return tableGroup;
+    public static TableGroup of(List<OrderTable> orderTables) {
+        return of(null, orderTables);
+    }
+
+    public static TableGroup of(Long id, List<OrderTable> orderTables) {
+        return new TableGroup(id, orderTables);
     }
 
     public Long getId() {
@@ -50,9 +56,18 @@ public class TableGroup {
         return orderTables;
     }
 
-    public void addOrderTable(OrderTable orderTable) {
-        orderTables.add(orderTable);
-        orderTable.changeTableGroup(this);
+    public void ungroup() {
+        orderTables.forEach(OrderTable::clearTableGroup);
+    }
+
+    private void validateOrderTables(List<OrderTable> orderTables) {
+        if (isLessOrderTables(orderTables)) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    private boolean isLessOrderTables(List<OrderTable> orderTables) {
+        return CollectionUtils.isEmpty(orderTables) || orderTables.size() < MIN_ORDER_TABLES;
     }
 
     @Override
@@ -64,13 +79,11 @@ public class TableGroup {
             return false;
         }
         TableGroup that = (TableGroup) o;
-        return Objects.equals(getId(), that.getId())
-                && Objects.equals(getCreatedDate(), that.getCreatedDate())
-                && Objects.equals(getOrderTables(), that.getOrderTables());
+        return Objects.equals(getId(), that.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getCreatedDate(), getOrderTables());
+        return Objects.hash(getId());
     }
 }
