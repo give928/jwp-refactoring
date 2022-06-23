@@ -19,7 +19,6 @@ public class MenuProduct {
     @JoinColumn(name = "product_id", nullable = false, foreignKey = @ForeignKey(name = "fk_menu_product_product"))
     private Product product;
 
-    @Column(nullable = false)
     private long quantity;
 
     protected MenuProduct() {

@@ -19,7 +19,6 @@ public class OrderLineItem {
     @JoinColumn(name = "menu_id", nullable = false, foreignKey = @ForeignKey(name = "fk_order_line_item_menu"))
     private Menu menu;
 
-    @Column(nullable = false)
     private long quantity;
 
     public OrderLineItem() {
