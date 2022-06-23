@@ -1,7 +1,8 @@
 package kitchenpos.table.application;
 
-import kitchenpos.order.domain.Order;
-import kitchenpos.order.domain.OrderStatus;
+import kitchenpos.menu.domain.Menu;
+import kitchenpos.menu.domain.MenuProducts;
+import kitchenpos.order.domain.*;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.domain.OrderTableRepository;
 import kitchenpos.table.domain.TableGroup;
@@ -18,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,9 +51,12 @@ class TableServiceTest {
     @Test
     void create() {
         // given
-        OrderTableRequest orderTableRequest = new OrderTableRequest(orderTable1.getNumberOfGuests(), orderTable1.isEmpty());
+        OrderTableRequest orderTableRequest = new OrderTableRequest(orderTable1.getNumberOfGuests(),
+                                                                    orderTable1.isEmpty());
 
-        given(orderTableRepository.save(OrderTable.of(orderTableRequest.getNumberOfGuests(), orderTableRequest.isEmpty()))).willReturn(orderTable1);
+        given(orderTableRepository.save(
+                OrderTable.of(orderTableRequest.getNumberOfGuests(), orderTableRequest.isEmpty()))).willReturn(
+                orderTable1);
 
         // when
         OrderTableResponse orderTableResponse = tableService.create(orderTableRequest);
@@ -73,10 +78,14 @@ class TableServiceTest {
         List<OrderTableResponse> orderTableResponses = tableService.list();
 
         // then
-        assertThat(orderTableResponses).extracting("id").containsExactly(orderTable1.getId(), orderTable2.getId());
-        assertThat(orderTableResponses).extracting("tableGroupId").containsExactly(null, null);
-        assertThat(orderTableResponses).extracting("numberOfGuests").containsExactly(orderTable1.getNumberOfGuests(), orderTable2.getNumberOfGuests());
-        assertThat(orderTableResponses).extracting("empty").containsExactly(orderTable1.isEmpty(), orderTable2.isEmpty());
+        assertThat(orderTableResponses).extracting("id")
+                .containsExactly(orderTable1.getId(), orderTable2.getId());
+        assertThat(orderTableResponses).extracting("tableGroupId")
+                .containsExactly(null, null);
+        assertThat(orderTableResponses).extracting("numberOfGuests")
+                .containsExactly(orderTable1.getNumberOfGuests(), orderTable2.getNumberOfGuests());
+        assertThat(orderTableResponses).extracting("empty")
+                .containsExactly(orderTable1.isEmpty(), orderTable2.isEmpty());
     }
 
     @DisplayName("주문 테이블의 빈 테이블 여부를 변경하고 변경한 주문 테이블을 반환한다.")
@@ -88,7 +97,8 @@ class TableServiceTest {
         given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
 
         // when
-        OrderTableResponse orderTableResponse = tableService.changeEmpty(orderTable1.getId(), orderTableChangeEmptyRequest);
+        OrderTableResponse orderTableResponse =
+                tableService.changeEmpty(orderTable1.getId(), orderTableChangeEmptyRequest);
 
         // then
         assertThat(orderTableResponse.isEmpty()).isFalse();
@@ -104,8 +114,8 @@ class TableServiceTest {
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeEmpty(orderTable.getId(),
-                                                                                           orderTableChangeEmptyRequest);
+        ThrowableAssert.ThrowingCallable throwingCallable = () ->
+                tableService.changeEmpty(orderTable.getId(), orderTableChangeEmptyRequest);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
@@ -116,11 +126,16 @@ class TableServiceTest {
     void cannotChangeEmptyCookingOrMeal() {
         // given
         OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(true);
-        OrderTable orderTable = OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
-                                              orderTable1.getNumberOfGuests(), false,
-                                              Collections.singletonList(
-                                                      Order.of(1L, null, OrderStatus.COOKING, LocalDateTime.now(),
-                                                               Collections.emptyList())));
+        OrderLineItem orderLineItem =
+                OrderLineItem.of(1L, null,
+                                 Menu.of(1L, "음식1", BigDecimal.ZERO, null,
+                                         MenuProducts.from(Collections.emptyList())), 1);
+        OrderTable orderTable =
+                OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
+                              orderTable1.getNumberOfGuests(), false,
+                              Orders.from(Collections.singletonList(
+                                      Order.of(1L, null, OrderStatus.COOKING, LocalDateTime.now(),
+                                               OrderLineItems.from(Collections.singletonList(orderLineItem))))));
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
 
@@ -136,27 +151,32 @@ class TableServiceTest {
     @Test
     void changeNumberOfGuests() {
         // given
-        OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest = new OrderTableChangeNumberOfGuestRequest(1);
-        OrderTable orderTable = OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(), orderTable1.getNumberOfGuests(), false);
+        OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest =
+                new OrderTableChangeNumberOfGuestRequest(1);
+        OrderTable orderTable = OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
+                                              orderTable1.getNumberOfGuests(), false);
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
 
         // when
-        OrderTableResponse orderTableResponse = tableService.changeNumberOfGuests(orderTable1.getId(), orderTableChangeNumberOfGuestRequest);
+        OrderTableResponse orderTableResponse = tableService.changeNumberOfGuests(orderTable1.getId(),
+                                                                                  orderTableChangeNumberOfGuestRequest);
 
         // then
-        assertThat(orderTableResponse.getNumberOfGuests()).isEqualTo(orderTableChangeNumberOfGuestRequest.getNumberOfGuests());
+        assertThat(orderTableResponse.getNumberOfGuests()).isEqualTo(
+                orderTableChangeNumberOfGuestRequest.getNumberOfGuests());
     }
 
     @DisplayName("방문한 손님 수는 0명 이상만 가능하다.")
     @Test
     void invalidNumberOfGuests() {
         // given
-        OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest = new OrderTableChangeNumberOfGuestRequest(0);
+        OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest =
+                new OrderTableChangeNumberOfGuestRequest(0);
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeNumberOfGuests(orderTable1.getId(),
-                                                                                                    orderTableChangeNumberOfGuestRequest);
+        ThrowableAssert.ThrowingCallable throwingCallable = () ->
+                tableService.changeNumberOfGuests(orderTable1.getId(), orderTableChangeNumberOfGuestRequest);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
@@ -166,13 +186,14 @@ class TableServiceTest {
     @Test
     void cannotChangeNumberOfGuestsEmptyTable() {
         // given
-        OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest = new OrderTableChangeNumberOfGuestRequest(1);
+        OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest = new OrderTableChangeNumberOfGuestRequest(
+                1);
 
         given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeNumberOfGuests(orderTable1.getId(),
-                                                                                                    orderTableChangeNumberOfGuestRequest);
+        ThrowableAssert.ThrowingCallable throwingCallable = () ->
+                tableService.changeNumberOfGuests(orderTable1.getId(), orderTableChangeNumberOfGuestRequest);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);

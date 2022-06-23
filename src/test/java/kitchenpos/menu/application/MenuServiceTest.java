@@ -63,15 +63,15 @@ class MenuServiceTest {
         product2 = Product.of(2L, "음식2", BigDecimal.ONE);
         menuGroup = MenuGroup.of(1L, "메뉴그룹1");
         menu1 = Menu.of(menuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup,
-                        Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
-                                      MenuProduct.of(2L, menu1, product2, 1)));
+                        MenuProducts.from(Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
+                                                        MenuProduct.of(2L, menu1, product2, 1))));
 
         Long menuId2 = 2L;
         Product product3 = Product.of(3L, "음식1", BigDecimal.ONE);
         Product product4 = Product.of(4L, "음식2", BigDecimal.ONE);
         menu2 = Menu.of(menuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup,
-                        Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
-                                      MenuProduct.of(4L, menu2, product4, 1)));
+                        MenuProducts.from(Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
+                                                        MenuProduct.of(4L, menu2, product4, 1))));
     }
 
     @DisplayName("메뉴를 등록하고 등록한 메뉴와 메뉴 상품을 반환한다.")
@@ -81,13 +81,15 @@ class MenuServiceTest {
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menu1.getMenuGroup().getId(),
                                                   menu1.getMenuProducts().stream()
                                                           .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProduct().getId(), menuProduct.getQuantity()))
+                                                                  menuProduct.getProduct().getId(),
+                                                                  menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
 
         given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
         given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
                                                    .map(MenuProductRequest::getProductId)
-                                                   .collect(Collectors.toList()))).willReturn(Arrays.asList(product1, product2));
+                                                   .collect(Collectors.toList()))).willReturn(
+                Arrays.asList(product1, product2));
         given(menuRepository.save(any())).willReturn(menu1);
 
         // when
@@ -106,12 +108,14 @@ class MenuServiceTest {
     @MethodSource("invalidPriceParameter")
     void invalidPrice(BigDecimal price) {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), price, menu1.getMenuGroup().getId(), Collections.emptyList());
+        MenuRequest menuRequest = new MenuRequest(menu1.getName(), price, menu1.getMenuGroup().getId(),
+                                                  Collections.emptyList());
 
         given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
         given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
                                                    .map(MenuProductRequest::getProductId)
-                                                   .collect(Collectors.toList()))).willReturn(Arrays.asList(product1, product2));
+                                                   .collect(Collectors.toList()))).willReturn(
+                Arrays.asList(product1, product2));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
@@ -125,7 +129,8 @@ class MenuServiceTest {
     @MethodSource("invalidMenuGroupParameter")
     void invalidMenuGroup(Long menuGroupId) {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menuGroupId, Collections.emptyList());
+        MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menuGroupId,
+                                                  Collections.emptyList());
 
         given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.empty());
 
@@ -143,13 +148,15 @@ class MenuServiceTest {
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), BigDecimal.valueOf(3L), menu1.getMenuGroup().getId(),
                                                   menu1.getMenuProducts().stream()
                                                           .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProduct().getId(), menuProduct.getQuantity()))
+                                                                  menuProduct.getProduct().getId(),
+                                                                  menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
 
         given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
         given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
                                                    .map(MenuProductRequest::getProductId)
-                                                   .collect(Collectors.toList()))).willReturn(Arrays.asList(product1, product2));
+                                                   .collect(Collectors.toList()))).willReturn(
+                Arrays.asList(product1, product2));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);

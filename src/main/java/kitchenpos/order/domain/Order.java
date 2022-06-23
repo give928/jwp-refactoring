@@ -27,60 +27,39 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime orderedTime;
 
-    @OneToMany(mappedBy = "order", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    private List<OrderLineItem> orderLineItems;
+    @Embedded
+    private OrderLineItems orderLineItems;
 
     protected Order() {
     }
 
     private Order(Long id, OrderTable orderTable, OrderStatus orderStatus, LocalDateTime orderedTime,
-                  List<OrderLineItem> orderLineItems) {
+                  OrderLineItems orderLineItems) {
         validateOrderTable(orderTable);
         this.id = id;
         this.orderTable = orderTable;
         this.orderStatus = orderStatus;
         this.orderedTime = orderedTime;
-        this.orderLineItems = orderLineItems;
-        this.orderLineItems.forEach(orderLineItem -> orderLineItem.initOrder(this));
+        this.orderLineItems = orderLineItems.initOrder(this);
+    }
+
+    public static Order of(OrderTable orderTable, OrderLineItems orderLineItems) {
+        return of(null, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
+    }
+
+    public static Order of(Long id, OrderTable orderTable, OrderLineItems orderLineItems) {
+        return of(id, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
+    }
+
+    public static Order of(Long id, OrderTable orderTable, OrderStatus orderStatus, LocalDateTime orderedTime,
+                           OrderLineItems orderLineItems) {
+        return new Order(id, orderTable, orderStatus, orderedTime, orderLineItems);
     }
 
     private void validateOrderTable(OrderTable orderTable) {
         if (orderTable != null && orderTable.isEmpty()) {
             throw new IllegalArgumentException();
         }
-    }
-
-    public static Order of(OrderTable orderTable, List<OrderLineItem> orderLineItems) {
-        return of(null, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
-    }
-
-    public static Order of(Long id, OrderTable orderTable, List<OrderLineItem> orderLineItems) {
-        return of(id, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
-    }
-
-    public static Order of(Long id, OrderTable orderTable, OrderStatus orderStatus, LocalDateTime orderedTime,
-                           List<OrderLineItem> orderLineItems) {
-        return new Order(id, orderTable, orderStatus, orderedTime, orderLineItems);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public OrderTable getOrderTable() {
-        return orderTable;
-    }
-
-    public OrderStatus getOrderStatus() {
-        return orderStatus;
-    }
-
-    public LocalDateTime getOrderedTime() {
-        return orderedTime;
-    }
-
-    public List<OrderLineItem> getOrderLineItems() {
-        return orderLineItems;
     }
 
     public void initOrderTable(OrderTable orderTable) {
@@ -99,8 +78,28 @@ public class Order {
         }
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public OrderTable getOrderTable() {
+        return orderTable;
+    }
+
+    public OrderStatus getOrderStatus() {
+        return orderStatus;
+    }
+
     public boolean isCookingOrMeal() {
         return getOrderStatus().isCookingOrMeal();
+    }
+
+    public LocalDateTime getOrderedTime() {
+        return orderedTime;
+    }
+
+    public List<OrderLineItem> getOrderLineItems() {
+        return orderLineItems.get();
     }
 
     @Override

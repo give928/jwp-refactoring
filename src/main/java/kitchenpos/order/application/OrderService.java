@@ -2,10 +2,7 @@ package kitchenpos.order.application;
 
 import kitchenpos.menu.domain.Menu;
 import kitchenpos.menu.domain.MenuRepository;
-import kitchenpos.order.domain.Order;
-import kitchenpos.order.domain.OrderLineItem;
-import kitchenpos.order.domain.OrderRepository;
-import kitchenpos.order.domain.OrderStatus;
+import kitchenpos.order.domain.*;
 import kitchenpos.order.dto.OrderLineItemRequest;
 import kitchenpos.order.dto.OrderRequest;
 import kitchenpos.order.dto.OrderResponse;
@@ -38,7 +35,7 @@ public class OrderService {
                 .orElseThrow(IllegalArgumentException::new);
         List<OrderLineItem> orderLineItems = mapOrderLineItems(orderRequest);
 
-        return OrderResponse.from(orderRepository.save(Order.of(orderTable, orderLineItems)));
+        return OrderResponse.from(orderRepository.save(Order.of(orderTable, OrderLineItems.from(orderLineItems))));
     }
 
     private List<OrderLineItem> mapOrderLineItems(OrderRequest orderRequest) {

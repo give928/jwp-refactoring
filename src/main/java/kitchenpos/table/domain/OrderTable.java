@@ -1,10 +1,10 @@
 package kitchenpos.table.domain;
 
 import kitchenpos.order.domain.Order;
+import kitchenpos.order.domain.Orders;
 
 import javax.persistence.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -22,13 +22,13 @@ public class OrderTable {
 
     private boolean empty;
 
-    @OneToMany(mappedBy = "orderTable", orphanRemoval = true)
-    private List<Order> orders;
+    @Embedded
+    private Orders orders;
 
     protected OrderTable() {
     }
 
-    private OrderTable(Long id, TableGroup tableGroup, NumberOfGuests numberOfGuests, boolean empty, List<Order> orders) {
+    private OrderTable(Long id, TableGroup tableGroup, NumberOfGuests numberOfGuests, boolean empty, Orders orders) {
         this.id = id;
         this.tableGroup = tableGroup;
         this.numberOfGuests = numberOfGuests;
@@ -41,10 +41,10 @@ public class OrderTable {
     }
 
     public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty) {
-        return of(id, tableGroup, numberOfGuests, empty, new ArrayList<>());
+        return of(id, tableGroup, numberOfGuests, empty, Orders.from(new ArrayList<>()));
     }
 
-    public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, List<Order> orders) {
+    public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, Orders orders) {
         return new OrderTable(id, tableGroup, NumberOfGuests.from(numberOfGuests), empty, orders);
     }
 
@@ -104,7 +104,7 @@ public class OrderTable {
     }
 
     private void validateIfOrdersInCookingOrMeal() {
-        if (orders.stream().anyMatch(Order::isCookingOrMeal)) {
+        if (orders.hasCookingOrMeal()) {
             throw new IllegalArgumentException();
         }
     }

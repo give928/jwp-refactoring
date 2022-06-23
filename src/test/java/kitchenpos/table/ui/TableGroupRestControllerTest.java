@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
 import kitchenpos.table.application.TableGroupService;
 import kitchenpos.table.domain.OrderTable;
+import kitchenpos.table.domain.OrderTables;
 import kitchenpos.table.domain.TableGroup;
 import kitchenpos.table.dto.OrderTableGroupRequest;
 import kitchenpos.table.dto.TableGroupRequest;
@@ -46,10 +47,12 @@ class TableGroupRestControllerTest {
     void create() throws Exception {
         // given
         Long tableGroupId1 = 1L;
-        TableGroup tableGroup = TableGroup.of(tableGroupId1, Arrays.asList(OrderTable.of(1L, null, 0, true),
-                                                                           OrderTable.of(2L, null, 0, true)));
+        OrderTables orderTables = OrderTables.from(Arrays.asList(OrderTable.of(1L, null, 0, true),
+                                                                 OrderTable.of(2L, null, 0, true)));
+        TableGroup tableGroup = TableGroup.of(tableGroupId1, orderTables);
         TableGroupRequest tableGroupRequest = new TableGroupRequest(tableGroup.getOrderTables().stream()
-                                                                            .map(orderTable -> new OrderTableGroupRequest(orderTable.getId()))
+                                                                            .map(orderTable -> new OrderTableGroupRequest(
+                                                                                    orderTable.getId()))
                                                                             .collect(Collectors.toList()));
         TableGroupResponse tableGroupResponse = TableGroupResponse.from(tableGroup);
 
@@ -58,7 +61,8 @@ class TableGroupRestControllerTest {
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
                                                               .contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsBytes(tableGroupRequest)))
+                                                              .content(objectMapper.writeValueAsBytes(
+                                                                      tableGroupRequest)))
                 .andDo(print());
 
         // then

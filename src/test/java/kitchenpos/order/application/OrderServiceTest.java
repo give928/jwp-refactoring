@@ -1,11 +1,9 @@
 package kitchenpos.order.application;
 
 import kitchenpos.menu.domain.Menu;
+import kitchenpos.menu.domain.MenuProducts;
 import kitchenpos.menu.domain.MenuRepository;
-import kitchenpos.order.domain.Order;
-import kitchenpos.order.domain.OrderLineItem;
-import kitchenpos.order.domain.OrderRepository;
-import kitchenpos.order.domain.OrderStatus;
+import kitchenpos.order.domain.*;
 import kitchenpos.order.dto.OrderLineItemRequest;
 import kitchenpos.order.dto.OrderRequest;
 import kitchenpos.order.dto.OrderResponse;
@@ -62,8 +60,8 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        menu1 = Menu.of(1L, "메뉴1", BigDecimal.ZERO, null, Collections.emptyList());
-        menu2 = Menu.of(2L, "메뉴2", BigDecimal.ZERO, null, Collections.emptyList());
+        menu1 = Menu.of(1L, "메뉴1", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
+        menu2 = Menu.of(2L, "메뉴2", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
 
         orderTable1 = OrderTable.of(1L, null, 1, false);
         OrderTable orderTable2 = OrderTable.of(2L, null, 1, false);
@@ -71,12 +69,12 @@ class OrderServiceTest {
         Long orderId1 = 1L;
         orderLineItem1 = OrderLineItem.of(1L, order1, menu1, 1);
         orderLineItem2 = OrderLineItem.of(2L, order1, menu2, 2);
-        order1 = Order.of(orderId1, orderTable1, Arrays.asList(orderLineItem1, orderLineItem2));
+        order1 = Order.of(orderId1, orderTable1, OrderLineItems.from(Arrays.asList(orderLineItem1, orderLineItem2)));
 
         Long orderId2 = 2L;
         OrderLineItem orderLineItem3 = OrderLineItem.of(3L, order2, menu1, 3);
         OrderLineItem orderLineItem4 = OrderLineItem.of(4L, order2, menu2, 4);
-        order2 = Order.of(orderId2, orderTable2, Arrays.asList(orderLineItem3, orderLineItem4));
+        order2 = Order.of(orderId2, orderTable2, OrderLineItems.from(Arrays.asList(orderLineItem3, orderLineItem4)));
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")
@@ -177,9 +175,6 @@ class OrderServiceTest {
     @Test
     void list() {
         // given
-        Order order1 = Order.of(this.order1.getId(), this.order1.getOrderTable(), Collections.emptyList());
-        Order order2 = Order.of(this.order2.getId(), this.order2.getOrderTable(), Collections.emptyList());
-
         given(orderRepository.findAll()).willReturn(Arrays.asList(order1, order2));
 
         // when

@@ -1,13 +1,11 @@
 package kitchenpos.table.application;
 
+import kitchenpos.menu.domain.Menu;
+import kitchenpos.menu.domain.MenuProducts;
 import kitchenpos.order.domain.Order;
 import kitchenpos.order.domain.OrderLineItem;
-import kitchenpos.order.domain.OrderRepository;
-import kitchenpos.order.domain.OrderStatus;
-import kitchenpos.table.domain.OrderTable;
-import kitchenpos.table.domain.OrderTableRepository;
-import kitchenpos.table.domain.TableGroup;
-import kitchenpos.table.domain.TableGroupRepository;
+import kitchenpos.order.domain.OrderLineItems;
+import kitchenpos.table.domain.*;
 import kitchenpos.table.dto.OrderTableGroupRequest;
 import kitchenpos.table.dto.TableGroupRequest;
 import kitchenpos.table.dto.TableGroupResponse;
@@ -22,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -63,20 +62,21 @@ class TableGroupServiceTest {
     void setUp() {
         orderTable1 = OrderTable.of(1L, tableGroup1, 0, true);
         orderTable2 = OrderTable.of(2L, tableGroup1, 0, true);
-        tableGroup1 = TableGroup.of(1L, Arrays.asList(orderTable1, orderTable2));
+        tableGroup1 = TableGroup.of(1L, OrderTables.from(Arrays.asList(orderTable1, orderTable2)));
     }
 
     @DisplayName("주문 테이블을 단체 지정을 등록하고 등록한 단체 지정을 반환한다.")
     @Test
     void create() {
         // given
-        TableGroupRequest tableGroupRequest = new TableGroupRequest(Arrays.asList(new OrderTableGroupRequest(orderTable1.getId()),
-                                                                                  new OrderTableGroupRequest(orderTable2.getId())));
+        TableGroupRequest tableGroupRequest = new TableGroupRequest(
+                Arrays.asList(new OrderTableGroupRequest(orderTable1.getId()),
+                              new OrderTableGroupRequest(orderTable2.getId())));
 
         given(orderTableRepository.findAllByIdIn(tableGroupRequest.getOrderTables().stream()
-                                                  .mapToLong(OrderTableGroupRequest::getId)
-                                                  .boxed()
-                                                  .collect(Collectors.toList())))
+                                                         .mapToLong(OrderTableGroupRequest::getId)
+                                                         .boxed()
+                                                         .collect(Collectors.toList())))
                 .willReturn(Arrays.asList(OrderTable.of(1L, null, 0, true),
                                           OrderTable.of(2L, null, 0, true)));
         given(tableGroupRepository.save(any())).willReturn(tableGroup1);
@@ -126,8 +126,9 @@ class TableGroupServiceTest {
     @MethodSource("notEmptyOrNotNullTableGroupIdOfOrderTableParameter")
     void notEmptyOrNotNullTableGroupIdOfOrderTable(List<OrderTable> savedOrderTables) {
         // given
-        TableGroupRequest tableGroupRequest = new TableGroupRequest(Arrays.asList(new OrderTableGroupRequest(orderTable1.getId()),
-                                                                                  new OrderTableGroupRequest(orderTable2.getId())));
+        TableGroupRequest tableGroupRequest = new TableGroupRequest(
+                Arrays.asList(new OrderTableGroupRequest(orderTable1.getId()),
+                              new OrderTableGroupRequest(orderTable2.getId())));
 
         given(orderTableRepository.findAllByIdIn(any())).willReturn(savedOrderTables);
 
@@ -155,7 +156,11 @@ class TableGroupServiceTest {
     @Test
     void invalidOrderStatus() {
         // given
-        orderTable1.addOrder(Order.of(null, Collections.emptyList()));
+        OrderLineItem orderLineItem =
+                OrderLineItem.of(1L, null,
+                                 Menu.of(1L, "음식1", BigDecimal.ZERO, null,
+                                         MenuProducts.from(Collections.emptyList())), 1);
+        orderTable1.addOrder(Order.of(orderTable1, OrderLineItems.from(Collections.singletonList(orderLineItem))));
 
         given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));
 

@@ -23,44 +23,26 @@ public class Menu {
     @JoinColumn(name = "menu_group_id", nullable = false, foreignKey = @ForeignKey(name = "fk_menu_menu_group"))
     private MenuGroup menuGroup;
 
-    @OneToMany(mappedBy = "menu", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    private List<MenuProduct> menuProducts;
+    @Embedded
+    private MenuProducts menuProducts;
 
     protected Menu() {
     }
 
-    private Menu(Long id, String name, Price price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
-        validate(price, menuProducts);
+    private Menu(Long id, String name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.menuGroup = menuGroup;
-        this.menuProducts = menuProducts;
-        this.menuProducts.forEach(menuProduct -> menuProduct.initMenu(this));
+        this.menuProducts = menuProducts.initMenu(this);
     }
 
-    public static Menu of(String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
+    public static Menu of(String name, BigDecimal price, MenuGroup menuGroup, MenuProducts menuProducts) {
         return of(null, name, price, menuGroup, menuProducts);
     }
 
-    public static Menu of(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
+    public static Menu of(Long id, String name, BigDecimal price, MenuGroup menuGroup, MenuProducts menuProducts) {
         return new Menu(id, name, Price.from(price), menuGroup, menuProducts);
-    }
-
-    private static void validate(Price price, List<MenuProduct> menuProducts) {
-        if (price == null) {
-            throw new IllegalArgumentException();
-        }
-        if (price.get().compareTo(calculateMenuProductsPrice(menuProducts)) > 0) {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    private static BigDecimal calculateMenuProductsPrice(List<MenuProduct> menuProducts) {
-        return menuProducts.stream()
-                .map(menuProduct -> menuProduct.getProduct().getPrice()
-                        .multiply(BigDecimal.valueOf(menuProduct.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public Long getId() {
@@ -80,7 +62,7 @@ public class Menu {
     }
 
     public List<MenuProduct> getMenuProducts() {
-        return menuProducts;
+        return menuProducts.get();
     }
 
     @Override

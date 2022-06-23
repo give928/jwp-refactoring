@@ -32,7 +32,7 @@ public class MenuService {
                 .orElseThrow(IllegalArgumentException::new);
         List<MenuProduct> menuProducts = mapMenuProducts(menuRequest.getMenuProducts());
 
-        Menu menu = Menu.of(menuRequest.getName(), menuRequest.getPrice(), menuGroup, menuProducts);
+        Menu menu = Menu.of(menuRequest.getName(), menuRequest.getPrice(), menuGroup, MenuProducts.from(menuProducts));
         return MenuResponse.from(menuRepository.save(menu));
     }
 

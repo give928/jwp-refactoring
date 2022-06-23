@@ -3,9 +3,11 @@ package kitchenpos.order.ui;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
 import kitchenpos.menu.domain.Menu;
+import kitchenpos.menu.domain.MenuProducts;
 import kitchenpos.order.application.OrderService;
 import kitchenpos.order.domain.Order;
 import kitchenpos.order.domain.OrderLineItem;
+import kitchenpos.order.domain.OrderLineItems;
 import kitchenpos.order.domain.OrderStatus;
 import kitchenpos.order.dto.OrderLineItemRequest;
 import kitchenpos.order.dto.OrderRequest;
@@ -57,19 +59,19 @@ class OrderRestControllerTest {
 
     @BeforeEach
     void setUp() {
-        Menu menu1 = Menu.of(1L, "메뉴1", BigDecimal.ZERO, null, Collections.emptyList());
-        Menu menu2 = Menu.of(2L, "메뉴2", BigDecimal.ZERO, null, Collections.emptyList());
+        Menu menu1 = Menu.of(1L, "메뉴1", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
+        Menu menu2 = Menu.of(2L, "메뉴2", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
 
         Long orderId1 = 1L;
         OrderTable orderTable1 = OrderTable.of(1L, null, 1, false);
         orderLineItem1 = OrderLineItem.of(1L, null, menu1, 1);
         orderLineItem2 = OrderLineItem.of(2L, null, menu2, 1);
-        order1 = Order.of(orderId1, orderTable1, Arrays.asList(orderLineItem1, orderLineItem2));
+        order1 = Order.of(orderId1, orderTable1, OrderLineItems.from(Arrays.asList(orderLineItem1, orderLineItem2)));
 
         Long orderId2 = 2L;
         OrderTable orderTable2 = OrderTable.of(2L, null, 1, false);
-        order2 = Order.of(orderId2, orderTable2, Arrays.asList(OrderLineItem.of(3L, null, menu1, 2),
-                          OrderLineItem.of(4L, null, menu2, 2)));
+        order2 = Order.of(orderId2, orderTable2, OrderLineItems.from(Arrays.asList(OrderLineItem.of(3L, null, menu1, 2),
+                          OrderLineItem.of(4L, null, menu2, 2))));
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")
