@@ -17,7 +17,8 @@ public class OrderTable {
     @JoinColumn(name = "table_group_id", foreignKey = @ForeignKey(name = "fk_order_table_table_group"))
     private TableGroup tableGroup;
 
-    private int numberOfGuests;
+    @Embedded
+    private NumberOfGuests numberOfGuests;
 
     private boolean empty;
 
@@ -27,7 +28,7 @@ public class OrderTable {
     protected OrderTable() {
     }
 
-    private OrderTable(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, List<Order> orders) {
+    private OrderTable(Long id, TableGroup tableGroup, NumberOfGuests numberOfGuests, boolean empty, List<Order> orders) {
         this.id = id;
         this.tableGroup = tableGroup;
         this.numberOfGuests = numberOfGuests;
@@ -44,7 +45,7 @@ public class OrderTable {
     }
 
     public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, List<Order> orders) {
-        return new OrderTable(id, tableGroup, numberOfGuests, empty, orders);
+        return new OrderTable(id, tableGroup, NumberOfGuests.from(numberOfGuests), empty, orders);
     }
 
     public Long getId() {
@@ -56,7 +57,7 @@ public class OrderTable {
     }
 
     public int getNumberOfGuests() {
-        return numberOfGuests;
+        return numberOfGuests.get();
     }
 
     public boolean isEmpty() {
@@ -75,8 +76,8 @@ public class OrderTable {
     }
 
     public OrderTable changeNumberOfGuests(int numberOfGuests) {
-        validateNumberOfGuests(numberOfGuests);
-        this.numberOfGuests = numberOfGuests;
+        validateIfEmpty(Boolean.TRUE);
+        this.numberOfGuests = NumberOfGuests.from(numberOfGuests);
         return this;
     }
 
@@ -89,13 +90,6 @@ public class OrderTable {
     public void addOrder(Order order) {
         this.orders.add(order);
         order.initOrderTable(this);
-    }
-
-    private void validateNumberOfGuests(int numberOfGuests) {
-        if (numberOfGuests < 0) {
-            throw new IllegalArgumentException();
-        }
-        validateIfEmpty(Boolean.TRUE);
     }
 
     private void validateIfEmpty(boolean empty) {
