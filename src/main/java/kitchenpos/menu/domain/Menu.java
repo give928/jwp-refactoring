@@ -1,5 +1,6 @@
 package kitchenpos.menu.domain;
 
+import kitchenpos.common.domain.Name;
 import kitchenpos.common.domain.Price;
 
 import javax.persistence.*;
@@ -13,8 +14,8 @@ public class Menu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
+    @Embedded
+    private Name name;
 
     @Embedded
     private Price price;
@@ -29,7 +30,7 @@ public class Menu {
     protected Menu() {
     }
 
-    private Menu(Long id, String name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
+    private Menu(Long id, Name name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
         this.id = id;
         this.name = name;
         this.price = price;
@@ -37,11 +38,11 @@ public class Menu {
         this.menuProducts = menuProducts.initMenu(this);
     }
 
-    public static Menu of(String name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
+    public static Menu of(Name name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
         return of(null, name, price, menuGroup, menuProducts);
     }
 
-    public static Menu of(Long id, String name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
+    public static Menu of(Long id, Name name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
         return new Menu(id, name, price, menuGroup, menuProducts);
     }
 
@@ -50,7 +51,7 @@ public class Menu {
     }
 
     public String getName() {
-        return name;
+        return name.get();
     }
 
     public BigDecimal getPrice() {

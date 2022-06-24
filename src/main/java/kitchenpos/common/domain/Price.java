@@ -8,28 +8,28 @@ import java.util.Objects;
 @Embeddable
 public class Price {
     @Column(nullable = false)
-    private BigDecimal value;
+    private BigDecimal price;
 
     protected Price() {
     }
 
-    private Price(BigDecimal value) {
-        validate(value);
-        this.value = value;
+    private Price(BigDecimal price) {
+        validate(price);
+        this.price = price;
     }
 
-    public static Price from(BigDecimal value) {
-        return new Price(value);
+    public static Price from(BigDecimal price) {
+        return new Price(price);
     }
 
-    private static void validate(BigDecimal value) {
-        if (Objects.isNull(value) || value.compareTo(BigDecimal.ZERO) < 0) {
+    private static void validate(BigDecimal price) {
+        if (Objects.isNull(price) || price.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException();
         }
     }
 
     public BigDecimal get() {
-        return value;
+        return price;
     }
 
     @Override

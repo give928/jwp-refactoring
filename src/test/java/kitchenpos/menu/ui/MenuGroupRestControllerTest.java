@@ -2,6 +2,7 @@ package kitchenpos.menu.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
+import kitchenpos.common.domain.Name;
 import kitchenpos.menu.application.MenuGroupService;
 import kitchenpos.menu.domain.MenuGroup;
 import kitchenpos.menu.dto.MenuGroupRequest;
@@ -45,8 +46,8 @@ class MenuGroupRestControllerTest {
 
     @BeforeEach
     void setUp() {
-        menuGroup1 = MenuGroup.of(1L, "메뉴그룹1");
-        menuGroup2 = MenuGroup.of(2L, "메뉴그룹2");
+        menuGroup1 = MenuGroup.of(1L, Name.from("메뉴그룹1"));
+        menuGroup2 = MenuGroup.of(2L, Name.from("메뉴그룹2"));
     }
 
     @DisplayName("메뉴 그룹을 등록하고 등록한 메뉴 그룹을 반환한다.")

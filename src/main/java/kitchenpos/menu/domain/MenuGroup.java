@@ -1,5 +1,7 @@
 package kitchenpos.menu.domain;
 
+import kitchenpos.common.domain.Name;
+
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -9,22 +11,22 @@ public class MenuGroup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
+    @Embedded
+    private Name name;
 
     protected MenuGroup() {
     }
 
-    private MenuGroup(Long id, String name) {
+    private MenuGroup(Long id, Name name) {
         this.id = id;
         this.name = name;
     }
 
-    public static MenuGroup of(String name) {
+    public static MenuGroup of(Name name) {
         return of(null, name);
     }
 
-    public static MenuGroup of(Long id, String name) {
+    public static MenuGroup of(Long id, Name name) {
         return new MenuGroup(id, name);
     }
 
@@ -33,7 +35,7 @@ public class MenuGroup {
     }
 
     public String getName() {
-        return name;
+        return name.get();
     }
 
     @Override
