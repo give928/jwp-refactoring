@@ -1,5 +1,6 @@
 package kitchenpos.product.application;
 
+import kitchenpos.common.domain.Price;
 import kitchenpos.product.domain.Product;
 import kitchenpos.product.domain.ProductRepository;
 import kitchenpos.product.dto.ProductRequest;
@@ -41,8 +42,8 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        product1 = Product.of(1L, "음식1", BigDecimal.ONE);
-        product2 = Product.of(2L, "음식2", BigDecimal.valueOf(2));
+        product1 = Product.of(1L, "음식1", Price.from(BigDecimal.ONE));
+        product2 = Product.of(2L, "음식2", Price.from(BigDecimal.valueOf(2)));
     }
 
     @DisplayName("상품을 등록하고 등록한 상품을 반환한다.")

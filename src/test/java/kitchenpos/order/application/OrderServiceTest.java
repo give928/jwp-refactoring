@@ -1,5 +1,6 @@
 package kitchenpos.order.application;
 
+import kitchenpos.common.domain.Price;
 import kitchenpos.menu.domain.Menu;
 import kitchenpos.menu.domain.MenuProducts;
 import kitchenpos.menu.domain.MenuRepository;
@@ -55,8 +56,8 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        Menu menu1 = Menu.of(1L, "메뉴1", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
-        Menu menu2 = Menu.of(2L, "메뉴2", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
+        Menu menu1 = Menu.of(1L, "메뉴1", Price.from(BigDecimal.ZERO), null, MenuProducts.from(Collections.emptyList()));
+        Menu menu2 = Menu.of(2L, "메뉴2", Price.from(BigDecimal.ZERO), null, MenuProducts.from(Collections.emptyList()));
 
         OrderTable orderTable1 = OrderTable.of(1L, null, 1, false);
         OrderTable orderTable2 = OrderTable.of(2L, null, 1, false);

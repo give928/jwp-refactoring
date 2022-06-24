@@ -27,12 +27,12 @@ public class Product {
         this.price = price;
     }
 
-    public static Product of(String name, BigDecimal price) {
+    public static Product of(String name, Price price) {
         return of(null, name, price);
     }
 
-    public static Product of(Long id, String name, BigDecimal price) {
-        return new Product(id, name, Price.from(price));
+    public static Product of(Long id, String name, Price price) {
+        return new Product(id, name, price);
     }
 
     public Long getId() {

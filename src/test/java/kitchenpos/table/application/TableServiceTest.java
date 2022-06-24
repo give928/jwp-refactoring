@@ -1,5 +1,6 @@
 package kitchenpos.table.application;
 
+import kitchenpos.common.domain.Price;
 import kitchenpos.menu.domain.Menu;
 import kitchenpos.menu.domain.MenuProducts;
 import kitchenpos.order.domain.*;
@@ -126,7 +127,7 @@ class TableServiceTest {
         OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(true);
         OrderLineItem orderLineItem =
                 OrderLineItem.of(1L, null,
-                                 Menu.of(1L, "음식1", BigDecimal.ZERO, null,
+                                 Menu.of(1L, "음식1", Price.from(BigDecimal.ZERO), null,
                                          MenuProducts.from(Collections.emptyList())), 1);
         OrderTable orderTable =
                 OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),

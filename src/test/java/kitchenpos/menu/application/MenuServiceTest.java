@@ -1,5 +1,6 @@
 package kitchenpos.menu.application;
 
+import kitchenpos.common.domain.Price;
 import kitchenpos.menu.domain.*;
 import kitchenpos.menu.dto.MenuProductRequest;
 import kitchenpos.menu.dto.MenuRequest;
@@ -59,17 +60,17 @@ class MenuServiceTest {
     @BeforeEach
     void setUp() {
         Long menuId1 = 1L;
-        product1 = Product.of(1L, "음식1", BigDecimal.ONE);
-        product2 = Product.of(2L, "음식2", BigDecimal.ONE);
+        product1 = Product.of(1L, "음식1", Price.from(BigDecimal.ONE));
+        product2 = Product.of(2L, "음식2", Price.from(BigDecimal.ONE));
         menuGroup = MenuGroup.of(1L, "메뉴그룹1");
-        menu1 = Menu.of(menuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup,
+        menu1 = Menu.of(menuId1, "메뉴1", Price.from(BigDecimal.valueOf(2L)), menuGroup,
                         MenuProducts.from(Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
                                                         MenuProduct.of(2L, menu1, product2, 1))));
 
         Long menuId2 = 2L;
-        Product product3 = Product.of(3L, "음식1", BigDecimal.ONE);
-        Product product4 = Product.of(4L, "음식2", BigDecimal.ONE);
-        menu2 = Menu.of(menuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup,
+        Product product3 = Product.of(3L, "음식1", Price.from(BigDecimal.ONE));
+        Product product4 = Product.of(4L, "음식2", Price.from(BigDecimal.ONE));
+        menu2 = Menu.of(menuId2, "메뉴2", Price.from(BigDecimal.valueOf(2L)), menuGroup,
                         MenuProducts.from(Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
                                                         MenuProduct.of(4L, menu2, product4, 1))));
     }

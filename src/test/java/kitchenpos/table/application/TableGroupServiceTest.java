@@ -1,5 +1,6 @@
 package kitchenpos.table.application;
 
+import kitchenpos.common.domain.Price;
 import kitchenpos.menu.domain.Menu;
 import kitchenpos.menu.domain.MenuProducts;
 import kitchenpos.order.domain.Order;
@@ -154,8 +155,8 @@ class TableGroupServiceTest {
         // given
         OrderLineItem orderLineItem =
                 OrderLineItem.of(1L, null,
-                                 Menu.of(1L, "음식1", BigDecimal.ZERO, null,
-                                         MenuProducts.from(Collections.emptyList())), 1);
+                                 Menu.of(1L, "음식1", Price.from(BigDecimal.ZERO), null,
+                                                               MenuProducts.from(Collections.emptyList())), 1);
         orderTable1.addOrder(Order.of(orderTable1, OrderLineItems.from(Collections.singletonList(orderLineItem))));
 
         given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));

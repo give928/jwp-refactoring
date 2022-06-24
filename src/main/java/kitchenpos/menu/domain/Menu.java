@@ -37,12 +37,12 @@ public class Menu {
         this.menuProducts = menuProducts.initMenu(this);
     }
 
-    public static Menu of(String name, BigDecimal price, MenuGroup menuGroup, MenuProducts menuProducts) {
+    public static Menu of(String name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
         return of(null, name, price, menuGroup, menuProducts);
     }
 
-    public static Menu of(Long id, String name, BigDecimal price, MenuGroup menuGroup, MenuProducts menuProducts) {
-        return new Menu(id, name, Price.from(price), menuGroup, menuProducts);
+    public static Menu of(Long id, String name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
+        return new Menu(id, name, price, menuGroup, menuProducts);
     }
 
     public Long getId() {

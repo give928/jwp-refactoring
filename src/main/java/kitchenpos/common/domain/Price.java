@@ -31,4 +31,21 @@ public class Price {
     public BigDecimal get() {
         return value;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Price price = (Price) o;
+        return Objects.equals(get(), price.get());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(get());
+    }
 }

@@ -2,6 +2,7 @@ package kitchenpos.menu.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
+import kitchenpos.common.domain.Price;
 import kitchenpos.menu.application.MenuService;
 import kitchenpos.menu.domain.Menu;
 import kitchenpos.menu.domain.MenuGroup;
@@ -53,17 +54,17 @@ class MenuRestControllerTest {
     @BeforeEach
     void setUp() {
         Long savedMenuId1 = 1L;
-        Product product1 = Product.of(1L, "음식1", BigDecimal.ONE);
-        Product product2 = Product.of(2L, "음식2", BigDecimal.ONE);
+        Product product1 = Product.of(1L, "음식1", Price.from(BigDecimal.ONE));
+        Product product2 = Product.of(2L, "음식2", Price.from(BigDecimal.ONE));
         MenuGroup menuGroup = MenuGroup.of(1L, "메뉴그룹1");
-        menu1 = Menu.of(savedMenuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup,
+        menu1 = Menu.of(savedMenuId1, "메뉴1", Price.from(BigDecimal.valueOf(2L)), menuGroup,
                         MenuProducts.from(Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
                                                         MenuProduct.of(2L, menu1, product2, 1))));
 
         Long savedMenuId2 = 2L;
-        Product product3 = Product.of(3L, "음식1", BigDecimal.ONE);
-        Product product4 = Product.of(4L, "음식2", BigDecimal.ONE);
-        menu2 = Menu.of(savedMenuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup,
+        Product product3 = Product.of(3L, "음식1", Price.from(BigDecimal.ONE));
+        Product product4 = Product.of(4L, "음식2", Price.from(BigDecimal.ONE));
+        menu2 = Menu.of(savedMenuId2, "메뉴2", Price.from(BigDecimal.valueOf(2L)), menuGroup,
                         MenuProducts.from(Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
                                                         MenuProduct.of(4L, menu2, product4, 1))));
     }
