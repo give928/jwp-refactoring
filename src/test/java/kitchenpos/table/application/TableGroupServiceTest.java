@@ -69,9 +69,7 @@ class TableGroupServiceTest {
     @Test
     void create() {
         // given
-        TableGroupRequest tableGroupRequest = new TableGroupRequest(
-                Arrays.asList(new OrderTableGroupRequest(orderTable1.getId()),
-                              new OrderTableGroupRequest(orderTable2.getId())));
+        TableGroupRequest tableGroupRequest = createTableGroupRequest(orderTable1, orderTable2);
 
         given(orderTableRepository.findAllByIdIn(tableGroupRequest.getOrderTables().stream()
                                                          .mapToLong(OrderTableGroupRequest::getId)
@@ -126,9 +124,7 @@ class TableGroupServiceTest {
     @MethodSource("notEmptyOrNotNullTableGroupIdOfOrderTableParameter")
     void notEmptyOrNotNullTableGroupIdOfOrderTable(List<OrderTable> savedOrderTables) {
         // given
-        TableGroupRequest tableGroupRequest = new TableGroupRequest(
-                Arrays.asList(new OrderTableGroupRequest(orderTable1.getId()),
-                              new OrderTableGroupRequest(orderTable2.getId())));
+        TableGroupRequest tableGroupRequest = createTableGroupRequest(orderTable1, orderTable2);
 
         given(orderTableRepository.findAllByIdIn(any())).willReturn(savedOrderTables);
 
@@ -169,5 +165,11 @@ class TableGroupServiceTest {
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private TableGroupRequest createTableGroupRequest(OrderTable... orderTables) {
+        return new TableGroupRequest(Stream.of(orderTables)
+                                             .map(orderTable -> new OrderTableGroupRequest(orderTable.getId()))
+                                             .collect(Collectors.toList()));
     }
 }

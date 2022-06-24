@@ -78,18 +78,15 @@ class MenuServiceTest {
     @Test
     void create() {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menu1.getMenuGroup().getId(),
-                                                  menu1.getMenuProducts().stream()
-                                                          .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProduct().getId(),
-                                                                  menuProduct.getQuantity()))
-                                                          .collect(Collectors.toList()));
+        MenuRequest menuRequest = createMenuRequestBy(menu1);
 
-        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
+        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menu1.getMenuGroup()));
         given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
                                                    .map(MenuProductRequest::getProductId)
-                                                   .collect(Collectors.toList()))).willReturn(
-                Arrays.asList(product1, product2));
+                                                   .collect(Collectors.toList())))
+                .willReturn(menu1.getMenuProducts().stream()
+                                    .map(MenuProduct::getProduct)
+                                    .collect(Collectors.toList()));
         given(menuRepository.save(any())).willReturn(menu1);
 
         // when
@@ -109,13 +106,19 @@ class MenuServiceTest {
     void invalidPrice(BigDecimal price) {
         // given
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), price, menu1.getMenuGroup().getId(),
-                                                  Collections.emptyList());
+                                                  menu1.getMenuProducts().stream()
+                                                          .map(menuProduct -> new MenuProductRequest(
+                                                                  menuProduct.getProduct().getId(),
+                                                                  menuProduct.getQuantity()))
+                                                          .collect(Collectors.toList()));
 
-        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
+        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menu1.getMenuGroup()));
         given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
                                                    .map(MenuProductRequest::getProductId)
-                                                   .collect(Collectors.toList()))).willReturn(
-                Arrays.asList(product1, product2));
+                                                   .collect(Collectors.toList())))
+                .willReturn(menu1.getMenuProducts().stream()
+                                    .map(MenuProduct::getProduct)
+                                    .collect(Collectors.toList()));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
@@ -130,7 +133,11 @@ class MenuServiceTest {
     void invalidMenuGroup(Long menuGroupId) {
         // given
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menuGroupId,
-                                                  Collections.emptyList());
+                                                  menu1.getMenuProducts().stream()
+                                                          .map(menuProduct -> new MenuProductRequest(
+                                                                  menuProduct.getProduct().getId(),
+                                                                  menuProduct.getQuantity()))
+                                                          .collect(Collectors.toList()));
 
         given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.empty());
 
@@ -178,5 +185,14 @@ class MenuServiceTest {
         assertThat(menuResponses).extracting("id").containsExactly(menu1.getId(), menu2.getId());
         assertThat(menuResponses).extracting("name").containsExactly(menu1.getName(), menu2.getName());
         assertThat(menuResponses).extracting("price").containsExactly(menu1.getPrice(), menu2.getPrice());
+    }
+
+    private MenuRequest createMenuRequestBy(Menu menu) {
+        return new MenuRequest(menu.getName(), menu.getPrice(), menu.getMenuGroup().getId(),
+                               menu.getMenuProducts().stream()
+                                       .map(menuProduct -> new MenuProductRequest(
+                                               menuProduct.getProduct().getId(),
+                                               menuProduct.getQuantity()))
+                                       .collect(Collectors.toList()));
     }
 }

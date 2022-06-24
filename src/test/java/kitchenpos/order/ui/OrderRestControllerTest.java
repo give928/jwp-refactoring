@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -52,8 +53,6 @@ class OrderRestControllerTest {
     @MockBean
     private OrderService orderService;
 
-    private OrderLineItem orderLineItem1;
-    private OrderLineItem orderLineItem2;
     private Order order1;
     private Order order2;
 
@@ -64,8 +63,8 @@ class OrderRestControllerTest {
 
         Long orderId1 = 1L;
         OrderTable orderTable1 = OrderTable.of(1L, null, 1, false);
-        orderLineItem1 = OrderLineItem.of(1L, null, menu1, 1);
-        orderLineItem2 = OrderLineItem.of(2L, null, menu2, 1);
+        OrderLineItem orderLineItem1 = OrderLineItem.of(1L, null, menu1, 1);
+        OrderLineItem orderLineItem2 = OrderLineItem.of(2L, null, menu2, 1);
         order1 = Order.of(orderId1, orderTable1, OrderLineItems.from(Arrays.asList(orderLineItem1, orderLineItem2)));
 
         Long orderId2 = 2L;
@@ -78,9 +77,7 @@ class OrderRestControllerTest {
     @Test
     void create() throws Exception {
         // given
-        OrderRequest orderRequest = new OrderRequest(order1.getOrderTable().getId(),
-                                                     Arrays.asList(new OrderLineItemRequest(orderLineItem1.getMenu().getId(), orderLineItem1.getQuantity()),
-                                                                   new OrderLineItemRequest(orderLineItem2.getMenu().getId(), orderLineItem2.getQuantity())));
+        OrderRequest orderRequest = createOrderRequestBy(order1);
         OrderResponse orderResponse = OrderResponse.from(order1);
 
         given(orderService.create(any())).willReturn(orderResponse);
@@ -135,5 +132,17 @@ class OrderRestControllerTest {
         // then
         resultActions.andExpect(status().isOk())
                 .andExpect(content().string(objectMapper.writeValueAsString(orderResponse)));
+    }
+
+    private OrderRequest createOrderRequestBy(Order order) {
+        return new OrderRequest(order.getOrderTable().getId(),
+                                getOrderLineItemRequests(order));
+    }
+
+    private List<OrderLineItemRequest> getOrderLineItemRequests(Order order) {
+        return order.getOrderLineItems().stream()
+                .map(orderLineItem -> new OrderLineItemRequest(orderLineItem.getMenu().getId(),
+                                                               orderLineItem.getQuantity()))
+                .collect(Collectors.toList());
     }
 }

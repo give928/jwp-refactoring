@@ -46,14 +46,12 @@ class TableGroupRestControllerTest {
     @Test
     void create() throws Exception {
         // given
-        Long tableGroupId1 = 1L;
-        OrderTables orderTables = OrderTables.from(Arrays.asList(OrderTable.of(1L, null, 0, true),
-                                                                 OrderTable.of(2L, null, 0, true)));
-        TableGroup tableGroup = TableGroup.of(tableGroupId1, orderTables);
-        TableGroupRequest tableGroupRequest = new TableGroupRequest(tableGroup.getOrderTables().stream()
-                                                                            .map(orderTable -> new OrderTableGroupRequest(
-                                                                                    orderTable.getId()))
-                                                                            .collect(Collectors.toList()));
+        TableGroup tableGroup = TableGroup.of(1L, OrderTables.from(Arrays.asList(OrderTable.of(1L, null, 0, true),
+                                                                                 OrderTable.of(2L, null, 0, true))));
+        TableGroupRequest tableGroupRequest =
+                new TableGroupRequest(tableGroup.getOrderTables().stream()
+                                              .map(orderTable -> new OrderTableGroupRequest(orderTable.getId()))
+                                              .collect(Collectors.toList()));
         TableGroupResponse tableGroupResponse = TableGroupResponse.from(tableGroup);
 
         given(tableGroupService.create(any())).willReturn(tableGroupResponse);

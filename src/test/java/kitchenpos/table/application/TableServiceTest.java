@@ -54,9 +54,7 @@ class TableServiceTest {
         OrderTableRequest orderTableRequest = new OrderTableRequest(orderTable1.getNumberOfGuests(),
                                                                     orderTable1.isEmpty());
 
-        given(orderTableRepository.save(
-                OrderTable.of(orderTableRequest.getNumberOfGuests(), orderTableRequest.isEmpty()))).willReturn(
-                orderTable1);
+        given(orderTableRepository.save(orderTableRequest.toOrderTable())).willReturn(orderTable1);
 
         // when
         OrderTableResponse orderTableResponse = tableService.create(orderTableRequest);
@@ -159,7 +157,7 @@ class TableServiceTest {
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
 
         // when
-        OrderTableResponse orderTableResponse = tableService.changeNumberOfGuests(orderTable1.getId(),
+        OrderTableResponse orderTableResponse = tableService.changeNumberOfGuests(orderTable.getId(),
                                                                                   orderTableChangeNumberOfGuestRequest);
 
         // then

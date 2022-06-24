@@ -56,7 +56,8 @@ class TableRestControllerTest {
     @Test
     void create() throws Exception {
         // given
-        OrderTableRequest orderTableRequest = new OrderTableRequest(orderTable1.getNumberOfGuests(), orderTable1.isEmpty());
+        OrderTableRequest orderTableRequest = new OrderTableRequest(orderTable1.getNumberOfGuests(),
+                                                                    orderTable1.isEmpty());
         OrderTableResponse orderTableResponse = OrderTableResponse.from(orderTable1);
 
         given(tableService.create(any())).willReturn(orderTableResponse);
@@ -64,7 +65,8 @@ class TableRestControllerTest {
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
                                                               .contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsBytes(orderTableRequest)))
+                                                              .content(objectMapper.writeValueAsBytes(
+                                                                      orderTableRequest)))
                 .andDo(print());
 
         // then
@@ -94,18 +96,18 @@ class TableRestControllerTest {
     @Test
     void changeEmpty() throws Exception {
         // given
-        OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(false);
         OrderTable orderTable = OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
-                                               orderTable1.getNumberOfGuests(), orderTableChangeEmptyRequest.isEmpty());
+                                              orderTable1.getNumberOfGuests(), true);
+        OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(!orderTable.isEmpty());
         OrderTableResponse orderTableResponse = OrderTableResponse.from(orderTable);
 
-        given(tableService.changeEmpty(eq(orderTable1.getId()), any()))
-                .willReturn(orderTableResponse);
+        given(tableService.changeEmpty(eq(orderTable1.getId()), any())).willReturn(orderTableResponse);
 
         // when
-        ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.put(URL + String.format("/%d/empty", orderTable1.getId()))
-                                                              .contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsBytes(orderTableChangeEmptyRequest)))
+        ResultActions resultActions = mockMvc.perform(
+                        MockMvcRequestBuilders.put(URL + String.format("/%d/empty", orderTable1.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsBytes(orderTableChangeEmptyRequest)))
                 .andDo(print());
 
         // then
@@ -117,17 +119,19 @@ class TableRestControllerTest {
     @Test
     void changeNumberOfGuests() throws Exception {
         // given
-        OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest = new OrderTableChangeNumberOfGuestRequest(1);
-        OrderTableResponse orderTableResponse = OrderTableResponse.from(OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
-                                                                       orderTableChangeNumberOfGuestRequest.getNumberOfGuests(), orderTable1.isEmpty()));
+        OrderTableChangeNumberOfGuestRequest orderTableChangeNumberOfGuestRequest =
+                new OrderTableChangeNumberOfGuestRequest(1);
+        OrderTableResponse orderTableResponse = OrderTableResponse.from(
+                OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
+                              orderTableChangeNumberOfGuestRequest.getNumberOfGuests(), orderTable1.isEmpty()));
 
-        given(tableService.changeNumberOfGuests(eq(orderTable1.getId()), any()))
-                .willReturn(orderTableResponse);
+        given(tableService.changeNumberOfGuests(eq(orderTable1.getId()), any())).willReturn(orderTableResponse);
 
         // when
-        ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.put(URL + String.format("/%d/number-of-guests", orderTable1.getId()))
-                                                              .contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsBytes(orderTableChangeNumberOfGuestRequest)))
+        ResultActions resultActions = mockMvc.perform(
+                        MockMvcRequestBuilders.put(URL + String.format("/%d/number-of-guests", orderTable1.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsBytes(orderTableChangeNumberOfGuestRequest)))
                 .andDo(print());
 
         // then

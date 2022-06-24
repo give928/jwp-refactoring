@@ -72,12 +72,7 @@ class MenuRestControllerTest {
     @Test
     void create() throws Exception {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menu1.getMenuGroup().getId(),
-                                                  menu1.getMenuProducts().stream()
-                                                          .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProduct().getId(),
-                                                                  menuProduct.getQuantity()))
-                                                          .collect(Collectors.toList()));
+        MenuRequest menuRequest = createMenuRequestBy(menu1);
         MenuResponse menuResponse = MenuResponse.from(menu1);
 
         given(menuService.create(any())).willReturn(menuResponse);
@@ -109,5 +104,14 @@ class MenuRestControllerTest {
         // then
         resultActions.andExpect(status().isOk())
                 .andExpect(content().string(objectMapper.writeValueAsString(menuResponses)));
+    }
+
+    private MenuRequest createMenuRequestBy(Menu menu) {
+        return new MenuRequest(menu.getName(), menu.getPrice(), menu.getMenuGroup().getId(),
+                               menu.getMenuProducts().stream()
+                                       .map(menuProduct -> new MenuProductRequest(
+                                               menuProduct.getProduct().getId(),
+                                               menuProduct.getQuantity()))
+                                       .collect(Collectors.toList()));
     }
 }

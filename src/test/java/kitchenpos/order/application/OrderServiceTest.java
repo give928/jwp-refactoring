@@ -46,11 +46,6 @@ class OrderServiceTest {
     @InjectMocks
     private OrderService orderService;
 
-    private Menu menu1;
-    private Menu menu2;
-    private OrderTable orderTable1;
-    private OrderLineItem orderLineItem1;
-    private OrderLineItem orderLineItem2;
     private Order order1;
     private Order order2;
 
@@ -60,15 +55,15 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        menu1 = Menu.of(1L, "메뉴1", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
-        menu2 = Menu.of(2L, "메뉴2", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
+        Menu menu1 = Menu.of(1L, "메뉴1", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
+        Menu menu2 = Menu.of(2L, "메뉴2", BigDecimal.ZERO, null, MenuProducts.from(Collections.emptyList()));
 
-        orderTable1 = OrderTable.of(1L, null, 1, false);
+        OrderTable orderTable1 = OrderTable.of(1L, null, 1, false);
         OrderTable orderTable2 = OrderTable.of(2L, null, 1, false);
 
         Long orderId1 = 1L;
-        orderLineItem1 = OrderLineItem.of(1L, order1, menu1, 1);
-        orderLineItem2 = OrderLineItem.of(2L, order1, menu2, 2);
+        OrderLineItem orderLineItem1 = OrderLineItem.of(1L, order1, menu1, 1);
+        OrderLineItem orderLineItem2 = OrderLineItem.of(2L, order1, menu2, 2);
         order1 = Order.of(orderId1, orderTable1, OrderLineItems.from(Arrays.asList(orderLineItem1, orderLineItem2)));
 
         Long orderId2 = 2L;
@@ -81,16 +76,16 @@ class OrderServiceTest {
     @Test
     void create() {
         // given
-        OrderLineItemRequest orderLineItemRequest1 = new OrderLineItemRequest(orderLineItem1.getMenu().getId(), orderLineItem1.getQuantity());
-        OrderLineItemRequest orderLineItemRequest2 = new OrderLineItemRequest(orderLineItem2.getMenu().getId(), orderLineItem2.getQuantity());
-        OrderRequest orderRequest = new OrderRequest(order1.getOrderTable().getId(), Arrays.asList(orderLineItemRequest1, orderLineItemRequest2));
+        OrderRequest orderRequest = createOrderRequestBy(order1);
 
         given(menuRepository.findByIdIn(orderRequest.getOrderLineItems().stream()
                                                 .mapToLong(OrderLineItemRequest::getMenuId)
                                                 .boxed()
                                                 .collect(Collectors.toList())))
-                .willReturn(Arrays.asList(menu1, menu2));
-        given(orderTableRepository.findById(orderRequest.getOrderTableId())).willReturn(Optional.of(orderTable1));
+                .willReturn(order1.getOrderLineItems().stream()
+                                    .map(OrderLineItem::getMenu)
+                                    .collect(Collectors.toList()));
+        given(orderTableRepository.findById(orderRequest.getOrderTableId())).willReturn(Optional.of(order1.getOrderTable()));
         given(orderRepository.save(any())).willReturn(order1);
 
         // when
@@ -121,8 +116,9 @@ class OrderServiceTest {
     @Test
     void invalidMenuIdOfOrderLineItem() {
         // given
-        Long menuId = 0L;
-        OrderRequest orderRequest = new OrderRequest(order1.getOrderTable().getId(), Collections.singletonList(new OrderLineItemRequest(menuId, 1)));
+        Long menuId = -1L;
+        OrderRequest orderRequest = new OrderRequest(order1.getOrderTable().getId(),
+                                                     Collections.singletonList(new OrderLineItemRequest(menuId, 1)));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
@@ -135,9 +131,8 @@ class OrderServiceTest {
     @Test
     void notExistsOrderTable() {
         // given
-        OrderRequest orderRequest = new OrderRequest(0L, Arrays.asList(
-                new OrderLineItemRequest(orderLineItem1.getMenu().getId(), orderLineItem1.getQuantity()),
-                new OrderLineItemRequest(orderLineItem2.getMenu().getId(), orderLineItem2.getQuantity())));
+        OrderRequest orderRequest = new OrderRequest(-1L,
+                                                     getOrderLineItemRequests(order1));
 
         given(orderTableRepository.findById(orderRequest.getOrderTableId())).willReturn(Optional.empty());
 
@@ -153,15 +148,16 @@ class OrderServiceTest {
     void cannotEmptyOrderTable() {
         // given
         OrderTable orderTable1 = OrderTable.of(1L, null, 1, true);
-        OrderRequest orderRequest = new OrderRequest(order1.getOrderTable().getId(),
-                                                     Arrays.asList(new OrderLineItemRequest(orderLineItem1.getMenu().getId(), orderLineItem1.getQuantity()),
-                                                                   new OrderLineItemRequest(orderLineItem2.getMenu().getId(), orderLineItem2.getQuantity())));
+        OrderRequest orderRequest = new OrderRequest(orderTable1.getId(),
+                                                     getOrderLineItemRequests(order1));
 
         given(menuRepository.findByIdIn(orderRequest.getOrderLineItems().stream()
                                                 .mapToLong(OrderLineItemRequest::getMenuId)
                                                 .boxed()
                                                 .collect(Collectors.toList())))
-                .willReturn(Arrays.asList(menu1, menu2));
+                .willReturn(order1.getOrderLineItems().stream()
+                                    .map(OrderLineItem::getMenu)
+                                    .collect(Collectors.toList()));
         given(orderTableRepository.findById(orderRequest.getOrderTableId())).willReturn(Optional.of(orderTable1));
 
         // when
@@ -182,9 +178,12 @@ class OrderServiceTest {
 
         // then
         assertThat(orderResponses).extracting("id").containsExactly(order1.getId(), order2.getId());
-        assertThat(orderResponses).extracting("orderTableId").containsExactly(order1.getOrderTable().getId(), order2.getOrderTable().getId());
-        assertThat(orderResponses).extracting("orderStatus").containsExactly(order1.getOrderStatus().name(), order2.getOrderStatus().name());
-        assertThat(orderResponses).extracting("orderedTime").containsExactly(order1.getOrderedTime(), order2.getOrderedTime());
+        assertThat(orderResponses).extracting("orderTableId").containsExactly(order1.getOrderTable().getId(),
+                                                                              order2.getOrderTable().getId());
+        assertThat(orderResponses).extracting("orderStatus").containsExactly(order1.getOrderStatus().name(),
+                                                                             order2.getOrderStatus().name());
+        assertThat(orderResponses).extracting("orderedTime").containsExactly(order1.getOrderedTime(),
+                                                                             order2.getOrderedTime());
     }
 
     @DisplayName("주문의 주문 상태를 변경하고 주문과 주문 항목을 반환한다.")
@@ -201,5 +200,17 @@ class OrderServiceTest {
 
         // then
         assertThat(orderResponse.getOrderStatus()).isEqualTo(nextOrderStatus);
+    }
+
+    private OrderRequest createOrderRequestBy(Order order) {
+        return new OrderRequest(order.getOrderTable().getId(),
+                                getOrderLineItemRequests(order));
+    }
+
+    private List<OrderLineItemRequest> getOrderLineItemRequests(Order order) {
+        return order.getOrderLineItems().stream()
+                .map(orderLineItem -> new OrderLineItemRequest(orderLineItem.getMenu().getId(),
+                                                               orderLineItem.getQuantity()))
+                .collect(Collectors.toList());
     }
 }
