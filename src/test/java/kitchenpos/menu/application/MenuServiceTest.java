@@ -1,7 +1,5 @@
 package kitchenpos.menu.application;
 
-import kitchenpos.common.domain.Name;
-import kitchenpos.common.domain.Price;
 import kitchenpos.menu.domain.*;
 import kitchenpos.menu.dto.MenuProductRequest;
 import kitchenpos.menu.dto.MenuRequest;
@@ -21,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -61,19 +58,19 @@ class MenuServiceTest {
     @BeforeEach
     void setUp() {
         Long menuId1 = 1L;
-        product1 = Product.of(1L, Name.from("음식1"), Price.from(BigDecimal.ONE));
-        product2 = Product.of(2L, Name.from("음식2"), Price.from(BigDecimal.ONE));
-        menuGroup = MenuGroup.of(1L, Name.from("메뉴그룹1"));
-        menu1 = Menu.of(menuId1, Name.from("메뉴1"), Price.from(BigDecimal.valueOf(2L)), menuGroup,
-                        MenuProducts.from(Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
-                                                        MenuProduct.of(2L, menu1, product2, 1))));
+        product1 = Product.of(1L, "음식1", BigDecimal.ONE);
+        product2 = Product.of(2L, "음식2", BigDecimal.ONE);
+        menuGroup = MenuGroup.of(1L, "메뉴그룹1");
+        menu1 = Menu.of(menuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup,
+                        Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
+                                      MenuProduct.of(2L, menu1, product2, 1)));
 
         Long menuId2 = 2L;
-        Product product3 = Product.of(3L, Name.from("음식1"), Price.from(BigDecimal.ONE));
-        Product product4 = Product.of(4L, Name.from("음식2"), Price.from(BigDecimal.ONE));
-        menu2 = Menu.of(menuId2, Name.from("메뉴2"), Price.from(BigDecimal.valueOf(2L)), menuGroup,
-                        MenuProducts.from(Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
-                                                        MenuProduct.of(4L, menu2, product4, 1))));
+        Product product3 = Product.of(3L, "음식1", BigDecimal.ONE);
+        Product product4 = Product.of(4L, "음식2", BigDecimal.ONE);
+        menu2 = Menu.of(menuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup,
+                        Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
+                                      MenuProduct.of(4L, menu2, product4, 1)));
     }
 
     @DisplayName("메뉴를 등록하고 등록한 메뉴와 메뉴 상품을 반환한다.")

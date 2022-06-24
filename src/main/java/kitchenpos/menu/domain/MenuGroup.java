@@ -17,16 +17,16 @@ public class MenuGroup {
     protected MenuGroup() {
     }
 
-    private MenuGroup(Long id, Name name) {
+    private MenuGroup(Long id, String name) {
         this.id = id;
-        this.name = name;
+        this.name = Name.from(name);
     }
 
-    public static MenuGroup of(Name name) {
+    public static MenuGroup of(String name) {
         return of(null, name);
     }
 
-    public static MenuGroup of(Long id, Name name) {
+    public static MenuGroup of(Long id, String name) {
         return new MenuGroup(id, name);
     }
 

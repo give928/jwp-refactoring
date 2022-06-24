@@ -22,17 +22,17 @@ public class Product {
     protected Product() {
     }
 
-    private Product(Long id, Name name, Price price) {
+    private Product(Long id, String name, BigDecimal price) {
         this.id = id;
-        this.name = name;
-        this.price = price;
+        this.name = Name.from(name);
+        this.price = Price.from(price);
     }
 
-    public static Product of(Name name, Price price) {
+    public static Product of(String name, BigDecimal price) {
         return of(null, name, price);
     }
 
-    public static Product of(Long id, Name name, Price price) {
+    public static Product of(Long id, String name, BigDecimal price) {
         return new Product(id, name, price);
     }
 

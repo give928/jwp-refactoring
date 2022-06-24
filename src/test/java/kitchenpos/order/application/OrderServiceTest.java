@@ -1,11 +1,12 @@
 package kitchenpos.order.application;
 
-import kitchenpos.common.domain.Name;
-import kitchenpos.common.domain.Price;
 import kitchenpos.menu.domain.Menu;
-import kitchenpos.menu.domain.MenuProducts;
+import kitchenpos.menu.domain.MenuGroup;
 import kitchenpos.menu.domain.MenuRepository;
-import kitchenpos.order.domain.*;
+import kitchenpos.order.domain.Order;
+import kitchenpos.order.domain.OrderLineItem;
+import kitchenpos.order.domain.OrderRepository;
+import kitchenpos.order.domain.OrderStatus;
 import kitchenpos.order.dto.OrderLineItemRequest;
 import kitchenpos.order.dto.OrderRequest;
 import kitchenpos.order.dto.OrderResponse;
@@ -57,8 +58,9 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        Menu menu1 = Menu.of(1L, Name.from("메뉴1"), Price.from(BigDecimal.ZERO), null, MenuProducts.from(Collections.emptyList()));
-        Menu menu2 = Menu.of(2L, Name.from("메뉴2"), Price.from(BigDecimal.ZERO), null, MenuProducts.from(Collections.emptyList()));
+        MenuGroup menuGroup = MenuGroup.of(1L, "메뉴그룹1");
+        Menu menu1 = Menu.of(1L, "메뉴1", BigDecimal.ZERO, menuGroup, Collections.emptyList());
+        Menu menu2 = Menu.of(2L, "메뉴2", BigDecimal.ZERO, menuGroup, Collections.emptyList());
 
         OrderTable orderTable1 = OrderTable.of(1L, null, 1, false);
         OrderTable orderTable2 = OrderTable.of(2L, null, 1, false);
@@ -66,12 +68,12 @@ class OrderServiceTest {
         Long orderId1 = 1L;
         OrderLineItem orderLineItem1 = OrderLineItem.of(1L, order1, menu1, 1);
         OrderLineItem orderLineItem2 = OrderLineItem.of(2L, order1, menu2, 2);
-        order1 = Order.of(orderId1, orderTable1, OrderLineItems.from(Arrays.asList(orderLineItem1, orderLineItem2)));
+        order1 = Order.of(orderId1, orderTable1, Arrays.asList(orderLineItem1, orderLineItem2));
 
         Long orderId2 = 2L;
         OrderLineItem orderLineItem3 = OrderLineItem.of(3L, order2, menu1, 3);
         OrderLineItem orderLineItem4 = OrderLineItem.of(4L, order2, menu2, 4);
-        order2 = Order.of(orderId2, orderTable2, OrderLineItems.from(Arrays.asList(orderLineItem3, orderLineItem4)));
+        order2 = Order.of(orderId2, orderTable2, Arrays.asList(orderLineItem3, orderLineItem4));
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")

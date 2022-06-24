@@ -35,7 +35,7 @@ public class OrderService {
                 .orElseThrow(IllegalArgumentException::new);
         List<OrderLineItem> orderLineItems = mapOrderLineItems(orderRequest);
 
-        return OrderResponse.from(orderRepository.save(Order.of(orderTable, OrderLineItems.from(orderLineItems))));
+        return OrderResponse.from(orderRepository.save(Order.of(orderTable, orderLineItems)));
     }
 
     private List<OrderLineItem> mapOrderLineItems(OrderRequest orderRequest) {

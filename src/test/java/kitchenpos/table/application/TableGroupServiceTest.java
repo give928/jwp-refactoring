@@ -3,6 +3,7 @@ package kitchenpos.table.application;
 import kitchenpos.common.domain.Name;
 import kitchenpos.common.domain.Price;
 import kitchenpos.menu.domain.Menu;
+import kitchenpos.menu.domain.MenuGroup;
 import kitchenpos.menu.domain.MenuProducts;
 import kitchenpos.order.domain.Order;
 import kitchenpos.order.domain.OrderLineItem;
@@ -64,7 +65,7 @@ class TableGroupServiceTest {
     void setUp() {
         orderTable1 = OrderTable.of(1L, tableGroup1, 0, true);
         orderTable2 = OrderTable.of(2L, tableGroup1, 0, true);
-        tableGroup1 = TableGroup.of(1L, OrderTables.from(Arrays.asList(orderTable1, orderTable2)));
+        tableGroup1 = TableGroup.of(1L, Arrays.asList(orderTable1, orderTable2));
     }
 
     @DisplayName("주문 테이블을 단체 지정을 등록하고 등록한 단체 지정을 반환한다.")
@@ -156,9 +157,10 @@ class TableGroupServiceTest {
         // given
         OrderLineItem orderLineItem =
                 OrderLineItem.of(1L, null,
-                                 Menu.of(1L, Name.from("음식1"), Price.from(BigDecimal.ZERO), null,
-                                         MenuProducts.from(Collections.emptyList())), 1);
-        orderTable1.addOrder(Order.of(orderTable1, OrderLineItems.from(Collections.singletonList(orderLineItem))));
+                                 Menu.of(1L, "음식1", BigDecimal.ZERO,
+                                         MenuGroup.of(1L, "메뉴그룹1"),
+                                         Collections.emptyList()), 1);
+        orderTable1.addOrder(Order.of(orderTable1, Collections.singletonList(orderLineItem)));
 
         given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));
 

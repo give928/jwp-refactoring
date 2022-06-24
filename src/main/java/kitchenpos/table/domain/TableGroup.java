@@ -5,8 +5,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
@@ -25,16 +27,18 @@ public class TableGroup {
     public TableGroup() {
     }
 
-    private TableGroup(Long id, OrderTables orderTables) {
+    private TableGroup(Long id, List<OrderTable> orderTables) {
         this.id = id;
-        this.orderTables = orderTables.changeTableGroup(this);
+        this.orderTables = OrderTables.from(Optional.ofNullable(orderTables)
+                                                    .orElse(new ArrayList<>()))
+                .changeTableGroup(this);
     }
 
-    public static TableGroup of(OrderTables orderTables) {
+    public static TableGroup of(List<OrderTable> orderTables) {
         return of(null, orderTables);
     }
 
-    public static TableGroup of(Long id, OrderTables orderTables) {
+    public static TableGroup of(Long id, List<OrderTable> orderTables) {
         return new TableGroup(id, orderTables);
     }
 

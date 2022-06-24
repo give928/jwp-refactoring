@@ -5,8 +5,10 @@ import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 @Table(name = "orders")
@@ -34,25 +36,27 @@ public class Order {
     }
 
     private Order(Long id, OrderTable orderTable, OrderStatus orderStatus, LocalDateTime orderedTime,
-                  OrderLineItems orderLineItems) {
+                  List<OrderLineItem> orderLineItems) {
         validateOrderTable(orderTable);
         this.id = id;
         this.orderTable = orderTable;
         this.orderStatus = orderStatus;
         this.orderedTime = orderedTime;
-        this.orderLineItems = orderLineItems.initOrder(this);
+        this.orderLineItems = OrderLineItems.from(Optional.ofNullable(orderLineItems)
+                                                          .orElse(new ArrayList<>()))
+                .initOrder(this);
     }
 
-    public static Order of(OrderTable orderTable, OrderLineItems orderLineItems) {
+    public static Order of(OrderTable orderTable, List<OrderLineItem> orderLineItems) {
         return of(null, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
     }
 
-    public static Order of(Long id, OrderTable orderTable, OrderLineItems orderLineItems) {
+    public static Order of(Long id, OrderTable orderTable, List<OrderLineItem> orderLineItems) {
         return of(id, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
     }
 
     public static Order of(Long id, OrderTable orderTable, OrderStatus orderStatus, LocalDateTime orderedTime,
-                           OrderLineItems orderLineItems) {
+                           List<OrderLineItem> orderLineItems) {
         return new Order(id, orderTable, orderStatus, orderedTime, orderLineItems);
     }
 

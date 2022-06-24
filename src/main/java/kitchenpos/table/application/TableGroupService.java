@@ -24,7 +24,7 @@ public class TableGroupService {
     @Transactional
     public TableGroupResponse create(final TableGroupRequest tableGroupRequest) {
         final List<OrderTable> savedOrderTables = findOrderTables(tableGroupRequest.getOrderTables());
-        return TableGroupResponse.from(tableGroupRepository.save(TableGroup.of(OrderTables.from(savedOrderTables))));
+        return TableGroupResponse.from(tableGroupRepository.save(TableGroup.of(savedOrderTables)));
     }
 
     private List<OrderTable> findOrderTables(List<OrderTableGroupRequest> orderTableGroupRequests) {

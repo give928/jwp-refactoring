@@ -6,6 +6,7 @@ import kitchenpos.AcceptanceTest;
 import kitchenpos.order.acceptance.OrderAcceptanceTest;
 import kitchenpos.order.domain.OrderStatus;
 import kitchenpos.order.dto.OrderResponse;
+import kitchenpos.table.domain.NumberOfGuests;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.dto.*;
 import kitchenpos.utils.RestUtils;

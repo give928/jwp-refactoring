@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
 import kitchenpos.table.application.TableGroupService;
 import kitchenpos.table.domain.OrderTable;
-import kitchenpos.table.domain.OrderTables;
 import kitchenpos.table.domain.TableGroup;
 import kitchenpos.table.dto.OrderTableGroupRequest;
 import kitchenpos.table.dto.TableGroupRequest;
@@ -46,8 +45,9 @@ class TableGroupRestControllerTest {
     @Test
     void create() throws Exception {
         // given
-        TableGroup tableGroup = TableGroup.of(1L, OrderTables.from(Arrays.asList(OrderTable.of(1L, null, 0, true),
-                                                                                 OrderTable.of(2L, null, 0, true))));
+        TableGroup tableGroup = TableGroup.of(1L,
+                                              Arrays.asList(OrderTable.of(1L, null, 0, true),
+                                                            OrderTable.of(2L, null, 0, true)));
         TableGroupRequest tableGroupRequest =
                 new TableGroupRequest(tableGroup.getOrderTables().stream()
                                               .map(orderTable -> new OrderTableGroupRequest(orderTable.getId()))

@@ -5,8 +5,10 @@ import kitchenpos.common.domain.Price;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 public class Menu {
@@ -30,20 +32,26 @@ public class Menu {
     protected Menu() {
     }
 
-    private Menu(Long id, Name name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
+    private Menu(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
         this.id = id;
-        this.name = name;
-        this.price = price;
-        this.menuGroup = menuGroup;
-        this.menuProducts = menuProducts.initMenu(this);
+        this.name = Name.from(name);
+        this.price = Price.from(price);
+        this.menuGroup = Objects.requireNonNull(menuGroup);
+        this.menuProducts = MenuProducts.from(Optional.ofNullable(menuProducts)
+                                                      .orElse(new ArrayList<>()))
+                .initMenu(this);
     }
 
-    public static Menu of(Name name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
+    public static Menu of(String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
         return of(null, name, price, menuGroup, menuProducts);
     }
 
-    public static Menu of(Long id, Name name, Price price, MenuGroup menuGroup, MenuProducts menuProducts) {
+    public static Menu of(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
         return new Menu(id, name, price, menuGroup, menuProducts);
+    }
+
+    public void initMenuProducts(MenuProducts menuProducts) {
+        this.menuProducts = menuProducts;
     }
 
     public Long getId() {

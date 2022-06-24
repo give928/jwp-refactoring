@@ -17,7 +17,7 @@ public class MenuProducts {
     }
 
     private MenuProducts(List<MenuProduct> values) {
-        this.values = values;
+        this.values = Objects.requireNonNull(values);
     }
 
     public static MenuProducts from(List<MenuProduct> values) {
@@ -27,6 +27,7 @@ public class MenuProducts {
     public MenuProducts initMenu(Menu menu) {
         validatePrice(menu.getPrice());
         values.forEach(menuProduct -> menuProduct.initMenu(menu));
+        menu.initMenuProducts(this);
         return this;
     }
 

@@ -1,10 +1,10 @@
 package kitchenpos.table.application;
 
-import kitchenpos.common.domain.Name;
-import kitchenpos.common.domain.Price;
 import kitchenpos.menu.domain.Menu;
-import kitchenpos.menu.domain.MenuProducts;
-import kitchenpos.order.domain.*;
+import kitchenpos.menu.domain.MenuGroup;
+import kitchenpos.order.domain.Order;
+import kitchenpos.order.domain.OrderLineItem;
+import kitchenpos.order.domain.OrderStatus;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.domain.OrderTableRepository;
 import kitchenpos.table.domain.TableGroup;
@@ -128,14 +128,15 @@ class TableServiceTest {
         OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(true);
         OrderLineItem orderLineItem =
                 OrderLineItem.of(1L, null,
-                                 Menu.of(1L, Name.from("음식1"), Price.from(BigDecimal.ZERO), null,
-                                         MenuProducts.from(Collections.emptyList())), 1);
+                                 Menu.of(1L, "음식1", BigDecimal.ZERO,
+                                         MenuGroup.of(1L, "메뉴그룹1"),
+                                         Collections.emptyList()), 1);
         OrderTable orderTable =
                 OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
                               orderTable1.getNumberOfGuests(), false,
-                              Orders.from(Collections.singletonList(
+                              Collections.singletonList(
                                       Order.of(1L, null, OrderStatus.COOKING, LocalDateTime.now(),
-                                               OrderLineItems.from(Collections.singletonList(orderLineItem))))));
+                                               Collections.singletonList(orderLineItem))));
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
 

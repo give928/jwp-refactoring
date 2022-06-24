@@ -1,7 +1,5 @@
 package kitchenpos.menu.application;
 
-import kitchenpos.common.domain.Name;
-import kitchenpos.common.domain.Price;
 import kitchenpos.menu.domain.*;
 import kitchenpos.menu.dto.MenuProductRequest;
 import kitchenpos.menu.dto.MenuRequest;
@@ -34,7 +32,7 @@ public class MenuService {
                 .orElseThrow(IllegalArgumentException::new);
         List<MenuProduct> menuProducts = mapMenuProducts(menuRequest.getMenuProducts());
 
-        Menu menu = Menu.of(Name.from(menuRequest.getName()), Price.from(menuRequest.getPrice()), menuGroup, MenuProducts.from(menuProducts));
+        Menu menu = Menu.of(menuRequest.getName(), menuRequest.getPrice(), menuGroup, menuProducts);
         return MenuResponse.from(menuRepository.save(menu));
     }
 

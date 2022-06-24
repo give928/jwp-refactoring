@@ -5,7 +5,9 @@ import kitchenpos.order.domain.Orders;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 public class OrderTable {
@@ -28,12 +30,13 @@ public class OrderTable {
     protected OrderTable() {
     }
 
-    private OrderTable(Long id, TableGroup tableGroup, NumberOfGuests numberOfGuests, boolean empty, Orders orders) {
+    private OrderTable(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, List<Order> orders) {
         this.id = id;
         this.tableGroup = tableGroup;
-        this.numberOfGuests = numberOfGuests;
+        this.numberOfGuests = NumberOfGuests.from(numberOfGuests);
         this.empty = empty;
-        this.orders = orders;
+        this.orders = Orders.from(Optional.ofNullable(orders)
+                                          .orElse(new ArrayList<>()));
     }
 
     public static OrderTable of(int numberOfGuests, boolean empty) {
@@ -41,11 +44,11 @@ public class OrderTable {
     }
 
     public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty) {
-        return of(id, tableGroup, numberOfGuests, empty, Orders.from(new ArrayList<>()));
+        return of(id, tableGroup, numberOfGuests, empty, new ArrayList<>());
     }
 
-    public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, Orders orders) {
-        return new OrderTable(id, tableGroup, NumberOfGuests.from(numberOfGuests), empty, orders);
+    public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, List<Order> orders) {
+        return new OrderTable(id, tableGroup, numberOfGuests, empty, orders);
     }
 
     public Long getId() {

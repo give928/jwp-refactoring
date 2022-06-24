@@ -3,6 +3,7 @@ package kitchenpos.table.ui;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
 import kitchenpos.table.application.TableService;
+import kitchenpos.table.domain.NumberOfGuests;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.dto.OrderTableChangeEmptyRequest;
 import kitchenpos.table.dto.OrderTableChangeNumberOfGuestRequest;

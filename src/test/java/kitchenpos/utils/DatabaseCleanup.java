@@ -48,7 +48,6 @@ public class DatabaseCleanup implements InitializingBean {
     }
 
     private String getTableName(EntityType<?> e) {
-        System.out.println("e.getIdType() = " + e.getId(e.getIdType().getJavaType()).getName());
         if (e.getJavaType().getAnnotation(Table.class) != null && e.getJavaType().getAnnotation(Table.class).name() != null) {
             return e.getJavaType().getAnnotation(Table.class).name();
         }
