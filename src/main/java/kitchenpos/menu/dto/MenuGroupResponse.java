@@ -9,7 +9,7 @@ public class MenuGroupResponse {
     protected MenuGroupResponse() {
     }
 
-    private MenuGroupResponse(Long id, String name) {
+    public MenuGroupResponse(Long id, String name) {
         this.id = id;
         this.name = name;
     }

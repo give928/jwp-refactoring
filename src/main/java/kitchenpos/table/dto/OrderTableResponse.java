@@ -12,7 +12,7 @@ public class OrderTableResponse {
     protected OrderTableResponse() {
     }
 
-    private OrderTableResponse(Long id, Long tableGroupId, int numberOfGuests, boolean empty) {
+    public OrderTableResponse(Long id, Long tableGroupId, int numberOfGuests, boolean empty) {
         this.id = id;
         this.tableGroupId = tableGroupId;
         this.numberOfGuests = numberOfGuests;

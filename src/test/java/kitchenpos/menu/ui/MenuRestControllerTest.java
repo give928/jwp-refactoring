@@ -3,13 +3,10 @@ package kitchenpos.menu.ui;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.annotation.MockMvcEncodingConfiguration;
 import kitchenpos.menu.application.MenuService;
-import kitchenpos.menu.domain.Menu;
-import kitchenpos.menu.domain.MenuGroup;
-import kitchenpos.menu.domain.MenuProduct;
 import kitchenpos.menu.dto.MenuProductRequest;
+import kitchenpos.menu.dto.MenuProductResponse;
 import kitchenpos.menu.dto.MenuRequest;
 import kitchenpos.menu.dto.MenuResponse;
-import kitchenpos.product.domain.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,35 +43,28 @@ class MenuRestControllerTest {
     @MockBean
     private MenuService menuService;
 
-    private Menu menu1;
-    private Menu menu2;
+    private MenuResponse menuResponse1;
+    private MenuResponse menuResponse2;
 
     @BeforeEach
     void setUp() {
-        Long savedMenuId1 = 1L;
-        Product product1 = Product.of(1L, "음식1", BigDecimal.ONE);
-        Product product2 = Product.of(2L, "음식2", BigDecimal.ONE);
-        MenuGroup menuGroup = MenuGroup.of(1L, "메뉴그룹1");
-        menu1 = Menu.of(savedMenuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup,
-                        Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
-                                      MenuProduct.of(2L, menu1, product2, 1)));
-
-        Long savedMenuId2 = 2L;
-        Product product3 = Product.of(3L, "음식1", BigDecimal.ONE);
-        Product product4 = Product.of(4L, "음식2", BigDecimal.ONE);
-        menu2 = Menu.of(savedMenuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup,
-                        Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
-                                      MenuProduct.of(4L, menu2, product4, 1)));
+        Long menuId1 = 1L;
+        menuResponse1 = new MenuResponse(menuId1, "메뉴1", BigDecimal.valueOf(2), 1L,
+                                         Arrays.asList(new MenuProductResponse(1L, menuId1, 1L, 1),
+                                                       new MenuProductResponse(2L, menuId1, 2L, 1)));
+        Long menuId2 = 2L;
+        menuResponse2 = new MenuResponse(menuId2, "메뉴2", BigDecimal.valueOf(2), 1L,
+                                         Arrays.asList(new MenuProductResponse(3L, menuId2, 3L, 1),
+                                                       new MenuProductResponse(4L, menuId2, 4L, 1)));
     }
 
     @DisplayName("메뉴를 등록하고 등록한 메뉴와 메뉴 상품을 반환한다.")
     @Test
     void create() throws Exception {
         // given
-        MenuRequest menuRequest = createMenuRequestBy(menu1);
-        MenuResponse menuResponse = MenuResponse.from(menu1);
+        MenuRequest menuRequest = createMenuRequestBy(menuResponse1);
 
-        given(menuService.create(any())).willReturn(menuResponse);
+        given(menuService.create(any())).willReturn(menuResponse1);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -84,15 +74,14 @@ class MenuRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(menuResponse)));
+                .andExpect(content().string(objectMapper.writeValueAsString(menuResponse1)));
     }
 
     @DisplayName("메뉴와 메뉴 상품의 전체 목록을 조회한다.")
     @Test
     void list() throws Exception {
         // given
-        List<MenuResponse> menuResponses = Arrays.asList(MenuResponse.from(menu1),
-                                                         MenuResponse.from(menu2));
+        List<MenuResponse> menuResponses = Arrays.asList(menuResponse1, menuResponse2);
 
         given(menuService.list()).willReturn(menuResponses);
 
@@ -105,11 +94,11 @@ class MenuRestControllerTest {
                 .andExpect(content().string(objectMapper.writeValueAsString(menuResponses)));
     }
 
-    private MenuRequest createMenuRequestBy(Menu menu) {
-        return new MenuRequest(menu.getName(), menu.getPrice(), menu.getMenuGroup().getId(),
-                               menu.getMenuProducts().stream()
+    private MenuRequest createMenuRequestBy(MenuResponse menuResponse) {
+        return new MenuRequest(menuResponse.getName(), menuResponse.getPrice(), menuResponse.getMenuGroupId(),
+                               menuResponse.getMenuProducts().stream()
                                        .map(menuProduct -> new MenuProductRequest(
-                                               menuProduct.getProduct().getId(),
+                                               menuProduct.getProductId(),
                                                menuProduct.getQuantity()))
                                        .collect(Collectors.toList()));
     }

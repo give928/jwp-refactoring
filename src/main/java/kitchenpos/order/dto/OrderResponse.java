@@ -16,7 +16,7 @@ public class OrderResponse {
     protected OrderResponse() {
     }
 
-    private OrderResponse(Long id, Long orderTableId, String orderStatus, LocalDateTime orderedTime,
+    public OrderResponse(Long id, Long orderTableId, String orderStatus, LocalDateTime orderedTime,
                           List<OrderLineItemResponse> orderLineItems) {
         this.id = id;
         this.orderTableId = orderTableId;
