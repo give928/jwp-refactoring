@@ -35,7 +35,7 @@ class OrderTableTest {
         TableGroup tableGroup = new TableGroup();
 
         // when
-        orderTable.changeTableGroup(orderTableValidator, tableGroup);
+        orderTable.group(orderTableValidator, tableGroup);
 
         // then
         assertThat(orderTable.isEmpty()).isFalse();
@@ -50,7 +50,7 @@ class OrderTableTest {
         TableGroup tableGroup = new TableGroup();
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeTableGroup(orderTableValidator, tableGroup);
+        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.group(orderTableValidator, tableGroup);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
@@ -63,29 +63,10 @@ class OrderTableTest {
         OrderTable orderTable = aTableGroup1().getOrderTables().get(0);
 
         // when
-        orderTable.clearTableGroup(orderTableValidator);
+        orderTable.ungroup();
 
         // then
         assertThat(orderTable.getTableGroup()).isNull();
-    }
-
-    @DisplayName("조리중, 식사중인 경우 단체 지정을 해제할 수 없다.")
-    @Test
-    void cannotChangeEmptyIfInvalidOrderStatus() {
-        // given
-        OrderTable orderTable = aTableGroup1().getOrderTables().get(0);
-        TableGroupValidator tableGroupValidator = new TableGroupValidator(null) {
-            @Override
-            public boolean clearTableGroup(OrderTable orderTable) {
-                throw new IllegalArgumentException();
-            }
-        };
-
-        // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.clearTableGroup(tableGroupValidator);
-
-        // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
     }
 
     @DisplayName("빈 테이블 여부를 변경한다.")

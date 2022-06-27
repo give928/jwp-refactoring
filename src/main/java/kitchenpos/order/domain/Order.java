@@ -104,4 +104,54 @@ public class Order {
     public int hashCode() {
         return Objects.hash(getId());
     }
+
+    public static Order.OrderBuilder builder() {
+        return new Order.OrderBuilder();
+    }
+
+    public static class OrderBuilder {
+        private Long id;
+        private Long orderTableId;
+        private OrderStatus orderStatus;
+        private LocalDateTime orderedTime;
+        private List<OrderLineItem> orderLineItems;
+        private OrderValidator orderValidator;
+
+        OrderBuilder() {
+        }
+
+        public Order.OrderBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Order.OrderBuilder orderTableId(Long orderTableId) {
+            this.orderTableId = orderTableId;
+            return this;
+        }
+
+        public Order.OrderBuilder orderStatus(OrderStatus orderStatus) {
+            this.orderStatus = orderStatus;
+            return this;
+        }
+
+        public Order.OrderBuilder orderedTime(LocalDateTime orderedTime) {
+            this.orderedTime = orderedTime;
+            return this;
+        }
+
+        public Order.OrderBuilder orderLineItems(List<OrderLineItem> orderLineItems) {
+            this.orderLineItems = orderLineItems;
+            return this;
+        }
+
+        public Order.OrderBuilder orderValidator(OrderValidator orderValidator) {
+            this.orderValidator = orderValidator;
+            return this;
+        }
+
+        public Order build() {
+            return new Order(this.id, this.orderTableId, this.orderStatus, this.orderedTime, this.orderLineItems, this.orderValidator);
+        }
+    }
 }

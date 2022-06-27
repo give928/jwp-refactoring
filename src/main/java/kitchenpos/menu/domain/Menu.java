@@ -91,4 +91,54 @@ public class Menu {
     public int hashCode() {
         return Objects.hash(getId());
     }
+
+    public static Menu.MenuBuilder builder() {
+        return new Menu.MenuBuilder();
+    }
+
+    public static class MenuBuilder {
+        private Long id;
+        private String name;
+        private BigDecimal price;
+        private MenuGroup menuGroup;
+        private List<MenuProduct> menuProducts;
+        private MenuValidator menuValidator;
+
+        MenuBuilder() {
+        }
+
+        public Menu.MenuBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Menu.MenuBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Menu.MenuBuilder price(BigDecimal price) {
+            this.price = price;
+            return this;
+        }
+
+        public Menu.MenuBuilder menuGroup(MenuGroup menuGroup) {
+            this.menuGroup = menuGroup;
+            return this;
+        }
+
+        public Menu.MenuBuilder menuProducts(List<MenuProduct> menuProducts) {
+            this.menuProducts = menuProducts;
+            return this;
+        }
+
+        public Menu.MenuBuilder menuValidator(MenuValidator menuValidator) {
+            this.menuValidator = menuValidator;
+            return this;
+        }
+
+        public Menu build() {
+            return new Menu(this.id, this.name, this.price, this.menuGroup, this.menuProducts, this.menuValidator);
+        }
+    }
 }

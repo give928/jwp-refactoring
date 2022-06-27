@@ -1,10 +1,12 @@
 package kitchenpos.table.domain;
 
+import org.springframework.data.domain.AbstractAggregateRoot;
+
 import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
-public class OrderTable {
+public class OrderTable extends AbstractAggregateRoot<OrderTable> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -52,12 +54,11 @@ public class OrderTable {
         return empty;
     }
 
-    public void clearTableGroup(TableValidator tableValidator) {
-        tableValidator.clearTableGroup(this);
-        this.tableGroup = null;
+    public void ungroup() {
+        tableGroup = null;
     }
 
-    public void changeTableGroup(TableValidator tableValidator, TableGroup tableGroup) {
+    public void group(TableValidator tableValidator, TableGroup tableGroup) {
         tableValidator.changeTableGroup(this);
         changeEmpty(tableValidator, Boolean.FALSE);
         this.tableGroup = tableGroup;
@@ -71,11 +72,8 @@ public class OrderTable {
 
     public OrderTable changeEmpty(TableValidator tableValidator, boolean empty) {
         tableValidator.changeEmpty(this);
-        return changeEmpty(empty);
-    }
-
-    private OrderTable changeEmpty(boolean empty) {
         this.empty = empty;
+        registerEvent(new OrderTableEmptyChangedEvent(id));
         return this;
     }
 

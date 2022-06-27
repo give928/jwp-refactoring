@@ -56,36 +56,6 @@ class TableGroupValidatorTest {
         assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
     }
 
-    @DisplayName("주문 테이블의 단체 지정 해제 유효성을 확인한다.")
-    @Test
-    void clearTableGroup() {
-        // given
-        OrderTable orderTable = aTableGroup1().getOrderTables().get(0);
-
-        given(orderTableValidator.clearTableGroup(any())).willReturn(true);
-
-        // when
-        boolean valid = tableGroupValidator.clearTableGroup(orderTable);
-
-        // then
-        assertThat(valid).isTrue();
-    }
-
-    @DisplayName("조리중, 식사중인 경우 단체 지정 해제 유효성 확인이 실패한다.")
-    @Test
-    void cannotClearTableGroup() {
-        // given
-        OrderTable orderTable = aTableGroup1().getOrderTables().get(0);
-
-        given(orderTableValidator.clearTableGroup(orderTable)).willThrow(IllegalArgumentException.class);
-
-        // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupValidator.clearTableGroup(orderTable);
-
-        // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
-    }
-
     @DisplayName("빈 테이블 여부를 변경한다.")
     @Test
     void changeEmpty() {

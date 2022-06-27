@@ -41,7 +41,9 @@ public class TableService {
         final OrderTable savedOrderTable = orderTableRepository.findById(orderTableId)
                 .orElseThrow(IllegalArgumentException::new);
 
-        return OrderTableResponse.from(savedOrderTable.changeEmpty(orderTableValidator, orderTableChangeEmptyRequest.isEmpty()));
+        return OrderTableResponse.from(
+                orderTableRepository.save(
+                        savedOrderTable.changeEmpty(orderTableValidator, orderTableChangeEmptyRequest.isEmpty())));
     }
 
     @Transactional
@@ -50,6 +52,7 @@ public class TableService {
         final OrderTable savedOrderTable = orderTableRepository.findById(orderTableId)
                 .orElseThrow(IllegalArgumentException::new);
 
-        return OrderTableResponse.from(savedOrderTable.changeNumberOfGuests(orderTableValidator, orderTableChangeNumberOfGuestRequest.getNumberOfGuests()));
+        return OrderTableResponse.from(
+                savedOrderTable.changeNumberOfGuests(orderTableValidator, orderTableChangeNumberOfGuestRequest.getNumberOfGuests()));
     }
 }

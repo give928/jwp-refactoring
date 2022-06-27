@@ -4,21 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 import static kitchenpos.Fixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TableGroupTest {
-    private TableGroupValidator tableGroupValidator;
-
-    @BeforeEach
-    void setUp() {
-        tableGroupValidator = aTableGroupValidator();
-    }
-
     @DisplayName("단체 지정을 생성한다.")
     @Test
     void create() {
@@ -38,7 +29,7 @@ class TableGroupTest {
         TableGroup tableGroup = aTableGroup1();
 
         // when
-        tableGroup.ungroup(tableGroupValidator);
+        tableGroup.ungroup();
 
         // then
         assertThat(tableGroup.getOrderTables()).hasSize(tableGroup.getOrderTables().size())

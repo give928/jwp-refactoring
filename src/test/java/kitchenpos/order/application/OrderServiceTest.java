@@ -24,6 +24,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static kitchenpos.Fixtures.aOrder1;
+import static kitchenpos.Fixtures.aOrder2;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,15 +50,8 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        Long orderId1 = 1L;
-        OrderLineItem orderLineItem1 = OrderLineItem.of(1L, order1, 1L, 1);
-        OrderLineItem orderLineItem2 = OrderLineItem.of(2L, order1, 2L, 2);
-        order1 = Order.of(orderId1, 1L, Arrays.asList(orderLineItem1, orderLineItem2), orderValidator);
-
-        Long orderId2 = 2L;
-        OrderLineItem orderLineItem3 = OrderLineItem.of(3L, order2, 1L, 3);
-        OrderLineItem orderLineItem4 = OrderLineItem.of(4L, order2, 2L, 4);
-        order2 = Order.of(orderId2, 2L, Arrays.asList(orderLineItem3, orderLineItem4), orderValidator);
+        order1 = aOrder1().build();
+        order2 = aOrder2().build();
     }
 
     @DisplayName("주문을 등록하고 등록한 주문과 주문 항목을 반환한다.")
@@ -66,6 +61,7 @@ class OrderServiceTest {
         OrderRequest orderRequest = createOrderRequestBy(order1);
 
         given(orderRepository.save(any())).willReturn(order1);
+        given(orderValidator.create(any())).willReturn(true);
 
         // when
         OrderResponse orderResponse = orderService.create(orderRequest);

@@ -16,10 +16,10 @@ class OrderTest {
     @Test
     void create() {
         // when
-        Order order = aOrder1();
+        Order order = aOrder1().build();
 
         // then
-        assertThat(order).isEqualTo(aOrder1());
+        assertThat(order.getId()).isEqualTo(1L);
     }
 
     @DisplayName("주문 항목을 1개 이상 입력해야 한다.")
@@ -86,7 +86,7 @@ class OrderTest {
     @Test
     void changeOrderStatus() {
         // given
-        Order order = aOrder1();
+        Order order = aOrder1().build();
         OrderStatus meal = OrderStatus.MEAL;
         OrderValidator orderValidator = aOrderValidator();
 

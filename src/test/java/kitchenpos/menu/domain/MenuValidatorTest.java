@@ -41,7 +41,7 @@ class MenuValidatorTest {
         product1 = aProduct1();
         product2 = aProduct2();
         productIds = Arrays.asList(product1.getId(), product2.getId());
-        menu = aMenu1();
+        menu = aMenu1().build();
     }
 
     @DisplayName("메뉴의 유효성을 확인한다.")

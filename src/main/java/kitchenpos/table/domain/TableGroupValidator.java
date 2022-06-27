@@ -31,11 +31,6 @@ public class TableGroupValidator implements TableValidator {
     }
 
     @Override
-    public boolean clearTableGroup(OrderTable orderTable) {
-        return orderTableValidator.clearTableGroup(orderTable);
-    }
-
-    @Override
     public boolean changeEmpty(OrderTable orderTable) {
         return orderTableValidator.changeEmpty(orderTable);
     }

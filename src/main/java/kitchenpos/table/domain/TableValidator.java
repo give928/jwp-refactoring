@@ -12,7 +12,5 @@ public interface TableValidator {
         }
     }
 
-    boolean clearTableGroup(OrderTable orderTable);
-
     boolean changeEmpty(OrderTable orderTable);
 }

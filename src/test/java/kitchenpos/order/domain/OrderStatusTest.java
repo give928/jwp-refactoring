@@ -10,8 +10,6 @@ class OrderStatusTest {
     @DisplayName("조리중이거나 식사인지 주문 상태를 확인한다.")
     @Test
     void isCookingOrMeal() {
-        // given
-
         // when
         boolean cooking = OrderStatus.COOKING.isCookingOrMeal();
         boolean meal = OrderStatus.MEAL.isCookingOrMeal();

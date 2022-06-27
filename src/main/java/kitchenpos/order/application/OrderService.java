@@ -25,18 +25,16 @@ public class OrderService {
 
     @Transactional
     public OrderResponse create(final OrderRequest orderRequest) {
-        List<OrderLineItem> orderLineItems = mapOrderLineItems(orderRequest);
-
-        return OrderResponse.from(orderRepository.save(Order.of(orderRequest.getOrderTableId(), orderLineItems, orderValidator)));
+        Order order = Order.of(orderRequest.getOrderTableId(), mapOrderLineItems(orderRequest), orderValidator);
+        return OrderResponse.from(orderRepository.save(order));
     }
 
     private List<OrderLineItem> mapOrderLineItems(OrderRequest orderRequest) {
         return Optional.ofNullable(orderRequest.getOrderLineItems())
                 .orElse(Collections.emptyList())
                 .stream()
-                .map(orderLineItemRequest ->
-                             OrderLineItem.of(orderLineItemRequest.getMenuId(),
-                                              orderLineItemRequest.getQuantity()))
+                .map(orderLineItemRequest -> OrderLineItem.of(orderLineItemRequest.getMenuId(),
+                                                              orderLineItemRequest.getQuantity()))
                 .collect(Collectors.toList());
     }
 
@@ -47,11 +45,9 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse changeOrderStatus(final Long orderId,
-                                           final OrderStatusChangeRequest orderStatusChangeRequest) {
+    public OrderResponse changeOrderStatus(final Long orderId, final OrderStatusChangeRequest orderStatusChangeRequest) {
         final Order savedOrder = orderRepository.findById(orderId)
                 .orElseThrow(IllegalArgumentException::new);
-        return OrderResponse.from(
-                savedOrder.changeOrderStatus(orderValidator, OrderStatus.valueOf(orderStatusChangeRequest.getOrderStatus())));
+        return OrderResponse.from(savedOrder.changeOrderStatus(orderValidator, orderStatusChangeRequest.toOrderStatus()));
     }
 }

@@ -6,6 +6,7 @@ import javax.persistence.OneToMany;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Embeddable
 public class OrderTables {
@@ -24,17 +25,23 @@ public class OrderTables {
         return new OrderTables(values, tableGroupValidator);
     }
 
-    public OrderTables changeTableGroup(TableGroupValidator tableGroupValidator, TableGroup tableGroup) {
-        values.forEach(orderTable -> orderTable.changeTableGroup(tableGroupValidator, tableGroup));
+    public OrderTables group(TableGroupValidator tableGroupValidator, TableGroup tableGroup) {
+        values.forEach(orderTable -> orderTable.group(tableGroupValidator, tableGroup));
         return this;
     }
 
-    public void ungroup(TableGroupValidator tableGroupValidator) {
-        values.forEach(orderTable -> orderTable.clearTableGroup(tableGroupValidator));
+    public void ungroup() {
+        values.forEach(OrderTable::ungroup);
     }
 
     public List<OrderTable> get() {
         return Collections.unmodifiableList(values);
+    }
+
+    public List<Long> getIds() {
+        return values.stream()
+                .map(OrderTable::getId)
+                .collect(Collectors.toList());
     }
 
     @Override

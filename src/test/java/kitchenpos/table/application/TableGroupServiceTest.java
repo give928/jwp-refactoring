@@ -1,6 +1,5 @@
 package kitchenpos.table.application;
 
-import kitchenpos.order.domain.OrderLineItem;
 import kitchenpos.table.domain.*;
 import kitchenpos.table.dto.OrderTableGroupRequest;
 import kitchenpos.table.dto.TableGroupRequest;
@@ -144,20 +143,6 @@ class TableGroupServiceTest {
 
         // then
         assertThat(tableGroup1.getOrderTables()).extracting("tableGroup").containsExactly(null, null);
-    }
-
-    @DisplayName("주문 상태가 조리중이거나 식사인 경우에는 단체 지정을 해제할 수 없다.")
-    @Test
-    void invalidOrderStatus() {
-        // given
-        given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));
-        given(tableGroupValidator.clearTableGroup(any())).willThrow(IllegalArgumentException.class);
-
-        // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.ungroup(tableGroup1.getId());
-
-        // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
     }
 
     private TableGroupRequest createTableGroupRequest(OrderTable... orderTables) {

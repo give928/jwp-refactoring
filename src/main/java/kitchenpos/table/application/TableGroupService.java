@@ -62,6 +62,6 @@ public class TableGroupService {
     public void ungroup(final Long tableGroupId) {
         TableGroup tableGroup = tableGroupRepository.findById(tableGroupId)
                 .orElseThrow(IllegalArgumentException::new);
-        tableGroup.ungroup(tableGroupValidator);
+        tableGroupRepository.save(tableGroup.ungroup());
     }
 }

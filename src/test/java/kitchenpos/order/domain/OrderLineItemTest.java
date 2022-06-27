@@ -12,8 +12,6 @@ class OrderLineItemTest {
     @DisplayName("주문 항목을 생성한다.")
     @Test
     void create() {
-        // given
-
         // when
         OrderLineItem orderLineItem = aOrderLineItem1();
 

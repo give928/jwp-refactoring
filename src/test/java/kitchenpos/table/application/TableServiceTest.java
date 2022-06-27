@@ -92,6 +92,7 @@ class TableServiceTest {
         OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(false);
 
         given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
+        given(orderTableRepository.save(orderTable1)).willReturn(orderTable1);
 
         // when
         OrderTableResponse orderTableResponse =

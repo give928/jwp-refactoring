@@ -1,15 +1,19 @@
 package kitchenpos;
 
+import kitchenpos.menu.domain.Menu.MenuBuilder;
+import kitchenpos.menu.domain.MenuValidator;
 import kitchenpos.menu.domain.*;
-import kitchenpos.order.domain.Order;
-import kitchenpos.order.domain.OrderLineItem;
-import kitchenpos.order.domain.OrderLineItems;
-import kitchenpos.order.domain.OrderValidator;
+import kitchenpos.order.domain.*;
+import kitchenpos.order.domain.Order.OrderBuilder;
 import kitchenpos.product.domain.Product;
+import kitchenpos.table.domain.OrderTableValidator;
+import kitchenpos.table.domain.TableGroupValidator;
 import kitchenpos.table.domain.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 
 public class Fixtures {
     public static Product aProduct1() {
@@ -56,16 +60,34 @@ public class Fixtures {
         return MenuProducts.from(Arrays.asList(aMenuProduct1(), aMenuProduct3()));
     }
 
-    public static Menu aMenu1() {
-        return Menu.of(1L, "메뉴1", BigDecimal.valueOf(3), aMenuGroup1(), aMenuProducts1().get(), aMenuValidator());
+    public static MenuBuilder aMenu1() {
+        return Menu.builder()
+                .id(1L)
+                .name("메뉴1")
+                .price(BigDecimal.valueOf(3))
+                .menuGroup(aMenuGroup1())
+                .menuProducts(aMenuProducts1().get())
+                .menuValidator(aMenuValidator());
     }
 
-    public static Menu aMenu2() {
-        return Menu.of(2L, "메뉴2", BigDecimal.valueOf(5), aMenuGroup1(), aMenuProducts2().get(), aMenuValidator());
+    public static MenuBuilder aMenu2() {
+        return Menu.builder()
+                .id(2L)
+                .name("메뉴2")
+                .price(BigDecimal.valueOf(5))
+                .menuGroup(aMenuGroup1())
+                .menuProducts(aMenuProducts2().get())
+                .menuValidator(aMenuValidator());
     }
 
-    public static Menu aMenu3() {
-        return Menu.of(3L, "메뉴3", BigDecimal.valueOf(4), aMenuGroup1(), aMenuProducts3().get(), aMenuValidator());
+    public static MenuBuilder aMenu3() {
+        return Menu.builder()
+                .id(3L)
+                .name("메뉴3")
+                .price(BigDecimal.valueOf(4))
+                .menuGroup(aMenuGroup1())
+                .menuProducts(aMenuProducts3().get())
+                .menuValidator(aMenuValidator());
     }
 
     public static MenuValidator aMenuValidator() {
@@ -102,26 +124,7 @@ public class Fixtures {
     }
 
     public static OrderTableValidator aOrderTableValidator() {
-        return new OrderTableValidator(null) {
-            @Override
-            public boolean clearTableGroup(OrderTable orderTable) {
-                return true;
-            }
-
-            @Override
-            public boolean changeEmpty(OrderTable orderTable) {
-                return true;
-            }
-        };
-    }
-
-    public static OrderTableValidator aOrderTableValidatorThrownByClearTableGroup() {
-        return new OrderTableValidator(null) {
-            @Override
-            public boolean clearTableGroup(OrderTable orderTable) {
-                throw new IllegalArgumentException();
-            }
-
+        return new OrderTableValidator() {
             @Override
             public boolean changeEmpty(OrderTable orderTable) {
                 return true;
@@ -130,12 +133,7 @@ public class Fixtures {
     }
 
     public static OrderTableValidator aOrderTableValidatorThrownByChangeEmpty() {
-        return new OrderTableValidator(null) {
-            @Override
-            public boolean clearTableGroup(OrderTable orderTable) {
-                return true;
-            }
-
+        return new OrderTableValidator() {
             @Override
             public boolean changeEmpty(OrderTable orderTable) {
                 throw new IllegalArgumentException();
@@ -150,11 +148,6 @@ public class Fixtures {
     public static TableGroupValidator aTableGroupValidator(OrderTableValidator orderTableValidator) {
         return new TableGroupValidator(orderTableValidator) {
             @Override
-            public boolean clearTableGroup(OrderTable orderTable) {
-                return true;
-            }
-
-            @Override
             public boolean changeEmpty(OrderTable orderTable) {
                 return true;
             }
@@ -162,15 +155,15 @@ public class Fixtures {
     }
 
     public static OrderLineItem aOrderLineItem1() {
-        return OrderLineItem.of(1L, null, aMenu1().getId(), 1);
+        return OrderLineItem.of(1L, null, aMenu1().build().getId(), 1);
     }
 
     public static OrderLineItem aOrderLineItem2() {
-        return OrderLineItem.of(2L, null, aMenu2().getId(), 1);
+        return OrderLineItem.of(2L, null, aMenu2().build().getId(), 1);
     }
 
     public static OrderLineItem aOrderLineItem3() {
-        return OrderLineItem.of(3L, null, aMenu3().getId(), 1);
+        return OrderLineItem.of(3L, null, aMenu3().build().getId(), 1);
     }
 
     public static OrderLineItems aOrderLineItems1() {
@@ -181,12 +174,24 @@ public class Fixtures {
         return OrderLineItems.from(Arrays.asList(aOrderLineItem2(), aOrderLineItem3()));
     }
 
-    public static Order aOrder1() {
-        return Order.of(1L, aOrderTable1().getId(), aOrderLineItems1().get(), aOrderValidator());
+    public static OrderBuilder aOrder1() {
+        return Order.builder()
+                .id(1L)
+                .orderTableId(aOrderTable1().getId())
+                .orderStatus(OrderStatus.COOKING)
+                .orderedTime(LocalDateTime.now())
+                .orderLineItems(aOrderLineItems1().get())
+                .orderValidator(aOrderValidator());
     }
 
-    public static Order aOrder2() {
-        return Order.of(2L, aOrderTable2().getId(), aOrderLineItems2().get(), aOrderValidator());
+    public static OrderBuilder aOrder2() {
+        return Order.builder()
+                .id(2L)
+                .orderTableId(aOrderTable2().getId())
+                .orderStatus(OrderStatus.COOKING)
+                .orderedTime(LocalDateTime.now())
+                .orderLineItems(aOrderLineItems2().get())
+                .orderValidator(aOrderValidator());
     }
 
     public static OrderValidator aOrderValidator() {
@@ -205,5 +210,9 @@ public class Fixtures {
                 throw new IllegalArgumentException();
             }
         };
+    }
+
+    public static List<OrderStatus> aNotCompletionOrderStatuses() {
+        return Arrays.asList(OrderStatus.COOKING, OrderStatus.MEAL);
     }
 }

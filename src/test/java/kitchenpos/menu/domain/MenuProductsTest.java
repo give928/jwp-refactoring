@@ -37,7 +37,7 @@ class MenuProductsTest {
     @Test
     void initMenu() {
         // given
-        Menu menu = aMenu1();
+        Menu menu = aMenu1().build();
         MenuProducts menuProducts = aMenuProducts1();
 
         // when

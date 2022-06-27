@@ -37,7 +37,7 @@ class OrderValidatorTest {
     void create() {
         // given
         OrderTable orderTable = aOrderTable().empty(false).build();
-        Order order = aOrder1();
+        Order order = aOrder1().build();
 
         given(orderTableRepository.findById(order.getOrderTableId())).willReturn(Optional.of(orderTable));
         given(menuRepository.countByIdIn(order.getOrderLineItems().stream()
@@ -58,7 +58,7 @@ class OrderValidatorTest {
         // given
         List<OrderLineItem> orderLineItems = Collections.emptyList();
         OrderTable orderTable = aOrderTable().empty(false).build();
-        Order order = Order.of(1L, orderTable.getId(), orderLineItems, aOrderValidator());
+        Order order = aOrder1().orderLineItems(orderLineItems).build();
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
 
@@ -76,7 +76,7 @@ class OrderValidatorTest {
         Long menuId = -1L;
         List<OrderLineItem> orderLineItems = Collections.singletonList(OrderLineItem.of(menuId, 1));
         OrderTable orderTable = aOrderTable().empty(false).build();
-        Order order = Order.of(1L, orderTable.getId(), orderLineItems, aOrderValidator());
+        Order order = aOrder1().orderLineItems(orderLineItems).build();
 
         given(orderTableRepository.findById(order.getOrderTableId())).willReturn(Optional.of(orderTable));
         given(menuRepository.countByIdIn(order.getOrderLineItems().stream()
@@ -96,7 +96,7 @@ class OrderValidatorTest {
     void cannotCreateIfNotExistsOrderTable() {
         // given
         Long orderTableId = -1L;
-        Order order = Order.of(1L, orderTableId, aOrderLineItems1().get(), aOrderValidator());
+        Order order = aOrder1().orderTableId(orderTableId).build();
 
         given(orderTableRepository.findById(order.getOrderTableId())).willReturn(Optional.empty());
 
@@ -111,8 +111,8 @@ class OrderValidatorTest {
     @Test
     void cannotCreateIfEmptyOrderTable() {
         // given
-        OrderTable orderTable = aOrderTable().empty(true).build();
-        Order order = Order.of(1L, orderTable.getId(), aOrderLineItems1().get(), aOrderValidator());
+        Order order = aOrder1().build();
+        OrderTable orderTable = aOrderTable().id(order.getOrderTableId()).empty(true).build();
 
         given(orderTableRepository.findById(order.getOrderTableId())).willReturn(Optional.of(orderTable));
 
@@ -127,7 +127,7 @@ class OrderValidatorTest {
     @Test
     void changeOrderStatus() {
         // given
-        Order order = aOrder1();
+        Order order = aOrder1().build();
 
         // when
         boolean valid = orderValidator.changeOrderStatus(order);
@@ -140,7 +140,7 @@ class OrderValidatorTest {
     @Test
     void cannotChangeOrderStatusIfCompletion() {
         // given
-        Order order = aOrder1();
+        Order order = aOrder1().build();
         order.changeOrderStatus(aOrderValidator(), OrderStatus.COMPLETION);
 
         // when

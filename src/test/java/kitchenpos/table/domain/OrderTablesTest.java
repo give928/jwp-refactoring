@@ -59,7 +59,7 @@ class OrderTablesTest {
         TableGroup tableGroup = new TableGroup();
 
         // when
-        OrderTables changedOrderTables = orderTables.changeTableGroup(tableGroupValidator, tableGroup);
+        OrderTables changedOrderTables = orderTables.group(tableGroupValidator, tableGroup);
 
         // then
         assertThat(changedOrderTables.get()).extracting("tableGroup")
@@ -72,10 +72,10 @@ class OrderTablesTest {
         // given
         OrderTables orderTables = OrderTables.of(Arrays.asList(orderTable1, orderTable2), tableGroupValidator);
         TableGroup tableGroup = new TableGroup();
-        orderTables.changeTableGroup(tableGroupValidator, tableGroup);
+        orderTables.group(tableGroupValidator, tableGroup);
 
         // when
-        orderTables.ungroup(tableGroupValidator);
+        orderTables.ungroup();
 
         // then
         assertThat(orderTables.get()).extracting("tableGroup")

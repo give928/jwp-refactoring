@@ -54,8 +54,8 @@ class MenuServiceTest {
 
     @BeforeEach
     void setUp() {
-        menu1 = aMenu1();
-        menu2 = aMenu2();
+        menu1 = aMenu1().build();
+        menu2 = aMenu2().build();
     }
 
     @DisplayName("메뉴를 등록하고 등록한 메뉴와 메뉴 상품을 반환한다.")
@@ -104,12 +104,8 @@ class MenuServiceTest {
     @MethodSource("invalidMenuGroupParameter")
     void invalidMenuGroup(Long menuGroupId) {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menuGroupId,
-                                                  menu1.getMenuProducts().stream()
-                                                          .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProductId(),
-                                                                  menuProduct.getQuantity()))
-                                                          .collect(Collectors.toList()));
+        Menu menu = aMenu1().menuGroup(MenuGroup.of(menuGroupId, "존재하지 않는 메뉴그룹")).build();
+        MenuRequest menuRequest = createMenuRequestBy(menu);
 
         given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.empty());
 
@@ -124,14 +120,10 @@ class MenuServiceTest {
     @Test
     void invalidPrice() {
         // given
-        MenuRequest menuRequest = new MenuRequest(menu1.getName(), BigDecimal.valueOf(3L), menu1.getMenuGroup().getId(),
-                                                  menu1.getMenuProducts().stream()
-                                                          .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProductId(),
-                                                                  menuProduct.getQuantity()))
-                                                          .collect(Collectors.toList()));
+        Menu menu = aMenu1().price(BigDecimal.valueOf(3L)).build();
+        MenuRequest menuRequest = createMenuRequestBy(menu);
 
-        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menu1.getMenuGroup()));
+        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menu.getMenuGroup()));
         willThrow(IllegalArgumentException.class).given(menuValidator).create(any());
 
         // when
