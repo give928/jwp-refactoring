@@ -4,6 +4,7 @@ import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static kitchenpos.Fixtures.aMenuGroup1;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -12,10 +13,10 @@ class MenuGroupTest {
     @Test
     void create() {
         // when
-        MenuGroup menuGroup = MenuGroup.of(1L, "메뉴 그룹1");
+        MenuGroup menuGroup = aMenuGroup1();
 
         // then
-        assertThat(menuGroup).isEqualTo(MenuGroup.of(1L, "메뉴 그룹1"));
+        assertThat(menuGroup).isEqualTo(aMenuGroup1());
     }
 
     @DisplayName("메뉴 그룹의 이름은 필수이다.")

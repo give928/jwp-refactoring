@@ -1,13 +1,11 @@
 package kitchenpos.menu.domain;
 
-import kitchenpos.product.domain.Product;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
-import java.util.Collections;
-
+import static kitchenpos.Fixtures.aMenu1;
+import static kitchenpos.Fixtures.aMenuProduct1;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -15,14 +13,11 @@ class MenuProductTest {
     @DisplayName("메뉴 상품을 생성한다.")
     @Test
     void create() {
-        // given
-        Product product1 = Product.of(1L, "음식1", BigDecimal.ONE);
-
         // when
-        MenuProduct menuProduct = MenuProduct.of(1L, null, product1, 1L);
+        MenuProduct menuProduct = aMenuProduct1();
 
         // then
-        assertThat(menuProduct).isEqualTo(MenuProduct.of(1L, null, product1, 1L));
+        assertThat(menuProduct).isEqualTo(MenuProduct.of(1L, null, 1L, 1L));
     }
 
     @DisplayName("메뉴 상품의 상품은 필수이다.")
@@ -39,10 +34,8 @@ class MenuProductTest {
     @Test
     void initMenu() {
         // given
-        Product product1 = Product.of(1L, "음식1", BigDecimal.ONE);
-        MenuProduct menuProduct = MenuProduct.of(1L, null, Product.of(1L, "음식1", BigDecimal.ONE), 1L);
-        Menu menu = Menu.of(1L, "메뉴1", BigDecimal.ONE, MenuGroup.of(1L, "메뉴그룹1"),
-                            Collections.singletonList(MenuProduct.of(1L, null, product1, 1L)));
+        MenuProduct menuProduct = aMenuProduct1();
+        Menu menu = aMenu1();
 
         // when
         menuProduct.initMenu(menu);

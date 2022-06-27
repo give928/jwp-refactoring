@@ -4,26 +4,24 @@ import kitchenpos.menu.domain.*;
 import kitchenpos.menu.dto.MenuProductRequest;
 import kitchenpos.menu.dto.MenuRequest;
 import kitchenpos.menu.dto.MenuResponse;
-import kitchenpos.product.domain.Product;
-import kitchenpos.product.domain.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class MenuService {
     private final MenuRepository menuRepository;
     private final MenuGroupRepository menuGroupRepository;
-    private final ProductRepository productRepository;
+    private final MenuValidator menuValidator;
 
     public MenuService(final MenuRepository menuRepository, final MenuGroupRepository menuGroupRepository,
-                       final ProductRepository productRepository) {
+                       final MenuValidator menuValidator) {
         this.menuRepository = menuRepository;
         this.menuGroupRepository = menuGroupRepository;
-        this.productRepository = productRepository;
+        this.menuValidator = menuValidator;
     }
 
     @Transactional
@@ -32,29 +30,15 @@ public class MenuService {
                 .orElseThrow(IllegalArgumentException::new);
         List<MenuProduct> menuProducts = mapMenuProducts(menuRequest.getMenuProducts());
 
-        Menu menu = Menu.of(menuRequest.getName(), menuRequest.getPrice(), menuGroup, menuProducts);
+        Menu menu = Menu.of(menuRequest.getName(), menuRequest.getPrice(), menuGroup, menuProducts, menuValidator);
         return MenuResponse.from(menuRepository.save(menu));
     }
 
     private List<MenuProduct> mapMenuProducts(List<MenuProductRequest> menuProductRequests) {
-        List<Product> products = productRepository.findByIdIn(mapProductIds(menuProductRequests));
         return menuProductRequests.stream()
-                .map(menuProductRequest -> MenuProduct.of(findProduct(products, menuProductRequest.getProductId()),
+                .map(menuProductRequest -> MenuProduct.of(menuProductRequest.getProductId(),
                                                           menuProductRequest.getQuantity()))
                 .collect(Collectors.toList());
-    }
-
-    private List<Long> mapProductIds(List<MenuProductRequest> menuProductRequests) {
-        return menuProductRequests.stream()
-                .map(MenuProductRequest::getProductId)
-                .collect(Collectors.toList());
-    }
-
-    private Product findProduct(List<Product> products, Long productId) {
-        return products.stream()
-                .filter(product -> Objects.equals(product.getId(), productId))
-                .findAny()
-                .orElseThrow(IllegalArgumentException::new);
     }
 
     public List<MenuResponse> list() {

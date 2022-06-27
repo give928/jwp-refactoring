@@ -4,8 +4,6 @@ import kitchenpos.menu.domain.*;
 import kitchenpos.menu.dto.MenuProductRequest;
 import kitchenpos.menu.dto.MenuRequest;
 import kitchenpos.menu.dto.MenuResponse;
-import kitchenpos.product.domain.Product;
-import kitchenpos.product.domain.ProductRepository;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,10 +22,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static kitchenpos.Fixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 
 @ExtendWith(MockitoExtension.class)
 class MenuServiceTest {
@@ -36,14 +36,11 @@ class MenuServiceTest {
     @Mock
     private MenuGroupRepository menuGroupRepository;
     @Mock
-    private ProductRepository productRepository;
+    private MenuValidator menuValidator;
 
     @InjectMocks
     private MenuService menuService;
 
-    private Product product1;
-    private Product product2;
-    private MenuGroup menuGroup;
     private Menu menu1;
     private Menu menu2;
 
@@ -57,20 +54,8 @@ class MenuServiceTest {
 
     @BeforeEach
     void setUp() {
-        Long menuId1 = 1L;
-        product1 = Product.of(1L, "음식1", BigDecimal.ONE);
-        product2 = Product.of(2L, "음식2", BigDecimal.ONE);
-        menuGroup = MenuGroup.of(1L, "메뉴그룹1");
-        menu1 = Menu.of(menuId1, "메뉴1", BigDecimal.valueOf(2L), menuGroup,
-                        Arrays.asList(MenuProduct.of(1L, menu1, product1, 1),
-                                      MenuProduct.of(2L, menu1, product2, 1)));
-
-        Long menuId2 = 2L;
-        Product product3 = Product.of(3L, "음식1", BigDecimal.ONE);
-        Product product4 = Product.of(4L, "음식2", BigDecimal.ONE);
-        menu2 = Menu.of(menuId2, "메뉴2", BigDecimal.valueOf(2L), menuGroup,
-                        Arrays.asList(MenuProduct.of(3L, menu2, product3, 1),
-                                      MenuProduct.of(4L, menu2, product4, 1)));
+        menu1 = aMenu1();
+        menu2 = aMenu2();
     }
 
     @DisplayName("메뉴를 등록하고 등록한 메뉴와 메뉴 상품을 반환한다.")
@@ -80,12 +65,6 @@ class MenuServiceTest {
         MenuRequest menuRequest = createMenuRequestBy(menu1);
 
         given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menu1.getMenuGroup()));
-        given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
-                                                   .map(MenuProductRequest::getProductId)
-                                                   .collect(Collectors.toList())))
-                .willReturn(menu1.getMenuProducts().stream()
-                                    .map(MenuProduct::getProduct)
-                                    .collect(Collectors.toList()));
         given(menuRepository.save(any())).willReturn(menu1);
 
         // when
@@ -107,17 +86,11 @@ class MenuServiceTest {
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), price, menu1.getMenuGroup().getId(),
                                                   menu1.getMenuProducts().stream()
                                                           .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProduct().getId(),
+                                                                  menuProduct.getProductId(),
                                                                   menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
 
         given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menu1.getMenuGroup()));
-        given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
-                                                   .map(MenuProductRequest::getProductId)
-                                                   .collect(Collectors.toList())))
-                .willReturn(menu1.getMenuProducts().stream()
-                                    .map(MenuProduct::getProduct)
-                                    .collect(Collectors.toList()));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
@@ -134,7 +107,7 @@ class MenuServiceTest {
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), menu1.getPrice(), menuGroupId,
                                                   menu1.getMenuProducts().stream()
                                                           .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProduct().getId(),
+                                                                  menuProduct.getProductId(),
                                                                   menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
 
@@ -149,20 +122,17 @@ class MenuServiceTest {
 
     @DisplayName("메뉴의 가격은 메뉴 상품들의 금액의 합 이하만 가능하다.")
     @Test
-    void invalidAmount() {
+    void invalidPrice() {
         // given
         MenuRequest menuRequest = new MenuRequest(menu1.getName(), BigDecimal.valueOf(3L), menu1.getMenuGroup().getId(),
                                                   menu1.getMenuProducts().stream()
                                                           .map(menuProduct -> new MenuProductRequest(
-                                                                  menuProduct.getProduct().getId(),
+                                                                  menuProduct.getProductId(),
                                                                   menuProduct.getQuantity()))
                                                           .collect(Collectors.toList()));
 
-        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menuGroup));
-        given(productRepository.findByIdIn(menuRequest.getMenuProducts().stream()
-                                                   .map(MenuProductRequest::getProductId)
-                                                   .collect(Collectors.toList()))).willReturn(
-                Arrays.asList(product1, product2));
+        given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menu1.getMenuGroup()));
+        willThrow(IllegalArgumentException.class).given(menuValidator).create(any());
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
@@ -190,7 +160,7 @@ class MenuServiceTest {
         return new MenuRequest(menu.getName(), menu.getPrice(), menu.getMenuGroup().getId(),
                                menu.getMenuProducts().stream()
                                        .map(menuProduct -> new MenuProductRequest(
-                                               menuProduct.getProduct().getId(),
+                                               menuProduct.getProductId(),
                                                menuProduct.getQuantity()))
                                        .collect(Collectors.toList()));
     }

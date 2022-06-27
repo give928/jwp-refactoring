@@ -1,13 +1,7 @@
 package kitchenpos.table.domain;
 
-import kitchenpos.order.domain.Order;
-import kitchenpos.order.domain.Orders;
-
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Entity
 public class OrderTable {
@@ -15,7 +9,7 @@ public class OrderTable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "table_group_id", foreignKey = @ForeignKey(name = "fk_order_table_table_group"))
     private TableGroup tableGroup;
 
@@ -24,19 +18,14 @@ public class OrderTable {
 
     private boolean empty;
 
-    @Embedded
-    private Orders orders;
-
     protected OrderTable() {
     }
 
-    private OrderTable(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, List<Order> orders) {
+    private OrderTable(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty) {
         this.id = id;
         this.tableGroup = tableGroup;
         this.numberOfGuests = NumberOfGuests.from(numberOfGuests);
         this.empty = empty;
-        this.orders = Orders.from(Optional.ofNullable(orders)
-                                          .orElse(new ArrayList<>()));
     }
 
     public static OrderTable of(int numberOfGuests, boolean empty) {
@@ -44,11 +33,7 @@ public class OrderTable {
     }
 
     public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty) {
-        return of(id, tableGroup, numberOfGuests, empty, new ArrayList<>());
-    }
-
-    public static OrderTable of(Long id, TableGroup tableGroup, int numberOfGuests, boolean empty, List<Order> orders) {
-        return new OrderTable(id, tableGroup, numberOfGuests, empty, orders);
+        return new OrderTable(id, tableGroup, numberOfGuests, empty);
     }
 
     public Long getId() {
@@ -67,55 +52,31 @@ public class OrderTable {
         return empty;
     }
 
-    public void clearTableGroup() {
-        validateIfOrdersInCookingOrMeal();
+    public void clearTableGroup(TableValidator tableValidator) {
+        tableValidator.clearTableGroup(this);
         this.tableGroup = null;
     }
 
-    public void changeTableGroup(TableGroup tableGroup) {
-        validateIfEmpty(Boolean.FALSE);
-        changeEmpty(Boolean.FALSE);
+    public void changeTableGroup(TableValidator tableValidator, TableGroup tableGroup) {
+        tableValidator.changeTableGroup(this);
+        changeEmpty(tableValidator, Boolean.FALSE);
         this.tableGroup = tableGroup;
     }
 
-    public OrderTable changeNumberOfGuests(int numberOfGuests) {
-        validateIfEmpty(Boolean.TRUE);
+    public OrderTable changeNumberOfGuests(OrderTableValidator orderTableValidator, int numberOfGuests) {
+        orderTableValidator.changeNumberOfGuests(this);
         this.numberOfGuests = NumberOfGuests.from(numberOfGuests);
         return this;
     }
 
-    public OrderTable changeEmpty(boolean empty) {
-        validateChangeEmpty();
+    public OrderTable changeEmpty(TableValidator tableValidator, boolean empty) {
+        tableValidator.changeEmpty(this);
+        return changeEmpty(empty);
+    }
+
+    private OrderTable changeEmpty(boolean empty) {
         this.empty = empty;
         return this;
-    }
-
-    public void addOrder(Order order) {
-        this.orders.add(order);
-        order.initOrderTable(this);
-    }
-
-    private void validateIfEmpty(boolean empty) {
-        if (isEmpty() == empty) {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    private void validateChangeEmpty() {
-        validateIfNotNullTableGroup();
-        validateIfOrdersInCookingOrMeal();
-    }
-
-    private void validateIfOrdersInCookingOrMeal() {
-        if (orders.hasCookingOrMeal()) {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    private void validateIfNotNullTableGroup() {
-        if (Objects.nonNull(getTableGroup())) {
-            throw new IllegalArgumentException();
-        }
     }
 
     @Override
@@ -133,5 +94,43 @@ public class OrderTable {
     @Override
     public int hashCode() {
         return Objects.hash(getId());
+    }
+
+    public static OrderTable.OrderTableBuilder builder() {
+        return new OrderTable.OrderTableBuilder();
+    }
+
+    public static class OrderTableBuilder {
+        private Long id;
+        private TableGroup tableGroup;
+        private int numberOfGuests;
+        private boolean empty;
+
+        OrderTableBuilder() {
+        }
+
+        public OrderTable.OrderTableBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public OrderTable.OrderTableBuilder tableGroup(TableGroup tableGroup) {
+            this.tableGroup = tableGroup;
+            return this;
+        }
+
+        public OrderTable.OrderTableBuilder numberOfGuests(int numberOfGuests) {
+            this.numberOfGuests = numberOfGuests;
+            return this;
+        }
+
+        public OrderTable.OrderTableBuilder empty(boolean empty) {
+            this.empty = empty;
+            return this;
+        }
+
+        public OrderTable build() {
+            return new OrderTable(this.id, this.tableGroup, this.numberOfGuests, this.empty);
+        }
     }
 }

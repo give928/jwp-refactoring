@@ -12,19 +12,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class TableGroupService {
     private final OrderTableRepository orderTableRepository;
     private final TableGroupRepository tableGroupRepository;
+    private final TableGroupValidator tableGroupValidator;
 
-    public TableGroupService(final OrderTableRepository orderTableRepository, final TableGroupRepository tableGroupRepository) {
+    public TableGroupService(final OrderTableRepository orderTableRepository,
+                             final TableGroupRepository tableGroupRepository,
+                             final TableGroupValidator tableGroupValidator) {
         this.orderTableRepository = orderTableRepository;
         this.tableGroupRepository = tableGroupRepository;
+        this.tableGroupValidator = tableGroupValidator;
     }
 
     @Transactional
     public TableGroupResponse create(final TableGroupRequest tableGroupRequest) {
         final List<OrderTable> savedOrderTables = findOrderTables(tableGroupRequest.getOrderTables());
-        return TableGroupResponse.from(tableGroupRepository.save(TableGroup.of(savedOrderTables)));
+        TableGroup tableGroup = TableGroup.of(savedOrderTables, tableGroupValidator);
+        return TableGroupResponse.from(tableGroupRepository.save(tableGroup));
     }
 
     private List<OrderTable> findOrderTables(List<OrderTableGroupRequest> orderTableGroupRequests) {
@@ -43,7 +49,7 @@ public class TableGroupService {
     }
 
     private boolean isLessOrderTables(List<OrderTableGroupRequest> orderTableGroupRequests) {
-        return CollectionUtils.isEmpty(orderTableGroupRequests) || orderTableGroupRequests.size() < OrderTables.MIN_ORDER_TABLES;
+        return CollectionUtils.isEmpty(orderTableGroupRequests) || orderTableGroupRequests.size() < TableGroupValidator.MIN_ORDER_TABLES;
     }
 
     private void validateIfOrderTables(List<OrderTableGroupRequest> orderTableGroupRequests, List<OrderTable> orderTables) {
@@ -56,6 +62,6 @@ public class TableGroupService {
     public void ungroup(final Long tableGroupId) {
         TableGroup tableGroup = tableGroupRepository.findById(tableGroupId)
                 .orElseThrow(IllegalArgumentException::new);
-        tableGroup.ungroup();
+        tableGroup.ungroup(tableGroupValidator);
     }
 }

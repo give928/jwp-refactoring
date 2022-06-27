@@ -1,12 +1,8 @@
 package kitchenpos.table.application;
 
-import kitchenpos.menu.domain.Menu;
-import kitchenpos.menu.domain.MenuGroup;
-import kitchenpos.order.domain.Order;
-import kitchenpos.order.domain.OrderLineItem;
-import kitchenpos.order.domain.OrderStatus;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.domain.OrderTableRepository;
+import kitchenpos.table.domain.OrderTableValidator;
 import kitchenpos.table.domain.TableGroup;
 import kitchenpos.table.dto.OrderTableChangeEmptyRequest;
 import kitchenpos.table.dto.OrderTableChangeNumberOfGuestRequest;
@@ -21,21 +17,22 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class TableServiceTest {
     @Mock
     private OrderTableRepository orderTableRepository;
+
+    @Mock
+    private OrderTableValidator orderTableValidator;
 
     @InjectMocks
     private TableService tableService;
@@ -112,6 +109,7 @@ class TableServiceTest {
         OrderTable orderTable = OrderTable.of(1L, new TableGroup(), 1, false);
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
+        given(orderTableValidator.changeEmpty(any())).willThrow(IllegalArgumentException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () ->
@@ -126,19 +124,12 @@ class TableServiceTest {
     void cannotChangeEmptyCookingOrMeal() {
         // given
         OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(true);
-        OrderLineItem orderLineItem =
-                OrderLineItem.of(1L, null,
-                                 Menu.of(1L, "음식1", BigDecimal.ZERO,
-                                         MenuGroup.of(1L, "메뉴그룹1"),
-                                         Collections.emptyList()), 1);
         OrderTable orderTable =
                 OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
-                              orderTable1.getNumberOfGuests(), false,
-                              Collections.singletonList(
-                                      Order.of(1L, null, OrderStatus.COOKING, LocalDateTime.now(),
-                                               Collections.singletonList(orderLineItem))));
+                              orderTable1.getNumberOfGuests(), false);
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
+        given(orderTableValidator.changeEmpty(any())).willThrow(IllegalArgumentException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeEmpty(orderTable1.getId(),
@@ -191,6 +182,7 @@ class TableServiceTest {
                 1);
 
         given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
+        given(orderTableValidator.changeNumberOfGuests(any())).willThrow(IllegalArgumentException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () ->

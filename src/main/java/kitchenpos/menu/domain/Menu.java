@@ -32,7 +32,7 @@ public class Menu {
     protected Menu() {
     }
 
-    private Menu(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
+    private Menu(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts, MenuValidator menuValidator) {
         this.id = id;
         this.name = Name.from(name);
         this.price = Price.from(price);
@@ -40,14 +40,15 @@ public class Menu {
         this.menuProducts = MenuProducts.from(Optional.ofNullable(menuProducts)
                                                       .orElse(new ArrayList<>()))
                 .initMenu(this);
+        menuValidator.create(this);
     }
 
-    public static Menu of(String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
-        return of(null, name, price, menuGroup, menuProducts);
+    public static Menu of(String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts, MenuValidator menuValidator) {
+        return of(null, name, price, menuGroup, menuProducts, menuValidator);
     }
 
-    public static Menu of(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
-        return new Menu(id, name, price, menuGroup, menuProducts);
+    public static Menu of(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts, MenuValidator menuValidator) {
+        return new Menu(id, name, price, menuGroup, menuProducts, menuValidator);
     }
 
     public void initMenuProducts(MenuProducts menuProducts) {

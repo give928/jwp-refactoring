@@ -1,13 +1,6 @@
 package kitchenpos.table.application;
 
-import kitchenpos.common.domain.Name;
-import kitchenpos.common.domain.Price;
-import kitchenpos.menu.domain.Menu;
-import kitchenpos.menu.domain.MenuGroup;
-import kitchenpos.menu.domain.MenuProducts;
-import kitchenpos.order.domain.Order;
 import kitchenpos.order.domain.OrderLineItem;
-import kitchenpos.order.domain.OrderLineItems;
 import kitchenpos.table.domain.*;
 import kitchenpos.table.dto.OrderTableGroupRequest;
 import kitchenpos.table.dto.TableGroupRequest;
@@ -23,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +34,8 @@ class TableGroupServiceTest {
     private OrderTableRepository orderTableRepository;
     @Mock
     private TableGroupRepository tableGroupRepository;
+    @Mock
+    private TableGroupValidator tableGroupValidator;
 
     @InjectMocks
     private TableGroupService tableGroupService;
@@ -63,9 +57,9 @@ class TableGroupServiceTest {
 
     @BeforeEach
     void setUp() {
-        orderTable1 = OrderTable.of(1L, tableGroup1, 0, true);
-        orderTable2 = OrderTable.of(2L, tableGroup1, 0, true);
-        tableGroup1 = TableGroup.of(1L, Arrays.asList(orderTable1, orderTable2));
+        orderTable1 = OrderTable.of(1L, null, 0, true);
+        orderTable2 = OrderTable.of(2L, null, 0, true);
+        tableGroup1 = TableGroup.of(1L, Arrays.asList(orderTable1, orderTable2), tableGroupValidator);
     }
 
     @DisplayName("주문 테이블을 단체 지정을 등록하고 등록한 단체 지정을 반환한다.")
@@ -130,6 +124,7 @@ class TableGroupServiceTest {
         TableGroupRequest tableGroupRequest = createTableGroupRequest(orderTable1, orderTable2);
 
         given(orderTableRepository.findAllByIdIn(any())).willReturn(savedOrderTables);
+        given(tableGroupValidator.create(any())).willThrow(IllegalArgumentException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.create(tableGroupRequest);
@@ -155,14 +150,8 @@ class TableGroupServiceTest {
     @Test
     void invalidOrderStatus() {
         // given
-        OrderLineItem orderLineItem =
-                OrderLineItem.of(1L, null,
-                                 Menu.of(1L, "음식1", BigDecimal.ZERO,
-                                         MenuGroup.of(1L, "메뉴그룹1"),
-                                         Collections.emptyList()), 1);
-        orderTable1.addOrder(Order.of(orderTable1, Collections.singletonList(orderLineItem)));
-
         given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));
+        given(tableGroupValidator.clearTableGroup(any())).willThrow(IllegalArgumentException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.ungroup(tableGroup1.getId());

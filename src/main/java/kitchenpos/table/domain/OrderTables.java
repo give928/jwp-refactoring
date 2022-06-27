@@ -1,7 +1,5 @@
 package kitchenpos.table.domain;
 
-import org.springframework.util.CollectionUtils;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.OneToMany;
@@ -11,40 +9,28 @@ import java.util.Objects;
 
 @Embeddable
 public class OrderTables {
-    public static final int MIN_ORDER_TABLES = 2;
-
     @OneToMany(mappedBy = "tableGroup", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     private List<OrderTable> values;
 
     protected OrderTables() {
     }
 
-    private OrderTables(List<OrderTable> values) {
-        validateOrderTables(values);
+    private OrderTables(List<OrderTable> values, TableGroupValidator tableGroupValidator) {
         this.values = values;
+        tableGroupValidator.create(this);
     }
 
-    public static OrderTables from(List<OrderTable> values) {
-        return new OrderTables(values);
+    public static OrderTables of(List<OrderTable> values, TableGroupValidator tableGroupValidator) {
+        return new OrderTables(values, tableGroupValidator);
     }
 
-    private void validateOrderTables(List<OrderTable> values) {
-        if (isLessOrderTables(values)) {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    private boolean isLessOrderTables(List<OrderTable> values) {
-        return CollectionUtils.isEmpty(values) || values.size() < MIN_ORDER_TABLES;
-    }
-
-    public OrderTables changeTableGroup(TableGroup tableGroup) {
-        values.forEach(orderTable -> orderTable.changeTableGroup(tableGroup));
+    public OrderTables changeTableGroup(TableGroupValidator tableGroupValidator, TableGroup tableGroup) {
+        values.forEach(orderTable -> orderTable.changeTableGroup(tableGroupValidator, tableGroup));
         return this;
     }
 
-    public void ungroup() {
-        values.forEach(OrderTable::clearTableGroup);
+    public void ungroup(TableGroupValidator tableGroupValidator) {
+        values.forEach(orderTable -> orderTable.clearTableGroup(tableGroupValidator));
     }
 
     public List<OrderTable> get() {

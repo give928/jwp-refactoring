@@ -2,6 +2,7 @@ package kitchenpos.table.application;
 
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.domain.OrderTableRepository;
+import kitchenpos.table.domain.OrderTableValidator;
 import kitchenpos.table.dto.OrderTableChangeEmptyRequest;
 import kitchenpos.table.dto.OrderTableChangeNumberOfGuestRequest;
 import kitchenpos.table.dto.OrderTableRequest;
@@ -13,11 +14,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class TableService {
     private final OrderTableRepository orderTableRepository;
+    private final OrderTableValidator orderTableValidator;
 
-    public TableService(final OrderTableRepository orderTableRepository) {
+    public TableService(final OrderTableRepository orderTableRepository, final OrderTableValidator orderTableValidator) {
         this.orderTableRepository = orderTableRepository;
+        this.orderTableValidator = orderTableValidator;
     }
 
     @Transactional
@@ -37,7 +41,7 @@ public class TableService {
         final OrderTable savedOrderTable = orderTableRepository.findById(orderTableId)
                 .orElseThrow(IllegalArgumentException::new);
 
-        return OrderTableResponse.from(savedOrderTable.changeEmpty(orderTableChangeEmptyRequest.isEmpty()));
+        return OrderTableResponse.from(savedOrderTable.changeEmpty(orderTableValidator, orderTableChangeEmptyRequest.isEmpty()));
     }
 
     @Transactional
@@ -46,6 +50,6 @@ public class TableService {
         final OrderTable savedOrderTable = orderTableRepository.findById(orderTableId)
                 .orElseThrow(IllegalArgumentException::new);
 
-        return OrderTableResponse.from(savedOrderTable.changeNumberOfGuests(orderTableChangeNumberOfGuestRequest.getNumberOfGuests()));
+        return OrderTableResponse.from(savedOrderTable.changeNumberOfGuests(orderTableValidator, orderTableChangeNumberOfGuestRequest.getNumberOfGuests()));
     }
 }

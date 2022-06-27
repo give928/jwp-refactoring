@@ -27,19 +27,20 @@ public class TableGroup {
     public TableGroup() {
     }
 
-    private TableGroup(Long id, List<OrderTable> orderTables) {
+    private TableGroup(Long id, List<OrderTable> orderTables, TableGroupValidator tableGroupValidator) {
         this.id = id;
-        this.orderTables = OrderTables.from(Optional.ofNullable(orderTables)
-                                                    .orElse(new ArrayList<>()))
-                .changeTableGroup(this);
+        this.orderTables = OrderTables.of(Optional.ofNullable(orderTables)
+                                                    .orElse(new ArrayList<>()),
+                                          tableGroupValidator)
+                .changeTableGroup(tableGroupValidator, this);
     }
 
-    public static TableGroup of(List<OrderTable> orderTables) {
-        return of(null, orderTables);
+    public static TableGroup of(List<OrderTable> orderTables, TableGroupValidator tableGroupValidator) {
+        return of(null, orderTables, tableGroupValidator);
     }
 
-    public static TableGroup of(Long id, List<OrderTable> orderTables) {
-        return new TableGroup(id, orderTables);
+    public static TableGroup of(Long id, List<OrderTable> orderTables, TableGroupValidator tableGroupValidator) {
+        return new TableGroup(id, orderTables, tableGroupValidator);
     }
 
     public Long getId() {
@@ -54,8 +55,8 @@ public class TableGroup {
         return orderTables.get();
     }
 
-    public void ungroup() {
-        orderTables.ungroup();
+    public void ungroup(TableGroupValidator tableGroupValidator) {
+        orderTables.ungroup(tableGroupValidator);
     }
 
     @Override

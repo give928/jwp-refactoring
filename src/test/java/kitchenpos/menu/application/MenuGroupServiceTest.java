@@ -15,6 +15,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Arrays;
 import java.util.List;
 
+import static kitchenpos.Fixtures.aMenuGroup1;
+import static kitchenpos.Fixtures.aMenuGroup2;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
@@ -31,8 +33,8 @@ class MenuGroupServiceTest {
 
     @BeforeEach
     void setUp() {
-        menuGroup1 = MenuGroup.of(1L, "메뉴그룹1");
-        menuGroup2 = MenuGroup.of(2L, "메뉴그룹2");
+        menuGroup1 = aMenuGroup1();
+        menuGroup2 = aMenuGroup2();
     }
 
     @DisplayName("메뉴 그룹을 등록하고 등록한 메뉴 그룹을 반환한다.")
