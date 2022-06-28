@@ -1,5 +1,6 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.table.exception.RequiredOrderTablesOfTableGroupException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +49,8 @@ class OrderTablesTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> OrderTables.of(orderTableList, tableGroupValidator);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredOrderTablesOfTableGroupException.class)
+                .hasMessageContaining(RequiredOrderTablesOfTableGroupException.MESSAGE);
     }
 
     @DisplayName("단체 지정을 한다.")

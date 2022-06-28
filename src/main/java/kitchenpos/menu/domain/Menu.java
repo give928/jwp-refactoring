@@ -2,6 +2,7 @@ package kitchenpos.menu.domain;
 
 import kitchenpos.common.domain.Name;
 import kitchenpos.common.domain.Price;
+import kitchenpos.menu.exception.RequiredMenuGroupException;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -36,7 +37,8 @@ public class Menu {
         this.id = id;
         this.name = Name.from(name);
         this.price = Price.from(price);
-        this.menuGroup = Objects.requireNonNull(menuGroup);
+        this.menuGroup = Optional.ofNullable(menuGroup)
+                .orElseThrow(RequiredMenuGroupException::new);
         this.menuProducts = MenuProducts.from(Optional.ofNullable(menuProducts)
                                                       .orElse(new ArrayList<>()))
                 .initMenu(this);

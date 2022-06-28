@@ -1,8 +1,13 @@
 package kitchenpos.order.domain;
 
 import kitchenpos.menu.domain.MenuRepository;
+import kitchenpos.menu.exception.MenuNotFoundException;
+import kitchenpos.order.exception.OrderNotCompletionException;
+import kitchenpos.order.exception.RequiredOrderLineItemException;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.domain.OrderTableRepository;
+import kitchenpos.table.exception.OrderTableEmptyException;
+import kitchenpos.table.exception.OrderTableNotFoundException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,7 +71,8 @@ class OrderValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderValidator.create(order);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredOrderLineItemException.class)
+                .hasMessageContaining(RequiredOrderLineItemException.MESSAGE);
     }
 
     @DisplayName("등록되지 않은 메뉴는 주문 생성 유효성 확인이 실패한다.")
@@ -88,7 +94,8 @@ class OrderValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderValidator.create(order);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(MenuNotFoundException.class)
+                .hasMessageContaining(MenuNotFoundException.MESSAGE);
     }
 
     @DisplayName("등록되지 않은 주문 테이블은 주문 생성 유효성 확인이 실패한다.")
@@ -104,7 +111,8 @@ class OrderValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderValidator.create(order);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableNotFoundException.class)
+                .hasMessageContaining(OrderTableNotFoundException.MESSAGE);
     }
 
     @DisplayName("빈 테이블은 주문 생성 유효성 확인이 실패한다.")
@@ -120,7 +128,8 @@ class OrderValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderValidator.create(order);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class)
+                .hasMessageContaining(OrderTableEmptyException.EMPTY_MESSAGE);
     }
 
     @DisplayName("주문 상태를 변경 유효성을 확인한다.")
@@ -147,6 +156,7 @@ class OrderValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderValidator.changeOrderStatus(order);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderNotCompletionException.class)
+                .hasMessageContaining(OrderNotCompletionException.MESSAGE);
     }
 }

@@ -1,5 +1,6 @@
 package kitchenpos.order.domain;
 
+import kitchenpos.order.exception.OrderNotCompletionException;
 import kitchenpos.table.domain.OrderTableEmptyChangedEvent;
 import kitchenpos.table.domain.OrderTableUngroupedEvent;
 import org.springframework.context.event.EventListener;
@@ -34,7 +35,7 @@ public class OrderTableEventHandler {
 
     private void validateIfTableOrderStatusInCookingOrMeal(Long id) {
         if (hasOrderStatusInCookingOrMeal(id)) {
-            throw new IllegalArgumentException();
+            throw new OrderNotCompletionException();
         }
     }
 

@@ -1,5 +1,7 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.table.exception.OrderTableEmptyException;
+
 public interface TableValidator {
     default boolean changeTableGroup(OrderTable orderTable) {
         validateIfEmpty(orderTable, Boolean.FALSE);
@@ -8,7 +10,7 @@ public interface TableValidator {
 
     default void validateIfEmpty(OrderTable orderTable, boolean empty) {
         if (orderTable.isEmpty() == empty) {
-            throw new IllegalArgumentException();
+            throw OrderTableEmptyException.throwBy(empty);
         }
     }
 

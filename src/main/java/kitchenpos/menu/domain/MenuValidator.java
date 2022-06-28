@@ -1,7 +1,9 @@
 package kitchenpos.menu.domain;
 
+import kitchenpos.menu.exception.InvalidMenuPriceException;
 import kitchenpos.product.domain.Product;
 import kitchenpos.product.domain.ProductRepository;
+import kitchenpos.product.exception.ProductNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +28,7 @@ public class MenuValidator {
 
     private void validatePrice(Menu menu) {
         if (isInvalidPrice(menu, sumPriceOfMenuProducts(menu.getMenuProducts()))) {
-            throw new IllegalArgumentException();
+            throw new InvalidMenuPriceException();
         }
     }
 
@@ -52,6 +54,6 @@ public class MenuValidator {
         return products.stream()
                 .filter(product -> Objects.equals(product.getId(), productId))
                 .findAny()
-                .orElseThrow(IllegalArgumentException::new);
+                .orElseThrow(ProductNotFoundException::new);
     }
 }

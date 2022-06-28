@@ -1,5 +1,6 @@
 package kitchenpos.common.domain;
 
+import kitchenpos.common.exception.RequiredPriceException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,8 @@ class PriceTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Price.from(null);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredPriceException.class)
+                .hasMessageContaining(RequiredPriceException.MESSAGE);
     }
 
     @DisplayName("0원 미만의 가격은 생성할 수 없다.")
@@ -37,6 +39,7 @@ class PriceTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Price.from(BigDecimal.valueOf(-1));
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredPriceException.class)
+                .hasMessageContaining(RequiredPriceException.MESSAGE);
     }
 }

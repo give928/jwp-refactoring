@@ -1,5 +1,7 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.table.exception.OrderTableNotFoundException;
+import kitchenpos.table.exception.RequiredOrderTablesOfTableGroupException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -16,18 +18,26 @@ public class TableGroupValidator implements TableValidator {
     }
 
     public boolean create(OrderTables orderTables) {
-        validateOrderTables(orderTables.get());
+        validateIfLessOrderTables(orderTables.get());
         return true;
     }
 
-    private void validateOrderTables(List<OrderTable> values) {
+    public boolean validateIfLessOrderTables(List<?> values) {
         if (isLessOrderTables(values)) {
-            throw new IllegalArgumentException();
+            throw new RequiredOrderTablesOfTableGroupException();
         }
+        return true;
     }
 
-    private boolean isLessOrderTables(List<OrderTable> values) {
+    private boolean isLessOrderTables(List<?> values) {
         return CollectionUtils.isEmpty(values) || values.size() < MIN_ORDER_TABLES;
+    }
+
+    public boolean validateIfNotFoundOrderTables(List<Long> orderTableIds, List<OrderTable> orderTables) {
+        if (orderTableIds.size() != orderTables.size()) {
+            throw new OrderTableNotFoundException();
+        }
+        return true;
     }
 
     @Override

@@ -1,5 +1,10 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.order.domain.Order;
+import kitchenpos.order.domain.OrderValidator;
+import kitchenpos.order.exception.OrderNotCompletionException;
+import kitchenpos.table.exception.GroupedOrderTableException;
+import kitchenpos.table.exception.OrderTableEmptyException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,7 +58,8 @@ class OrderTableTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.group(orderTableValidator, tableGroup);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class)
+                .hasMessageContaining(OrderTableEmptyException.NOT_EMPTY_MESSAGE);
     }
 
     @DisplayName("단체 지정을 해제한다.")
@@ -87,13 +93,19 @@ class OrderTableTest {
     void cannotChangeEmptyNotNullTableGroup() {
         // given
         OrderTable orderTable = aTableGroup1().getOrderTables().get(0);
-        TableValidator tableValidator = aOrderTableValidatorThrownByChangeEmpty();
+        TableValidator tableValidator = new OrderTableValidator() {
+            @Override
+            public boolean changeEmpty(OrderTable orderTable) {
+                throw new GroupedOrderTableException();
+            }
+        };
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(tableValidator, true);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(GroupedOrderTableException.class)
+                .hasMessageContaining(GroupedOrderTableException.MESSAGE);
     }
 
     @DisplayName("주문 상태가 조리중이거나 식사인 경우에는 빈 테이블 여부를 변경할 수 없다.")
@@ -101,13 +113,19 @@ class OrderTableTest {
     void cannotChangeEmptyOrdersInCookingOrMeal() {
         // given
         OrderTable orderTable = aOrderTable().empty(false).build();
-        TableValidator tableValidator = aOrderTableValidatorThrownByChangeEmpty();
+        TableValidator tableValidator = new OrderTableValidator() {
+            @Override
+            public boolean changeEmpty(OrderTable orderTable) {
+                throw new OrderNotCompletionException();
+            }
+        };
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(tableValidator, true);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderNotCompletionException.class)
+                .hasMessageContaining(OrderNotCompletionException.MESSAGE);
     }
 
     @DisplayName("방문 손님 수를 변경한다.")
@@ -133,6 +151,7 @@ class OrderTableTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeNumberOfGuests(orderTableValidator, 1);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class)
+                .hasMessageContaining(OrderTableEmptyException.EMPTY_MESSAGE);
     }
 }

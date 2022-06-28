@@ -1,8 +1,13 @@
 package kitchenpos.order.domain;
 
 import kitchenpos.menu.domain.MenuRepository;
+import kitchenpos.menu.exception.MenuNotFoundException;
+import kitchenpos.order.exception.OrderNotCompletionException;
+import kitchenpos.order.exception.RequiredOrderLineItemException;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.domain.OrderTableRepository;
+import kitchenpos.table.exception.OrderTableEmptyException;
+import kitchenpos.table.exception.OrderTableNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -30,15 +35,15 @@ public class OrderValidator {
 
     private void validateOrderTable(Long orderTableId) {
         OrderTable orderTable = orderTableRepository.findById(orderTableId)
-                .orElseThrow(IllegalArgumentException::new);
+                .orElseThrow(OrderTableNotFoundException::new);
         if (orderTable.isEmpty()) {
-            throw new IllegalArgumentException();
+            throw new OrderTableEmptyException();
         }
     }
 
     private void validateOrderLineItems(List<OrderLineItem> orderLineItems) {
         if (CollectionUtils.isEmpty(orderLineItems)) {
-            throw new IllegalArgumentException();
+            throw new RequiredOrderLineItemException();
         }
         validateOrderLineItemMenus(orderLineItems);
     }
@@ -46,7 +51,7 @@ public class OrderValidator {
     private void validateOrderLineItemMenus(List<OrderLineItem> orderLineItems) {
         Long menuCount = menuRepository.countByIdIn(mapMenuIds(orderLineItems));
         if (orderLineItems.size() != menuCount.intValue()) {
-            throw new IllegalArgumentException();
+            throw new MenuNotFoundException();
         }
     }
 
@@ -58,7 +63,7 @@ public class OrderValidator {
 
     public boolean changeOrderStatus(Order order) {
         if (Objects.equals(OrderStatus.COMPLETION, order.getOrderStatus())) {
-            throw new IllegalArgumentException();
+            throw new OrderNotCompletionException();
         }
         return true;
     }

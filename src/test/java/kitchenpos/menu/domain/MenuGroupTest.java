@@ -1,5 +1,6 @@
 package kitchenpos.menu.domain;
 
+import kitchenpos.common.exception.RequiredNameException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ class MenuGroupTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> MenuGroup.of(1L, null);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredNameException.class)
+                .hasMessageContaining(RequiredNameException.MESSAGE);
     }
 }

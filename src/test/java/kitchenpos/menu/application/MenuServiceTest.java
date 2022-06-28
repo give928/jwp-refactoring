@@ -1,9 +1,12 @@
 package kitchenpos.menu.application;
 
+import kitchenpos.common.exception.RequiredPriceException;
 import kitchenpos.menu.domain.*;
 import kitchenpos.menu.dto.MenuProductRequest;
 import kitchenpos.menu.dto.MenuRequest;
 import kitchenpos.menu.dto.MenuResponse;
+import kitchenpos.menu.exception.InvalidMenuPriceException;
+import kitchenpos.menu.exception.MenuGroupNotFoundException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +25,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static kitchenpos.Fixtures.*;
+import static kitchenpos.Fixtures.aMenu1;
+import static kitchenpos.Fixtures.aMenu2;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -96,7 +100,8 @@ class MenuServiceTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredPriceException.class)
+                .hasMessageContaining(RequiredPriceException.MESSAGE);
     }
 
     @DisplayName("메뉴 그룹은 필수이고 등록된 메뉴 그룹만 가능하다.")
@@ -113,7 +118,8 @@ class MenuServiceTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(MenuGroupNotFoundException.class)
+                .hasMessageContaining(MenuGroupNotFoundException.MESSAGE);
     }
 
     @DisplayName("메뉴의 가격은 메뉴 상품들의 금액의 합 이하만 가능하다.")
@@ -124,13 +130,13 @@ class MenuServiceTest {
         MenuRequest menuRequest = createMenuRequestBy(menu);
 
         given(menuGroupRepository.findById(menuRequest.getMenuGroupId())).willReturn(Optional.of(menu.getMenuGroup()));
-        willThrow(IllegalArgumentException.class).given(menuValidator).create(any());
+        willThrow(InvalidMenuPriceException.class).given(menuValidator).create(any());
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuService.create(menuRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(InvalidMenuPriceException.class);
     }
 
     @DisplayName("메뉴와 메뉴 상품의 전체 목록을 조회한다.")

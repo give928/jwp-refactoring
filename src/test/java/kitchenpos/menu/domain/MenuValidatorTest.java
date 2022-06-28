@@ -1,7 +1,9 @@
 package kitchenpos.menu.domain;
 
+import kitchenpos.menu.exception.InvalidMenuPriceException;
 import kitchenpos.product.domain.Product;
 import kitchenpos.product.domain.ProductRepository;
+import kitchenpos.product.exception.ProductNotFoundException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -72,7 +74,8 @@ class MenuValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuValidator.create(menu);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(ProductNotFoundException.class)
+                .hasMessageContaining(ProductNotFoundException.MESSAGE);
 
         then(productRepository).should(times(1))
                 .findByIdIn(productIds);
@@ -92,7 +95,8 @@ class MenuValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> menuValidator.create(menu);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(InvalidMenuPriceException.class)
+                .hasMessageContaining(InvalidMenuPriceException.MESSAGE);
 
         then(productRepository).should(times(1))
                 .findByIdIn(productIds);

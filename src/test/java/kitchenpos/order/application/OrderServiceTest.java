@@ -1,11 +1,15 @@
 package kitchenpos.order.application;
 
+import kitchenpos.menu.exception.MenuNotFoundException;
 import kitchenpos.order.domain.*;
 import kitchenpos.order.dto.OrderLineItemRequest;
 import kitchenpos.order.dto.OrderRequest;
 import kitchenpos.order.dto.OrderResponse;
 import kitchenpos.order.dto.OrderStatusChangeRequest;
+import kitchenpos.order.exception.RequiredOrderLineItemException;
 import kitchenpos.table.domain.OrderTable;
+import kitchenpos.table.exception.OrderTableEmptyException;
+import kitchenpos.table.exception.OrderTableNotFoundException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -80,13 +84,13 @@ class OrderServiceTest {
         // given
         OrderRequest orderRequest = new OrderRequest(order1.getOrderTableId(), orderLineItems);
 
-        given(orderValidator.create(any())).willThrow(IllegalArgumentException.class);
+        given(orderValidator.create(any())).willThrow(RequiredOrderLineItemException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredOrderLineItemException.class);
     }
 
     @DisplayName("주문 항목들은 등록된 메뉴만 가능하다.")
@@ -97,13 +101,13 @@ class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(order1.getOrderTableId(),
                                                      Collections.singletonList(new OrderLineItemRequest(menuId, 1)));
 
-        given(orderValidator.create(any())).willThrow(IllegalArgumentException.class);
+        given(orderValidator.create(any())).willThrow(MenuNotFoundException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(MenuNotFoundException.class);
     }
 
     @DisplayName("등록된 주문 테이블만 주문을 할 수 있다.")
@@ -113,13 +117,13 @@ class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(-1L,
                                                      getOrderLineItemRequests(order1));
 
-        given(orderValidator.create(any())).willThrow(IllegalArgumentException.class);
+        given(orderValidator.create(any())).willThrow(OrderTableNotFoundException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableNotFoundException.class);
     }
 
     @DisplayName("빈 테이블은 주문을 할 수 없다.")
@@ -130,13 +134,13 @@ class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(orderTable1.getId(),
                                                      getOrderLineItemRequests(order1));
 
-        given(orderValidator.create(any())).willThrow(IllegalArgumentException.class);
+        given(orderValidator.create(any())).willThrow(OrderTableEmptyException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class);
     }
 
     @DisplayName("주문과 주문 항목의 전체 목록을 조회한다.")

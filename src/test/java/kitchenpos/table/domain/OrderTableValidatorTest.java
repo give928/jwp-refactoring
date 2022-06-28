@@ -2,6 +2,8 @@ package kitchenpos.table.domain;
 
 import kitchenpos.order.domain.OrderRepository;
 import kitchenpos.order.domain.OrderTableEventHandler;
+import kitchenpos.table.exception.GroupedOrderTableException;
+import kitchenpos.table.exception.OrderTableEmptyException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,12 +12,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static kitchenpos.Fixtures.*;
+import static kitchenpos.Fixtures.aOrderTable1;
+import static kitchenpos.Fixtures.aTableGroup1;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class OrderTableValidatorTest {
@@ -51,7 +51,8 @@ class OrderTableValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTableValidator.changeTableGroup(orderTable);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class)
+                .hasMessageContaining(OrderTableEmptyException.NOT_EMPTY_MESSAGE);
     }
 
     @DisplayName("주문 테이블의 빈 테이블 변경 유효성을 확인한다.")
@@ -77,7 +78,8 @@ class OrderTableValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTableValidator.changeEmpty(orderTable);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(GroupedOrderTableException.class)
+                .hasMessageContaining(GroupedOrderTableException.MESSAGE);
     }
 
     @DisplayName("방문 손님 수를 변경 유효성을 확인한다.")
@@ -103,6 +105,7 @@ class OrderTableValidatorTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTableValidator.changeNumberOfGuests(orderTable);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class)
+                .hasMessageContaining(OrderTableEmptyException.EMPTY_MESSAGE);
     }
 }

@@ -76,10 +76,6 @@ public class Order {
         return orderStatus;
     }
 
-    public boolean isCookingOrMeal() {
-        return getOrderStatus().isCookingOrMeal();
-    }
-
     public LocalDateTime getOrderedTime() {
         return orderedTime;
     }

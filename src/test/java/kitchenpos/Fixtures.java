@@ -132,15 +132,6 @@ public class Fixtures {
         };
     }
 
-    public static OrderTableValidator aOrderTableValidatorThrownByChangeEmpty() {
-        return new OrderTableValidator() {
-            @Override
-            public boolean changeEmpty(OrderTable orderTable) {
-                throw new IllegalArgumentException();
-            }
-        };
-    }
-
     public static TableGroupValidator aTableGroupValidator() {
         return aTableGroupValidator(aOrderTableValidator());
     }
@@ -199,15 +190,6 @@ public class Fixtures {
             @Override
             public boolean create(Order order) {
                 return true;
-            }
-        };
-    }
-
-    public static OrderValidator aOrderValidatorThrownByCreate() {
-        return new OrderValidator(null, null) {
-            @Override
-            public boolean create(Order order) {
-                throw new IllegalArgumentException();
             }
         };
     }

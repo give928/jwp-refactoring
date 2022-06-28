@@ -1,5 +1,6 @@
 package kitchenpos.table.application;
 
+import kitchenpos.order.exception.OrderNotCompletionException;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.domain.OrderTableRepository;
 import kitchenpos.table.domain.OrderTableValidator;
@@ -8,6 +9,9 @@ import kitchenpos.table.dto.OrderTableChangeEmptyRequest;
 import kitchenpos.table.dto.OrderTableChangeNumberOfGuestRequest;
 import kitchenpos.table.dto.OrderTableRequest;
 import kitchenpos.table.dto.OrderTableResponse;
+import kitchenpos.table.exception.GroupedOrderTableException;
+import kitchenpos.table.exception.OrderTableEmptyException;
+import kitchenpos.table.exception.OrderTableNotFoundException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -110,14 +114,14 @@ class TableServiceTest {
         OrderTable orderTable = OrderTable.of(1L, new TableGroup(), 1, false);
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
-        given(orderTableValidator.changeEmpty(any())).willThrow(IllegalArgumentException.class);
+        given(orderTableValidator.changeEmpty(any())).willThrow(GroupedOrderTableException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () ->
                 tableService.changeEmpty(orderTable.getId(), orderTableChangeEmptyRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(GroupedOrderTableException.class);
     }
 
     @DisplayName("주문 상태가 조리중이거나 식사인 경우에는 변경할 수 없다.")
@@ -130,14 +134,14 @@ class TableServiceTest {
                               orderTable1.getNumberOfGuests(), false);
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(orderTable));
-        given(orderTableValidator.changeEmpty(any())).willThrow(IllegalArgumentException.class);
+        given(orderTableValidator.changeEmpty(any())).willThrow(OrderNotCompletionException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeEmpty(orderTable1.getId(),
                                                                                            orderTableChangeEmptyRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderNotCompletionException.class);
     }
 
     @DisplayName("주문 테이블에 방문한 손님 수를 등록하고 등록한 주문 테이블을 반환한다.")
@@ -172,7 +176,8 @@ class TableServiceTest {
                 tableService.changeNumberOfGuests(orderTable1.getId(), orderTableChangeNumberOfGuestRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableNotFoundException.class)
+                .hasMessageContaining(OrderTableNotFoundException.MESSAGE);
     }
 
     @DisplayName("빈 테이블은 방문한 손님 수를 등록할 수 없다.")
@@ -183,13 +188,13 @@ class TableServiceTest {
                 1);
 
         given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
-        given(orderTableValidator.changeNumberOfGuests(any())).willThrow(IllegalArgumentException.class);
+        given(orderTableValidator.changeNumberOfGuests(any())).willThrow(OrderTableEmptyException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () ->
                 tableService.changeNumberOfGuests(orderTable1.getId(), orderTableChangeNumberOfGuestRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class);
     }
 }

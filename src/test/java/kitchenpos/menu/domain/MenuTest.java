@@ -1,6 +1,8 @@
 package kitchenpos.menu.domain;
 
-import kitchenpos.product.domain.Product;
+import kitchenpos.common.exception.RequiredNameException;
+import kitchenpos.common.exception.RequiredPriceException;
+import kitchenpos.menu.exception.RequiredMenuGroupException;
 import kitchenpos.product.domain.ProductRepository;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,7 +63,8 @@ class MenuTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Menu.of(1L, null, BigDecimal.ONE, menuGroup1, menuProducts, menuValidator);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredNameException.class)
+                .hasMessageContaining(RequiredNameException.MESSAGE);
     }
 
     @DisplayName("가격은 필수이다.")
@@ -72,7 +74,8 @@ class MenuTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Menu.of(1L, "메뉴1", null, menuGroup1, menuProducts, menuValidator);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredPriceException.class)
+                .hasMessageContaining(RequiredPriceException.MESSAGE);
     }
 
     @DisplayName("메뉴 그룹은 필수이다.")
@@ -82,7 +85,8 @@ class MenuTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Menu.of(1L, "메뉴1", BigDecimal.ONE, null, menuProducts, menuValidator);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredMenuGroupException.class)
+                .hasMessageContaining(RequiredMenuGroupException.MESSAGE);
     }
 
     @DisplayName("메뉴 상품 컬렉션을 설정한다.")

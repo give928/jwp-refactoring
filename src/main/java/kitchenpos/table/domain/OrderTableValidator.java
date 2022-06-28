@@ -1,5 +1,6 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.table.exception.GroupedOrderTableException;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -14,7 +15,7 @@ public class OrderTableValidator implements TableValidator {
 
     private void validateIfNotNullTableGroup(OrderTable orderTable) {
         if (Objects.nonNull(orderTable.getTableGroup())) {
-            throw new IllegalArgumentException();
+            throw new GroupedOrderTableException();
         }
     }
 

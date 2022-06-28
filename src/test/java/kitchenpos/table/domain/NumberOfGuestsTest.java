@@ -1,5 +1,6 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.table.exception.InvalidNumberOfGuestsException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,8 @@ class NumberOfGuestsTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> NumberOfGuests.from(-1);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(InvalidNumberOfGuestsException.class)
+                .hasMessageContaining(InvalidNumberOfGuestsException.MESSAGE);
     }
 
     @DisplayName("방문 손님 수 인스턴스를 캐싱한다.")

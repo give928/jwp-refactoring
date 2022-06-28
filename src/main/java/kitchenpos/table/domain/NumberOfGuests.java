@@ -1,5 +1,7 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.table.exception.InvalidNumberOfGuestsException;
+
 import javax.persistence.Embeddable;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +43,7 @@ public class NumberOfGuests {
 
     private static void validate(int numberOfGuests) {
         if (numberOfGuests < MIN) {
-            throw new IllegalArgumentException();
+            throw new InvalidNumberOfGuestsException();
         }
     }
 

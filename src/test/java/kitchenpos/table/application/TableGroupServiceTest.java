@@ -4,6 +4,9 @@ import kitchenpos.table.domain.*;
 import kitchenpos.table.dto.OrderTableGroupRequest;
 import kitchenpos.table.dto.TableGroupRequest;
 import kitchenpos.table.dto.TableGroupResponse;
+import kitchenpos.table.exception.OrderTableEmptyException;
+import kitchenpos.table.exception.OrderTableNotFoundException;
+import kitchenpos.table.exception.RequiredOrderTablesOfTableGroupException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +28,9 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 
 @ExtendWith(MockitoExtension.class)
 class TableGroupServiceTest {
@@ -90,29 +95,39 @@ class TableGroupServiceTest {
     @MethodSource("invalidOrderTablesParameter")
     void invalidOrderTables(List<OrderTableGroupRequest> orderTables) {
         // given
+        List<Long> orderTableIds = Optional.ofNullable(orderTables)
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(OrderTableGroupRequest::getId)
+                .collect(Collectors.toList());
         TableGroupRequest tableGroupRequest = new TableGroupRequest(orderTables);
+
+        given(tableGroupValidator.validateIfLessOrderTables(orderTableIds)).willThrow(RequiredOrderTablesOfTableGroupException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.create(tableGroupRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredOrderTablesOfTableGroupException.class);
     }
 
     @DisplayName("등록된 주문 테이블만 단체로 지정할 수 있다.")
     @Test
     void notExistsOrderTables() {
         // given
-        TableGroupRequest tableGroupRequest = new TableGroupRequest(Arrays.asList(new OrderTableGroupRequest(-1L),
-                                                                                  new OrderTableGroupRequest(-2L)));
+        List<Long> orderTableIds = Arrays.asList(-1L, -2L);
+        TableGroupRequest tableGroupRequest = new TableGroupRequest(orderTableIds.stream()
+                .map(OrderTableGroupRequest::new)
+                .collect(Collectors.toList()));
 
-        given(orderTableRepository.findAllByIdIn(any())).willReturn(Collections.emptyList());
+        given(orderTableRepository.findAllByIdIn(orderTableIds)).willReturn(Collections.emptyList());
+        given(tableGroupValidator.validateIfNotFoundOrderTables(orderTableIds, Collections.emptyList())).willThrow(OrderTableNotFoundException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.create(tableGroupRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableNotFoundException.class);
     }
 
     @DisplayName("주문 테이블이 비어있지 않거나, 이미 단체 지정이 되어 있으면 등록할 수 없다.")
@@ -123,13 +138,14 @@ class TableGroupServiceTest {
         TableGroupRequest tableGroupRequest = createTableGroupRequest(orderTable1, orderTable2);
 
         given(orderTableRepository.findAllByIdIn(any())).willReturn(savedOrderTables);
-        given(tableGroupValidator.create(any())).willThrow(IllegalArgumentException.class);
+        given(tableGroupValidator.create(any())).willThrow(OrderTableEmptyException.throwBy(false));
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.create(tableGroupRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class)
+                .hasMessageContaining(OrderTableEmptyException.NOT_EMPTY_MESSAGE);
     }
 
     @DisplayName("단체 지정을 해제한다.")

@@ -1,5 +1,6 @@
 package kitchenpos.product.application;
 
+import kitchenpos.common.exception.RequiredPriceException;
 import kitchenpos.product.domain.Product;
 import kitchenpos.product.domain.ProductRepository;
 import kitchenpos.product.dto.ProductRequest;
@@ -75,7 +76,8 @@ class ProductServiceTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> productService.create(productRequest);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredPriceException.class)
+                .hasMessageContaining(RequiredPriceException.MESSAGE);
     }
 
     @DisplayName("상품의 전체 목록을 조회한다.")
