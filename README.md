@@ -68,3 +68,12 @@
 
 ## 구현
 - [1단계 - 테스트를 통한 코드 보호](./docs/step1.md)
+- [2단계 - 서비스 리팩터링](./docs/step2.md)
+- [3단계 - 의존성 리팩터링](./docs/step3.md)
+- [4단계 - 멀티 모듈 적용](./docs/step4.md)
+  - local, prod 환경에서 kafka 설치 필요
+  ```shell
+  $ cd docker/kafka
+  $ docker-compose up -d
+  ```
+  - 설치 후 [http://127.0.0.1:9000](http://127.0.0.1:9000) kafdrop 에서 kafka 정보 확인 
