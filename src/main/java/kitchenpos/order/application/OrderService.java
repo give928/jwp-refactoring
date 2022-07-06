@@ -1,71 +1,42 @@
 package kitchenpos.order.application;
 
-import kitchenpos.menu.domain.Menu;
-import kitchenpos.menu.domain.MenuRepository;
 import kitchenpos.order.domain.*;
-import kitchenpos.order.dto.OrderLineItemRequest;
 import kitchenpos.order.dto.OrderRequest;
 import kitchenpos.order.dto.OrderResponse;
 import kitchenpos.order.dto.OrderStatusChangeRequest;
-import kitchenpos.table.domain.OrderTable;
-import kitchenpos.table.domain.OrderTableRepository;
+import kitchenpos.order.exception.OrderNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class OrderService {
-    private final MenuRepository menuRepository;
     private final OrderRepository orderRepository;
-    private final OrderTableRepository orderTableRepository;
+    private final OrderValidator orderValidator;
 
-    public OrderService(final MenuRepository menuRepository, final OrderRepository orderRepository,
-                        final OrderTableRepository orderTableRepository) {
-        this.menuRepository = menuRepository;
+    public OrderService(final OrderRepository orderRepository, final OrderValidator orderValidator) {
         this.orderRepository = orderRepository;
-        this.orderTableRepository = orderTableRepository;
+        this.orderValidator = orderValidator;
     }
 
     @Transactional
     public OrderResponse create(final OrderRequest orderRequest) {
-        final OrderTable orderTable = orderTableRepository.findById(orderRequest.getOrderTableId())
-                .orElseThrow(IllegalArgumentException::new);
-        List<OrderLineItem> orderLineItems = mapOrderLineItems(orderRequest);
-
-        return OrderResponse.from(orderRepository.save(Order.of(orderTable, orderLineItems)));
+        Order order = Order.of(orderRequest.getOrderTableId(), mapOrderLineItems(orderRequest), orderValidator);
+        return OrderResponse.from(orderRepository.save(order));
     }
 
     private List<OrderLineItem> mapOrderLineItems(OrderRequest orderRequest) {
-        List<Menu> menus = findMenus(orderRequest.getOrderLineItems());
-
-        return orderRequest.getOrderLineItems().stream()
-                .map(orderLineItemRequest ->
-                             OrderLineItem.of(findMenu(menus, orderLineItemRequest.getMenuId()),
-                                              orderLineItemRequest.getQuantity()))
+        return Optional.ofNullable(orderRequest.getOrderLineItems())
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(orderLineItemRequest -> OrderLineItem.of(orderLineItemRequest.getMenuId(),
+                                                              orderLineItemRequest.getQuantity()))
                 .collect(Collectors.toList());
-    }
-
-    private List<Menu> findMenus(List<OrderLineItemRequest> orderLineItemRequests) {
-        validateOrderLineItemRequests(orderLineItemRequests);
-        return menuRepository.findByIdIn(orderLineItemRequests.stream()
-                                                 .map(OrderLineItemRequest::getMenuId)
-                                                 .collect(Collectors.toList()));
-    }
-
-    private Menu findMenu(List<Menu> menus, Long menuId) {
-        return menus.stream()
-                .filter(menu -> menu.getId().equals(menuId))
-                .findAny()
-                .orElseThrow(IllegalArgumentException::new);
-    }
-
-    private void validateOrderLineItemRequests(List<OrderLineItemRequest> orderLineItemRequests) {
-        if (CollectionUtils.isEmpty(orderLineItemRequests)) {
-            throw new IllegalArgumentException();
-        }
     }
 
     public List<OrderResponse> list() {
@@ -75,11 +46,9 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse changeOrderStatus(final Long orderId,
-                                           final OrderStatusChangeRequest orderStatusChangeRequest) {
+    public OrderResponse changeOrderStatus(final Long orderId, final OrderStatusChangeRequest orderStatusChangeRequest) {
         final Order savedOrder = orderRepository.findById(orderId)
-                .orElseThrow(IllegalArgumentException::new);
-        return OrderResponse.from(
-                savedOrder.changeOrderStatus(OrderStatus.valueOf(orderStatusChangeRequest.getOrderStatus())));
+                .orElseThrow(OrderNotFoundException::new);
+        return OrderResponse.from(savedOrder.changeOrderStatus(orderValidator, orderStatusChangeRequest.toOrderStatus()));
     }
 }

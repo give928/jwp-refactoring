@@ -1,6 +1,5 @@
 package kitchenpos.order.domain;
 
-import kitchenpos.table.domain.OrderTable;
 import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
@@ -17,9 +16,8 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_table_id", nullable = false, foreignKey = @ForeignKey(name = "fk_orders_order_table"))
-    private OrderTable orderTable;
+    private Long orderTableId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -35,67 +33,47 @@ public class Order {
     protected Order() {
     }
 
-    private Order(Long id, OrderTable orderTable, OrderStatus orderStatus, LocalDateTime orderedTime,
-                  List<OrderLineItem> orderLineItems) {
-        validateOrderTable(orderTable);
+    private Order(Long id, Long orderTableId, OrderStatus orderStatus, LocalDateTime orderedTime,
+                  List<OrderLineItem> orderLineItems, OrderValidator orderValidator) {
         this.id = id;
-        this.orderTable = orderTable;
+        this.orderTableId = orderTableId;
         this.orderStatus = orderStatus;
         this.orderedTime = orderedTime;
         this.orderLineItems = OrderLineItems.from(Optional.ofNullable(orderLineItems)
                                                           .orElse(new ArrayList<>()))
                 .initOrder(this);
+        orderValidator.create(this);
     }
 
-    public static Order of(OrderTable orderTable, List<OrderLineItem> orderLineItems) {
-        return of(null, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
+    public static Order of(Long orderTableId, List<OrderLineItem> orderLineItems, OrderValidator orderValidator) {
+        return of(null, orderTableId, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems, orderValidator);
     }
 
-    public static Order of(Long id, OrderTable orderTable, List<OrderLineItem> orderLineItems) {
-        return of(id, orderTable, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems);
+    public static Order of(Long id, Long orderTableId, List<OrderLineItem> orderLineItems, OrderValidator orderValidator) {
+        return of(id, orderTableId, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems, orderValidator);
     }
 
-    public static Order of(Long id, OrderTable orderTable, OrderStatus orderStatus, LocalDateTime orderedTime,
-                           List<OrderLineItem> orderLineItems) {
-        return new Order(id, orderTable, orderStatus, orderedTime, orderLineItems);
+    public static Order of(Long id, Long orderTableId, OrderStatus orderStatus, LocalDateTime orderedTime,
+                           List<OrderLineItem> orderLineItems, OrderValidator orderValidator) {
+        return new Order(id, orderTableId, orderStatus, orderedTime, orderLineItems, orderValidator);
     }
 
-    private void validateOrderTable(OrderTable orderTable) {
-        if (orderTable != null && orderTable.isEmpty()) {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public void initOrderTable(OrderTable orderTable) {
-        this.orderTable = orderTable;
-    }
-
-    public Order changeOrderStatus(OrderStatus orderStatus) {
-        validateIfOrderStatusCompletion();
+    public Order changeOrderStatus(OrderValidator orderValidator, OrderStatus orderStatus) {
+        orderValidator.changeOrderStatus(this);
         this.orderStatus = orderStatus;
         return this;
-    }
-
-    private void validateIfOrderStatusCompletion() {
-        if (Objects.equals(OrderStatus.COMPLETION, getOrderStatus())) {
-            throw new IllegalArgumentException();
-        }
     }
 
     public Long getId() {
         return id;
     }
 
-    public OrderTable getOrderTable() {
-        return orderTable;
+    public Long getOrderTableId() {
+        return orderTableId;
     }
 
     public OrderStatus getOrderStatus() {
         return orderStatus;
-    }
-
-    public boolean isCookingOrMeal() {
-        return getOrderStatus().isCookingOrMeal();
     }
 
     public LocalDateTime getOrderedTime() {
@@ -121,5 +99,55 @@ public class Order {
     @Override
     public int hashCode() {
         return Objects.hash(getId());
+    }
+
+    public static Order.OrderBuilder builder() {
+        return new Order.OrderBuilder();
+    }
+
+    public static class OrderBuilder {
+        private Long id;
+        private Long orderTableId;
+        private OrderStatus orderStatus;
+        private LocalDateTime orderedTime;
+        private List<OrderLineItem> orderLineItems;
+        private OrderValidator orderValidator;
+
+        OrderBuilder() {
+        }
+
+        public Order.OrderBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Order.OrderBuilder orderTableId(Long orderTableId) {
+            this.orderTableId = orderTableId;
+            return this;
+        }
+
+        public Order.OrderBuilder orderStatus(OrderStatus orderStatus) {
+            this.orderStatus = orderStatus;
+            return this;
+        }
+
+        public Order.OrderBuilder orderedTime(LocalDateTime orderedTime) {
+            this.orderedTime = orderedTime;
+            return this;
+        }
+
+        public Order.OrderBuilder orderLineItems(List<OrderLineItem> orderLineItems) {
+            this.orderLineItems = orderLineItems;
+            return this;
+        }
+
+        public Order.OrderBuilder orderValidator(OrderValidator orderValidator) {
+            this.orderValidator = orderValidator;
+            return this;
+        }
+
+        public Order build() {
+            return new Order(this.id, this.orderTableId, this.orderStatus, this.orderedTime, this.orderLineItems, this.orderValidator);
+        }
     }
 }

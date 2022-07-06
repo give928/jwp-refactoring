@@ -40,23 +40,22 @@ class MenuGroupRestControllerTest {
     @MockBean
     private MenuGroupService menuGroupService;
 
-    private MenuGroup menuGroup1;
-    private MenuGroup menuGroup2;
+    private MenuGroupResponse menuGroupResponse1;
+    private MenuGroupResponse menuGroupResponse2;
 
     @BeforeEach
     void setUp() {
-        menuGroup1 = MenuGroup.of(1L, "메뉴그룹1");
-        menuGroup2 = MenuGroup.of(2L, "메뉴그룹2");
+        menuGroupResponse1 = new MenuGroupResponse(1L, "메뉴그룹1");
+        menuGroupResponse2 = new MenuGroupResponse(2L, "메뉴그룹2");
     }
 
     @DisplayName("메뉴 그룹을 등록하고 등록한 메뉴 그룹을 반환한다.")
     @Test
     void create() throws Exception {
         // given
-        MenuGroupRequest menuGroupRequest = new MenuGroupRequest(menuGroup1.getName());
-        MenuGroupResponse menuGroupResponse = MenuGroupResponse.from(menuGroup1);
+        MenuGroupRequest menuGroupRequest = new MenuGroupRequest(menuGroupResponse1.getName());
 
-        given(menuGroupService.create(any())).willReturn(menuGroupResponse);
+        given(menuGroupService.create(any())).willReturn(menuGroupResponse1);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post(URL)
@@ -66,15 +65,14 @@ class MenuGroupRestControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(objectMapper.writeValueAsString(menuGroupResponse)));
+                .andExpect(content().string(objectMapper.writeValueAsString(menuGroupResponse1)));
     }
 
     @DisplayName("메뉴 그룹의 전체 목록을 조회한다.")
     @Test
     void list() throws Exception {
         // given
-        List<MenuGroupResponse> menuGroups = Arrays.asList(MenuGroupResponse.from(menuGroup1),
-                                                           MenuGroupResponse.from(menuGroup2));
+        List<MenuGroupResponse> menuGroups = Arrays.asList(menuGroupResponse1, menuGroupResponse2);
 
         given(menuGroupService.list()).willReturn(menuGroups);
 

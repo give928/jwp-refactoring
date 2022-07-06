@@ -1,54 +1,67 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.table.exception.RequiredOrderTablesOfTableGroupException;
 import org.assertj.core.api.ThrowableAssert;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
+import static kitchenpos.Fixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrderTablesTest {
+    private OrderTable orderTable1;
+    private OrderTable orderTable2;
+    private TableGroupValidator tableGroupValidator;
+
+    @BeforeEach
+    void setUp() {
+        orderTable1 = aOrderTable1();
+        orderTable2 = aOrderTable2();
+        tableGroupValidator = aTableGroupValidator();
+    }
+
     @DisplayName("주문 테이블 일급 컬렉션을 생성한다.")
     @Test
     void create() {
         // given
-        OrderTable orderTable1 = OrderTable.of(1L, null, 0, true);
-        OrderTable orderTable2 = OrderTable.of(2L, null, 0, true);
+        List<OrderTable> orderTableList = Arrays.asList(orderTable1, orderTable2);
 
         // when
-        OrderTables orderTables = OrderTables.from(Arrays.asList(orderTable1, orderTable2));
+        OrderTables orderTables = OrderTables.of(orderTableList, tableGroupValidator);
 
         // then
-        assertThat(orderTables).isEqualTo(OrderTables.from(Arrays.asList(orderTable1, orderTable2)));
+        assertThat(orderTables).isEqualTo(OrderTables.of(orderTableList, tableGroupValidator));
     }
 
     @DisplayName("2개 미만 주문 테이블은 생성할 수 없다.")
     @Test
     void cannotCreateLess() {
         // given
-        OrderTable orderTable1 = OrderTable.of(1L, null, 0, true);
+        List<OrderTable> orderTableList = Collections.singletonList(orderTable1);
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> OrderTables.from(Collections.singletonList(orderTable1));
+        ThrowableAssert.ThrowingCallable throwingCallable = () -> OrderTables.of(orderTableList, tableGroupValidator);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredOrderTablesOfTableGroupException.class)
+                .hasMessageContaining(RequiredOrderTablesOfTableGroupException.MESSAGE);
     }
 
     @DisplayName("단체 지정을 한다.")
     @Test
     void changeTableGroup() {
         // given
-        OrderTable orderTable1 = OrderTable.of(1L, null, 0, true);
-        OrderTable orderTable2 = OrderTable.of(2L, null, 0, true);
-        OrderTables orderTables = OrderTables.from(Arrays.asList(orderTable1, orderTable2));
+        OrderTables orderTables = OrderTables.of(Arrays.asList(orderTable1, orderTable2), tableGroupValidator);
         TableGroup tableGroup = new TableGroup();
 
         // when
-        OrderTables changedOrderTables = orderTables.changeTableGroup(tableGroup);
+        OrderTables changedOrderTables = orderTables.group(tableGroupValidator, tableGroup);
 
         // then
         assertThat(changedOrderTables.get()).extracting("tableGroup")
@@ -59,11 +72,9 @@ class OrderTablesTest {
     @Test
     void ungroup() {
         // given
-        OrderTable orderTable1 = OrderTable.of(1L, null, 0, true);
-        OrderTable orderTable2 = OrderTable.of(2L, null, 0, true);
-        OrderTables orderTables = OrderTables.from(Arrays.asList(orderTable1, orderTable2));
+        OrderTables orderTables = OrderTables.of(Arrays.asList(orderTable1, orderTable2), tableGroupValidator);
         TableGroup tableGroup = new TableGroup();
-        orderTables.changeTableGroup(tableGroup);
+        orderTables.group(tableGroupValidator, tableGroup);
 
         // when
         orderTables.ungroup();

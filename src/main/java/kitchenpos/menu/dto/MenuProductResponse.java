@@ -11,7 +11,7 @@ public class MenuProductResponse {
     protected MenuProductResponse() {
     }
 
-    private MenuProductResponse(Long seq, Long menuId, Long productId, long quantity) {
+    public MenuProductResponse(Long seq, Long menuId, Long productId, long quantity) {
         this.seq = seq;
         this.menuId = menuId;
         this.productId = productId;
@@ -19,7 +19,7 @@ public class MenuProductResponse {
     }
 
     public static MenuProductResponse from(MenuProduct menuProduct) {
-        return new MenuProductResponse(menuProduct.getSeq(), menuProduct.getMenu().getId(), menuProduct.getProduct().getId(), menuProduct.getQuantity());
+        return new MenuProductResponse(menuProduct.getSeq(), menuProduct.getMenu().getId(), menuProduct.getProductId(), menuProduct.getQuantity());
     }
 
     public Long getSeq() {

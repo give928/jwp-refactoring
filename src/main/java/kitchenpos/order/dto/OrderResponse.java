@@ -16,7 +16,7 @@ public class OrderResponse {
     protected OrderResponse() {
     }
 
-    private OrderResponse(Long id, Long orderTableId, String orderStatus, LocalDateTime orderedTime,
+    public OrderResponse(Long id, Long orderTableId, String orderStatus, LocalDateTime orderedTime,
                           List<OrderLineItemResponse> orderLineItems) {
         this.id = id;
         this.orderTableId = orderTableId;
@@ -26,7 +26,7 @@ public class OrderResponse {
     }
 
     public static OrderResponse from(Order order) {
-        return new OrderResponse(order.getId(), order.getOrderTable().getId(), order.getOrderStatus().name(), order.getOrderedTime(),
+        return new OrderResponse(order.getId(), order.getOrderTableId(), order.getOrderStatus().name(), order.getOrderedTime(),
                                  order.getOrderLineItems().stream()
                                          .map(OrderLineItemResponse::from)
                                          .collect(Collectors.toList()));

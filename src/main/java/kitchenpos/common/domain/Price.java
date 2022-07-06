@@ -1,5 +1,7 @@
 package kitchenpos.common.domain;
 
+import kitchenpos.common.exception.RequiredPriceException;
+
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import java.math.BigDecimal;
@@ -7,29 +9,29 @@ import java.util.Objects;
 
 @Embeddable
 public class Price {
-    @Column(nullable = false)
-    private BigDecimal price;
+    @Column(name = "price", nullable = false)
+    private BigDecimal value;
 
     protected Price() {
     }
 
-    private Price(BigDecimal price) {
-        validate(price);
-        this.price = price;
+    private Price(BigDecimal value) {
+        validate(value);
+        this.value = value;
     }
 
-    public static Price from(BigDecimal price) {
-        return new Price(price);
+    public static Price from(BigDecimal value) {
+        return new Price(value);
     }
 
-    private static void validate(BigDecimal price) {
-        if (Objects.isNull(price) || price.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException();
+    private static void validate(BigDecimal value) {
+        if (Objects.isNull(value) || value.compareTo(BigDecimal.ZERO) < 0) {
+            throw new RequiredPriceException();
         }
     }
 
     public BigDecimal get() {
-        return price;
+        return value;
     }
 
     @Override

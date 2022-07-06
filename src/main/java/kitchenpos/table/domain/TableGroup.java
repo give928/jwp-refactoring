@@ -1,6 +1,7 @@
 package kitchenpos.table.domain;
 
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.domain.AbstractAggregateRoot;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class TableGroup {
+public class TableGroup extends AbstractAggregateRoot<TableGroup> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,19 +28,20 @@ public class TableGroup {
     public TableGroup() {
     }
 
-    private TableGroup(Long id, List<OrderTable> orderTables) {
+    private TableGroup(Long id, List<OrderTable> orderTables, TableGroupValidator tableGroupValidator) {
         this.id = id;
-        this.orderTables = OrderTables.from(Optional.ofNullable(orderTables)
-                                                    .orElse(new ArrayList<>()))
-                .changeTableGroup(this);
+        this.orderTables = OrderTables.of(Optional.ofNullable(orderTables)
+                                                    .orElse(new ArrayList<>()),
+                                          tableGroupValidator)
+                .group(tableGroupValidator, this);
     }
 
-    public static TableGroup of(List<OrderTable> orderTables) {
-        return of(null, orderTables);
+    public static TableGroup of(List<OrderTable> orderTables, TableGroupValidator tableGroupValidator) {
+        return of(null, orderTables, tableGroupValidator);
     }
 
-    public static TableGroup of(Long id, List<OrderTable> orderTables) {
-        return new TableGroup(id, orderTables);
+    public static TableGroup of(Long id, List<OrderTable> orderTables, TableGroupValidator tableGroupValidator) {
+        return new TableGroup(id, orderTables, tableGroupValidator);
     }
 
     public Long getId() {
@@ -54,8 +56,11 @@ public class TableGroup {
         return orderTables.get();
     }
 
-    public void ungroup() {
+    public TableGroup ungroup() {
+        List<Long> orderTableIds = orderTables.getIds();
         orderTables.ungroup();
+        registerEvent(new OrderTableUngroupedEvent(orderTableIds));
+        return this;
     }
 
     @Override

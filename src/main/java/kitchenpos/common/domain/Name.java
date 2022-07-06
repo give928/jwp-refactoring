@@ -1,5 +1,6 @@
 package kitchenpos.common.domain;
 
+import kitchenpos.common.exception.RequiredNameException;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.Column;
@@ -9,29 +10,29 @@ import java.util.Optional;
 
 @Embeddable
 public class Name {
-    @Column(nullable = false)
-    private String name;
+    @Column(name = "name", nullable = false)
+    private String value;
 
     protected Name() {
     }
 
     private Name(String value) {
-        this.name = validateIfEmptyName(value);
+        this.value = validateIfEmptyName(value);
     }
 
     public static Name from(String value) {
         return new Name(value);
     }
 
-    private String validateIfEmptyName(String name) {
-        return Optional.ofNullable(name)
+    private String validateIfEmptyName(String value) {
+        return Optional.ofNullable(value)
                 .map(StringUtils::trimWhitespace)
                 .filter(StringUtils::hasText)
-                .orElseThrow(IllegalArgumentException::new);
+                .orElseThrow(RequiredNameException::new);
     }
 
     public String get() {
-        return name;
+        return value;
     }
 
     @Override

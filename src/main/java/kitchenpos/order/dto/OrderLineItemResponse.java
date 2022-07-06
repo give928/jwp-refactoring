@@ -11,7 +11,7 @@ public class OrderLineItemResponse {
     protected OrderLineItemResponse() {
     }
 
-    private OrderLineItemResponse(Long seq, Long orderId, Long menuId, long quantity) {
+    public OrderLineItemResponse(Long seq, Long orderId, Long menuId, long quantity) {
         this.seq = seq;
         this.orderId = orderId;
         this.menuId = menuId;
@@ -19,7 +19,7 @@ public class OrderLineItemResponse {
     }
 
     public static OrderLineItemResponse from(OrderLineItem orderLineItem) {
-        return new OrderLineItemResponse(orderLineItem.getSeq(), orderLineItem.getOrder().getId(), orderLineItem.getMenu().getId(),
+        return new OrderLineItemResponse(orderLineItem.getSeq(), orderLineItem.getOrder().getId(), orderLineItem.getMenuId(),
                                          orderLineItem.getQuantity());
     }
 

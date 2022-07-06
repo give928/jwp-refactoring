@@ -2,6 +2,7 @@ package kitchenpos.menu.domain;
 
 import kitchenpos.common.domain.Name;
 import kitchenpos.common.domain.Price;
+import kitchenpos.menu.exception.RequiredMenuGroupException;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -32,22 +33,24 @@ public class Menu {
     protected Menu() {
     }
 
-    private Menu(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
+    private Menu(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts, MenuValidator menuValidator) {
         this.id = id;
         this.name = Name.from(name);
         this.price = Price.from(price);
-        this.menuGroup = Objects.requireNonNull(menuGroup);
+        this.menuGroup = Optional.ofNullable(menuGroup)
+                .orElseThrow(RequiredMenuGroupException::new);
         this.menuProducts = MenuProducts.from(Optional.ofNullable(menuProducts)
                                                       .orElse(new ArrayList<>()))
                 .initMenu(this);
+        menuValidator.create(this);
     }
 
-    public static Menu of(String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
-        return of(null, name, price, menuGroup, menuProducts);
+    public static Menu of(String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts, MenuValidator menuValidator) {
+        return of(null, name, price, menuGroup, menuProducts, menuValidator);
     }
 
-    public static Menu of(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts) {
-        return new Menu(id, name, price, menuGroup, menuProducts);
+    public static Menu of(Long id, String name, BigDecimal price, MenuGroup menuGroup, List<MenuProduct> menuProducts, MenuValidator menuValidator) {
+        return new Menu(id, name, price, menuGroup, menuProducts, menuValidator);
     }
 
     public void initMenuProducts(MenuProducts menuProducts) {
@@ -89,5 +92,55 @@ public class Menu {
     @Override
     public int hashCode() {
         return Objects.hash(getId());
+    }
+
+    public static Menu.MenuBuilder builder() {
+        return new Menu.MenuBuilder();
+    }
+
+    public static class MenuBuilder {
+        private Long id;
+        private String name;
+        private BigDecimal price;
+        private MenuGroup menuGroup;
+        private List<MenuProduct> menuProducts;
+        private MenuValidator menuValidator;
+
+        MenuBuilder() {
+        }
+
+        public Menu.MenuBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Menu.MenuBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Menu.MenuBuilder price(BigDecimal price) {
+            this.price = price;
+            return this;
+        }
+
+        public Menu.MenuBuilder menuGroup(MenuGroup menuGroup) {
+            this.menuGroup = menuGroup;
+            return this;
+        }
+
+        public Menu.MenuBuilder menuProducts(List<MenuProduct> menuProducts) {
+            this.menuProducts = menuProducts;
+            return this;
+        }
+
+        public Menu.MenuBuilder menuValidator(MenuValidator menuValidator) {
+            this.menuValidator = menuValidator;
+            return this;
+        }
+
+        public Menu build() {
+            return new Menu(this.id, this.name, this.price, this.menuGroup, this.menuProducts, this.menuValidator);
+        }
     }
 }

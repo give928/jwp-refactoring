@@ -1,37 +1,26 @@
 package kitchenpos.menu.domain;
 
-import kitchenpos.product.domain.Product;
 import org.assertj.core.api.ThrowableAssert;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 
+import static kitchenpos.Fixtures.aMenu1;
+import static kitchenpos.Fixtures.aMenuProducts1;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MenuProductsTest {
-    private Product product1;
-    private Product product2;
-
-    @BeforeEach
-    void setUp() {
-        product1 = Product.of(1L, "음식1", BigDecimal.ONE);
-        product2 = Product.of(2L, "음식2", BigDecimal.valueOf(2L));
-    }
-
     @DisplayName("메뉴 상품 일급 컬렉션을 생성한다.")
     @Test
     void create() {
         // when
-        MenuProducts menuProducts = MenuProducts.from(Arrays.asList(MenuProduct.of(1L, null, product1, 1L),
-                                                                    MenuProduct.of(2L, null, product2, 1L)));
+        MenuProducts menuProducts = aMenuProducts1();
 
         // then
-        assertThat(menuProducts).isEqualTo(MenuProducts.from(Arrays.asList(MenuProduct.of(1L, null, product1, 1L),
-                                                                           MenuProduct.of(2L, null, product2, 1L))));
+        assertThat(menuProducts).isEqualTo(MenuProducts.from(Arrays.asList(MenuProduct.of(1L, null, 1L, 1L),
+                                                                           MenuProduct.of(2L, null, 2L, 1L))));
     }
 
     @DisplayName("메뉴 상품 컬렉션은 필수이다.")
@@ -48,9 +37,8 @@ class MenuProductsTest {
     @Test
     void initMenu() {
         // given
-        Menu menu = Menu.of(1L, "메뉴1", BigDecimal.valueOf(0L), MenuGroup.of(1L, "메뉴그룹1"), null);
-        MenuProducts menuProducts = MenuProducts.from(Arrays.asList(MenuProduct.of(1L, null, product1, 1L),
-                                                                    MenuProduct.of(2L, null, product2, 1L)));
+        Menu menu = aMenu1().build();
+        MenuProducts menuProducts = aMenuProducts1();
 
         // when
         MenuProducts settingMenuProducts = menuProducts.initMenu(menu);

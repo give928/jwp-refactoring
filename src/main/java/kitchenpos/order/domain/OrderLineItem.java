@@ -1,7 +1,5 @@
 package kitchenpos.order.domain;
 
-import kitchenpos.menu.domain.Menu;
-
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -15,28 +13,27 @@ public class OrderLineItem {
     @JoinColumn(name = "order_id", nullable = false, foreignKey = @ForeignKey(name = "fk_order_line_item_orders"))
     private Order order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "menu_id", nullable = false, foreignKey = @ForeignKey(name = "fk_order_line_item_menu"))
-    private Menu menu;
+    private Long menuId;
 
     private long quantity;
 
     public OrderLineItem() {
     }
 
-    private OrderLineItem(Long seq, Order order, Menu menu, long quantity) {
+    private OrderLineItem(Long seq, Order order, Long menuId, long quantity) {
         this.seq = seq;
         this.order = order;
-        this.menu = menu;
+        this.menuId = menuId;
         this.quantity = quantity;
     }
 
-    public static OrderLineItem of(Menu menu, long quantity) {
-        return of(null, null, menu, quantity);
+    public static OrderLineItem of(Long menuId, long quantity) {
+        return of(null, null, menuId, quantity);
     }
 
-    public static OrderLineItem of(Long seq, Order order, Menu menu, long quantity) {
-        return new OrderLineItem(seq, order, menu, quantity);
+    public static OrderLineItem of(Long seq, Order order, Long menuId, long quantity) {
+        return new OrderLineItem(seq, order, menuId, quantity);
     }
 
     public Long getSeq() {
@@ -47,8 +44,8 @@ public class OrderLineItem {
         return order;
     }
 
-    public Menu getMenu() {
-        return menu;
+    public Long getMenuId() {
+        return menuId;
     }
 
     public long getQuantity() {

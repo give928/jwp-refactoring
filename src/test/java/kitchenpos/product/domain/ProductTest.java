@@ -1,13 +1,14 @@
 package kitchenpos.product.domain;
 
-import kitchenpos.common.domain.Name;
-import kitchenpos.common.domain.Price;
+import kitchenpos.common.exception.RequiredNameException;
+import kitchenpos.common.exception.RequiredPriceException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
+import static kitchenpos.Fixtures.aProduct1;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -16,10 +17,10 @@ class ProductTest {
     @Test
     void create() {
         // when
-        Product product = Product.of(1L, "음식1", BigDecimal.ONE);
+        Product product = aProduct1();
 
         // then
-        assertThat(product).isEqualTo(Product.of(1L, "음식1", BigDecimal.ONE));
+        assertThat(product).isEqualTo(aProduct1());
     }
 
     @DisplayName("상품의 이름은 필수이다.")
@@ -29,7 +30,8 @@ class ProductTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Product.of(1L, null, BigDecimal.ONE);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredNameException.class)
+                .hasMessageContaining(RequiredNameException.MESSAGE);
     }
 
     @DisplayName("상품의 가격은 필수이다.")
@@ -39,6 +41,7 @@ class ProductTest {
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Product.of(1L, "음식1", null);
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(throwingCallable).isInstanceOf(RequiredPriceException.class)
+                .hasMessageContaining(RequiredPriceException.MESSAGE);
     }
 }

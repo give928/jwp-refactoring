@@ -3,7 +3,6 @@ package kitchenpos.menu.domain;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.OneToMany;
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -25,23 +24,9 @@ public class MenuProducts {
     }
 
     public MenuProducts initMenu(Menu menu) {
-        validatePrice(menu.getPrice());
         values.forEach(menuProduct -> menuProduct.initMenu(menu));
         menu.initMenuProducts(this);
         return this;
-    }
-
-    private void validatePrice(BigDecimal price) {
-        if (price.compareTo(sumPrice()) > 0) {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    private BigDecimal sumPrice() {
-        return values.stream()
-                .map(menuProduct -> menuProduct.getProduct().getPrice()
-                        .multiply(BigDecimal.valueOf(menuProduct.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public List<MenuProduct> get() {
