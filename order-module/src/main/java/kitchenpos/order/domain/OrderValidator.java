@@ -36,10 +36,6 @@ public class OrderValidator {
         if (CollectionUtils.isEmpty(order.getOrderLineItems())) {
             throw new RequiredOrderLineItemException();
         }
-        boolean valid = orderEventPublisher.sendAndReceiveExistsMenusMessage(order);
-        if (!valid) {
-            throw new OrderMenusNotFoundException();
-        }
     }
 
     public boolean changeOrderStatus(Order order) {

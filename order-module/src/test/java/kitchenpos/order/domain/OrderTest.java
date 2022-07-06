@@ -31,7 +31,7 @@ class OrderTest {
     void cannotCreateIfEmptyOrderLineItem() {
         // given
         List<OrderLineItem> orderLineItems = Collections.emptyList();
-        OrderValidator orderValidator = new OrderValidator(aOrderMessageStream()) {
+        OrderValidator orderValidator = new OrderValidator(aOrderEventPublisher()) {
             @Override
             public boolean create(Order order) {
                 throw new RequiredOrderLineItemException();
@@ -40,7 +40,7 @@ class OrderTest {
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Order.of(1L, aOrderTable1(),
-                                                                           orderLineItems, orderValidator);
+                                                                           orderLineItems, orderValidator, aOrderEventPublisher());
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(RequiredOrderLineItemException.class);
@@ -52,16 +52,21 @@ class OrderTest {
         // given
         Long menuId = -1L;
         List<OrderLineItem> orderLineItems = Collections.singletonList(OrderLineItem.of(menuId, 1));
-        OrderValidator orderValidator = new OrderValidator(aOrderMessageStream()) {
+        OrderEventPublisher orderEventPublisher = new OrderEventPublisher() {
             @Override
-            public boolean create(Order order) {
-                throw new OrderMenusNotFoundException();
+            public List<OrderMenuMessage> sendAndReceiveMenusMessage(List<OrderLineItem> orderLineItems) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public OrderTableMessage sendAndReceiveExistsAndNotEmptyTableMessage(Order order) {
+                return new OrderTableMessage(order.getId(), true, false);
             }
         };
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Order.of(1L, aOrderTable1(),
-                                                                           orderLineItems, orderValidator);
+                                                                           orderLineItems, aOrderValidator(), orderEventPublisher);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(OrderMenusNotFoundException.class)
@@ -73,7 +78,7 @@ class OrderTest {
     void cannotCreateIfNotExistsOrderTable() {
         // given
         Long orderTableId = -1L;
-        OrderValidator orderValidator = new OrderValidator(aOrderMessageStream()) {
+        OrderValidator orderValidator = new OrderValidator(aOrderEventPublisher()) {
             @Override
             public boolean create(Order order) {
                 throw new OrderTableNotFoundException();
@@ -82,7 +87,7 @@ class OrderTest {
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Order.of(1L, orderTableId,
-                                                                           aOrderLineItems1().get(), orderValidator);
+                                                                           aOrderLineItems1().get(), orderValidator, aOrderEventPublisher());
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableNotFoundException.class)
@@ -93,7 +98,7 @@ class OrderTest {
     @Test
     void cannotCreateIfEmptyOrderTable() {
         // given
-        OrderValidator orderValidator = new OrderValidator(aOrderMessageStream()) {
+        OrderValidator orderValidator = new OrderValidator(aOrderEventPublisher()) {
             @Override
             public boolean create(Order order) {
                 throw new OrderTableEmptyException();
@@ -102,7 +107,7 @@ class OrderTest {
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> Order.of(1L, aOrderTable1(),
-                                                                           aOrderLineItems1().get(), orderValidator);
+                                                                           aOrderLineItems1().get(), orderValidator, aOrderEventPublisher());
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class)

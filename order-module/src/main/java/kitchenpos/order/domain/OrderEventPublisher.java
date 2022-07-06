@@ -1,7 +1,9 @@
 package kitchenpos.order.domain;
 
-public interface OrderEventPublisher {
-    OrderTableMessage sendAndReceiveExistsAndNotEmptyTableMessage(Order order);
+import java.util.List;
 
-    boolean sendAndReceiveExistsMenusMessage(Order order);
+public interface OrderEventPublisher {
+    List<OrderMenuMessage> sendAndReceiveMenusMessage(List<OrderLineItem> orderLineItems);
+
+    OrderTableMessage sendAndReceiveExistsAndNotEmptyTableMessage(Order order);
 }

@@ -13,7 +13,7 @@ public class MenuProduct {
     @JoinColumn(name = "menu_id", nullable = false, foreignKey = @ForeignKey(name = "fk_menu_product_menu"))
     private Menu menu;
 
-    @JoinColumn(name = "product_id", nullable = false, foreignKey = @ForeignKey(name = "fk_menu_product_product"))
+    @Column(nullable = false)
     private Long productId;
 
     private long quantity;

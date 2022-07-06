@@ -40,6 +40,8 @@ class OrderServiceTest {
     private OrderRepository orderRepository;
     @Mock
     private OrderValidator orderValidator;
+    @Mock
+    private OrderEventPublisher orderEventPublisher;
 
     @InjectMocks
     private OrderService orderService;
@@ -63,8 +65,10 @@ class OrderServiceTest {
         // given
         OrderRequest orderRequest = createOrderRequestBy(order1);
 
-        given(orderRepository.save(any())).willReturn(order1);
+        given(orderEventPublisher.sendAndReceiveMenusMessage(any()))
+                .willReturn(convertOrderMenuMessages(orderRequest));
         given(orderValidator.create(any())).willReturn(true);
+        given(orderRepository.save(any())).willReturn(order1);
 
         // when
         OrderResponse orderResponse = orderService.create(orderRequest);
@@ -83,6 +87,7 @@ class OrderServiceTest {
         // given
         OrderRequest orderRequest = new OrderRequest(order1.getOrderTableId(), orderLineItems);
 
+        given(orderEventPublisher.sendAndReceiveMenusMessage(any())).willReturn(convertOrderMenuMessages(orderRequest));
         given(orderValidator.create(any())).willThrow(RequiredOrderLineItemException.class);
 
         // when
@@ -100,7 +105,7 @@ class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(order1.getOrderTableId(),
                                                      Collections.singletonList(new OrderLineItemRequest(menuId, 1)));
 
-        given(orderValidator.create(any())).willThrow(OrderMenusNotFoundException.class);
+        given(orderEventPublisher.sendAndReceiveMenusMessage(any())).willReturn(Collections.emptyList());
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
@@ -116,6 +121,7 @@ class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(-1L,
                                                      getOrderLineItemRequests(order1));
 
+        given(orderEventPublisher.sendAndReceiveMenusMessage(any())).willReturn(convertOrderMenuMessages(orderRequest));
         given(orderValidator.create(any())).willThrow(OrderTableNotFoundException.class);
 
         // when
@@ -131,6 +137,7 @@ class OrderServiceTest {
         // given
         OrderRequest orderRequest = new OrderRequest(1L, getOrderLineItemRequests(order1));
 
+        given(orderEventPublisher.sendAndReceiveMenusMessage(any())).willReturn(convertOrderMenuMessages(orderRequest));
         given(orderValidator.create(any())).willThrow(OrderTableEmptyException.class);
 
         // when
@@ -184,6 +191,17 @@ class OrderServiceTest {
         return order.getOrderLineItems().stream()
                 .map(orderLineItem -> new OrderLineItemRequest(orderLineItem.getMenuId(),
                                                                orderLineItem.getQuantity()))
+                .collect(Collectors.toList());
+    }
+
+    private List<OrderMenuMessage> convertOrderMenuMessages(OrderRequest orderRequest) {
+        return Optional.ofNullable(orderRequest.getOrderLineItems())
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(orderLineItemRequest -> new OrderMenuMessage(
+                        orderLineItemRequest.getMenuId(),
+                        "음식" + orderLineItemRequest.getMenuId(),
+                        orderLineItemRequest.getQuantity() * 1_000))
                 .collect(Collectors.toList());
     }
 }

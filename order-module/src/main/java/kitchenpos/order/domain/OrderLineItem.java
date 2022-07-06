@@ -13,8 +13,8 @@ public class OrderLineItem {
     @JoinColumn(name = "order_id", nullable = false, foreignKey = @ForeignKey(name = "fk_order_line_item_orders"))
     private Order order;
 
-    @JoinColumn(name = "menu_id", nullable = false, foreignKey = @ForeignKey(name = "fk_order_line_item_menu"))
-    private Long menuId;
+    @Embedded
+    private OrderMenu orderMenu;
 
     private long quantity;
 
@@ -24,7 +24,7 @@ public class OrderLineItem {
     private OrderLineItem(Long seq, Order order, Long menuId, long quantity) {
         this.seq = seq;
         this.order = order;
-        this.menuId = menuId;
+        this.orderMenu = OrderMenu.from(menuId);
         this.quantity = quantity;
     }
 
@@ -45,11 +45,15 @@ public class OrderLineItem {
     }
 
     public Long getMenuId() {
-        return menuId;
+        return orderMenu.getMenuId();
     }
 
     public long getQuantity() {
         return quantity;
+    }
+
+    public void initOrderMenu(OrderMenu orderMenu) {
+        this.orderMenu = orderMenu;
     }
 
     public void initOrder(Order order) {
@@ -71,15 +75,5 @@ public class OrderLineItem {
     @Override
     public int hashCode() {
         return Objects.hash(getSeq());
-    }
-
-    @Override
-    public String toString() {
-        return "OrderLineItem{" +
-                "seq=" + seq +
-                ", order=" + order.getId() +
-                ", menuId=" + menuId +
-                ", quantity=" + quantity +
-                '}';
     }
 }

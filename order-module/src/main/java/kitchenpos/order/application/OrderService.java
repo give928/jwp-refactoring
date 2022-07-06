@@ -1,9 +1,6 @@
 package kitchenpos.order.application;
 
-import kitchenpos.order.domain.Order;
-import kitchenpos.order.domain.OrderLineItem;
-import kitchenpos.order.domain.OrderRepository;
-import kitchenpos.order.domain.OrderValidator;
+import kitchenpos.order.domain.*;
 import kitchenpos.order.dto.OrderRequest;
 import kitchenpos.order.dto.OrderResponse;
 import kitchenpos.order.dto.OrderStatusChangeRequest;
@@ -21,15 +18,18 @@ import java.util.stream.Collectors;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderValidator orderValidator;
+    private final OrderEventPublisher orderEventPublisher;
 
-    public OrderService(final OrderRepository orderRepository, final OrderValidator orderValidator) {
+    public OrderService(final OrderRepository orderRepository, final OrderValidator orderValidator,
+                        final OrderEventPublisher orderEventPublisher) {
         this.orderRepository = orderRepository;
         this.orderValidator = orderValidator;
+        this.orderEventPublisher = orderEventPublisher;
     }
 
     @Transactional
     public OrderResponse create(final OrderRequest orderRequest) {
-        Order order = Order.of(orderRequest.getOrderTableId(), mapOrderLineItems(orderRequest), orderValidator);
+        Order order = Order.of(orderRequest.getOrderTableId(), mapOrderLineItems(orderRequest), orderValidator, orderEventPublisher);
         return OrderResponse.from(orderRepository.save(order));
     }
 

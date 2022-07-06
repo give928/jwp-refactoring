@@ -76,7 +76,7 @@ class OrderTableTest {
     void cannotChangeEmptyNotNullTableGroup() {
         // given
         OrderTable orderTable = TableFixtures.aTableGroup1().getOrderTables().get(0);
-        OrderTableValidator orderTableValidator = new OrderTableValidator(aTableMessageStream());
+        OrderTableValidator orderTableValidator = new OrderTableValidator(aTableEventPublisher());
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(orderTableValidator, true);

@@ -10,8 +10,8 @@ kafka:
     reply-check-order-status-completion-of-tables: reply-check-order-status-completion-of-tables
     exists-and-empty-table: exists-and-empty-table
     reply-exists-and-empty-table: reply-exists-and-empty-table
-    exists-menus: exists-menus
-    reply-exists-menus: reply-exists-menus
+    get-menus: get-menus
+    reply-get-menus: reply-get-menus
 
 module:
   product:
