@@ -1,6 +1,7 @@
 package kitchenpos.order.acceptance;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
@@ -27,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -314,27 +316,35 @@ public class OrderAcceptanceTest extends AcceptanceTest {
         return Arrays.asList(메뉴1, 메뉴2, 메뉴3);
     }*/
 
-    private static String 메뉴_모듈_수신_메시지;
-    private static final String 메뉴_모듈_수신_메시지_메뉴_있음 = "{\"menuIds\":%s,\"exists\":true}";
-    private static final String 메뉴_모듈_수신_메시지_메뉴_없음 = "{\"menuIds\":%s,\"exists\":false}";
+    private static final String 메뉴_모듈_수신_메시지 = "{\"menuIds\":%s,\"menus\":[%s]}";
+    private static boolean 메뉴_모듈_수신_메시지_메뉴_있음 = false;
 
     private void 메뉴_모듈에서_메뉴_있음_수신받도록_설정() {
-        메뉴_모듈_수신_메시지 = 메뉴_모듈_수신_메시지_메뉴_있음;
+        메뉴_모듈_수신_메시지_메뉴_있음 = true;
     }
 
     private void 메뉴_모듈에서_메뉴_없음_수신받도록_설정() {
-        메뉴_모듈_수신_메시지 = 메뉴_모듈_수신_메시지_메뉴_없음;
+        메뉴_모듈_수신_메시지_메뉴_있음 = false;
     }
 
-    @KafkaListener(topics = "${kafka.topics.exists-menus}", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "${kafka.topics.get-menus}", containerFactory = "kafkaListenerContainerFactory")
     @SendTo
-    protected String existsMenusListener(@Payload String payload, Acknowledgment acknowledgment)
+    protected String getMenusListener(@Payload String payload, Acknowledgment acknowledgment)
             throws JsonProcessingException {
+        JsonNode jsonNode = objectMapper.readTree(payload);
+        JsonNode menuIds = jsonNode.get("menuIds");
+        String jsonMenus = "";
+        if (메뉴_모듈_수신_메시지_메뉴_있음) {
+            jsonMenus = StreamSupport.stream(menuIds.spliterator(), false)
+                    .map(j -> String.format("{\"id\":%d,\"name\":\"%s\",\"price\":%d}",
+                                            j.get("menuId").asLong(),
+                                            "음식" + j.get("menuId").asLong(),
+                                            j.get("menuId").asLong() * 1_000))
+                    .collect(Collectors.joining(","));
+        }
+        String replyMessage = String.format(메뉴_모듈_수신_메시지, menuIds, jsonMenus);
         acknowledgment.acknowledge();
-        return String.format(메뉴_모듈_수신_메시지,
-                             objectMapper.readTree(payload)
-                                     .get("menuIds")
-                                     .toString());
+        return replyMessage;
     }
 
     private static String 테이블_모듈_수신_메시지;

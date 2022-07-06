@@ -1,7 +1,7 @@
 package kitchenpos.order.domain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kitchenpos.order.exception.OrderLineItemMessageStreamException;
 import kitchenpos.order.exception.OrderTableMessageStreamException;
@@ -22,15 +22,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Component
 public class OrderKafkaProducer implements OrderEventPublisher {
     private static final Logger log = LoggerFactory.getLogger(OrderKafkaProducer.class);
-
-    private static final String MENU_ID_JSON_FIELD_NAME = "menuId";
-    private static final String MENU_IDS_JSON_FIELD_NAME = "menuIds";
-    private static final String EXISTS_MENUS_JSON_FIELD_NAME = "exists";
     private static final String EXISTS_AND_NOT_EMPTY_TABLE_MESSAGE_FORMAT = "{\"orderTableId\":%d}";
     private static final String CHECK_MENU_BY_ORDER_EVENT_MESSAGE_FORMAT = "{\"menuId\":%d}";
     private static final String EXISTS_MENUS_MESSAGE_FORMAT = "{\"menuIds\":[%s]}";
@@ -41,10 +36,10 @@ public class OrderKafkaProducer implements OrderEventPublisher {
     @Value("${kafka.topics.reply-exists-and-empty-table}")
     private String replyExistsAndNotEmptyTableTopic;
 
-    @Value("${kafka.topics.exists-menus}")
-    private String existsMenusTopic;
+    @Value("${kafka.topics.get-menus}")
+    private String getMenusTopic;
 
-    @Value("${kafka.topics.reply-exists-menus}")
+    @Value("${kafka.topics.reply-get-menus}")
     private String replyExistsMenusTopic;
 
     private final ObjectMapper objectMapper;
@@ -57,21 +52,22 @@ public class OrderKafkaProducer implements OrderEventPublisher {
     }
 
     @Override
-    public boolean sendAndReceiveExistsMenusMessage(Order order) {
-        log.info("OrderKafkaProducer.sendAndReceiveExistsMenusMessage id:{}, orderTableId:{}, orderStatus:{}, orderedTime:{}, orderLineItems:{}", order.getId(), order.getOrderTableId(), order.getOrderStatus(), order.getOrderedTime(), order.getOrderLineItems());
+    public List<OrderMenuMessage> sendAndReceiveMenusMessage(List<OrderLineItem> orderLineItems) {
+        log.info("OrderKafkaProducer.sendAndReceiveMenusMessage orderLineItems:{}", orderLineItems);
         String receiveMessage = null;
         String sendMessage = null;
         try {
-            sendMessage = String.format(EXISTS_MENUS_MESSAGE_FORMAT, order.getOrderLineItems()
+            sendMessage = String.format(EXISTS_MENUS_MESSAGE_FORMAT, orderLineItems
                     .stream()
                     .map(orderLineItem -> String.format(CHECK_MENU_BY_ORDER_EVENT_MESSAGE_FORMAT,
                                                         orderLineItem.getMenuId()))
                     .collect(Collectors.joining(",")));
-            log.info("OrderKafkaProducer.sendAndReceiveExistsMenusMessage sendMessage:{}", sendMessage);
-            receiveMessage = sendAndReceive(existsMenusTopic, replyExistsMenusTopic, sendMessage);
-            log.info("OrderKafkaProducer.sendAndReceiveExistsMenusMessage receiveMessage:{}", receiveMessage);
-            return existsMenus(order, receiveMessage);
+            log.info("OrderKafkaProducer.sendAndReceiveMenusMessage sendMessage:{}", sendMessage);
+            receiveMessage = sendAndReceive(getMenusTopic, replyExistsMenusTopic, sendMessage);
+            log.info("OrderKafkaProducer.sendAndReceiveMenusMessage receiveMessage:{}", receiveMessage);
+            return mapOrderMenus(receiveMessage);
         } catch (IllegalStateException | JsonProcessingException | ExecutionException | TimeoutException e) {
+            e.printStackTrace();
             throw new OrderLineItemMessageStreamException(sendMessage, receiveMessage);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -79,30 +75,11 @@ public class OrderKafkaProducer implements OrderEventPublisher {
         }
     }
 
-    private boolean existsMenus(Order order, String receiveMessage) throws JsonProcessingException {
-        JsonNode jsonNode = objectMapper.readTree(receiveMessage);
-        validateReceiveMessageMenuIds(order, jsonNode);
-        return jsonNode
-                .get(EXISTS_MENUS_JSON_FIELD_NAME)
-                .asBoolean();
-    }
-
-    private void validateReceiveMessageMenuIds(Order order, JsonNode jsonNode) {
-        List<Long> receiveMenuIds = StreamSupport.stream(jsonNode
-                                                                       .get(MENU_IDS_JSON_FIELD_NAME)
-                                                                       .spliterator(),
-                                                               false)
-                .map(j -> j.get(MENU_ID_JSON_FIELD_NAME).asLong())
-                .sorted()
-                .collect(Collectors.toList());
-        List<Long> menuIds = order.getOrderLineItems()
-                .stream()
-                .map(OrderLineItem::getMenuId)
-                .sorted()
-                .collect(Collectors.toList());
-        if (!menuIds.equals(receiveMenuIds)) {
-            throw new IllegalStateException();
-        }
+    private List<OrderMenuMessage> mapOrderMenus(String receiveMessage) throws JsonProcessingException {
+        return objectMapper.readValue(objectMapper.readTree(receiveMessage)
+                                              .withArray("menus")
+                                              .toString(),
+                                      new TypeReference<>(){});
     }
 
     @Override

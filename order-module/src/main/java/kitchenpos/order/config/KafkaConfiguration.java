@@ -41,7 +41,7 @@ public class KafkaConfiguration {
     @Value("${kafka.topics.reply-exists-and-empty-table}")
     private String replyExistsAndNotEmptyTableTopic;
 
-    @Value("${kafka.topics.reply-exists-menus}")
+    @Value("${kafka.topics.reply-get-menus}")
     private String replyExistsMenusTopic;
 
     @Bean

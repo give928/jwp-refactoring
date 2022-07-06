@@ -23,7 +23,7 @@ class OrderLineItemTest {
     @Test
     void initOrder() {
         // given
-        Order order = Order.of(1L, aOrderTable1(), Collections.emptyList(), aOrderValidator());
+        Order order = Order.of(1L, aOrderTable1(), Collections.emptyList(), aOrderValidator(), aOrderEventPublisher());
         OrderLineItem orderLineItem = aOrderLineItem1();
 
         // when

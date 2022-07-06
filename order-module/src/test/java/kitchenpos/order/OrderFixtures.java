@@ -7,6 +7,7 @@ import kitchenpos.order.domain.Order.OrderBuilder;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OrderFixtures {
     public static Long aMenu1() {
@@ -42,11 +43,11 @@ public class OrderFixtures {
     }
 
     public static OrderLineItems aOrderLineItems1() {
-        return OrderLineItems.from(Arrays.asList(aOrderLineItem1(), aOrderLineItem2()));
+        return OrderLineItems.of(Arrays.asList(aOrderLineItem1(), aOrderLineItem2()));
     }
 
     public static OrderLineItems aOrderLineItems2() {
-        return OrderLineItems.from(Arrays.asList(aOrderLineItem2(), aOrderLineItem3()));
+        return OrderLineItems.of(Arrays.asList(aOrderLineItem2(), aOrderLineItem3()));
     }
 
     public static OrderBuilder aOrder1() {
@@ -56,7 +57,8 @@ public class OrderFixtures {
                 .orderStatus(OrderStatus.COOKING)
                 .orderedTime(LocalDateTime.now())
                 .orderLineItems(aOrderLineItems1().get())
-                .orderValidator(aOrderValidator());
+                .orderValidator(aOrderValidator())
+                .orderEventPublisher(aOrderEventPublisher());
     }
 
     public static OrderBuilder aOrder2() {
@@ -66,11 +68,12 @@ public class OrderFixtures {
                 .orderStatus(OrderStatus.COOKING)
                 .orderedTime(LocalDateTime.now())
                 .orderLineItems(aOrderLineItems2().get())
-                .orderValidator(aOrderValidator());
+                .orderValidator(aOrderValidator())
+                .orderEventPublisher(aOrderEventPublisher());
     }
 
     public static OrderValidator aOrderValidator() {
-        return new OrderValidator(aOrderMessageStream()) {
+        return new OrderValidator(aOrderEventPublisher()) {
             @Override
             public boolean create(Order order) {
                 return true;
@@ -82,7 +85,7 @@ public class OrderFixtures {
         return Arrays.asList(OrderStatus.COOKING, OrderStatus.MEAL);
     }
 
-    public static OrderEventPublisher aOrderMessageStream() {
+    public static OrderEventPublisher aOrderEventPublisher() {
         return new OrderEventPublisher() {
             @Override
             public OrderTableMessage sendAndReceiveExistsAndNotEmptyTableMessage(Order order) {
@@ -90,8 +93,12 @@ public class OrderFixtures {
             }
 
             @Override
-            public boolean sendAndReceiveExistsMenusMessage(Order order) {
-                return true;
+            public List<OrderMenuMessage> sendAndReceiveMenusMessage(List<OrderLineItem> orderLineItems) {
+                return orderLineItems.stream()
+                        .map(orderLineItem -> new OrderMenuMessage(orderLineItem.getMenuId(),
+                                                                   "음식" + orderLineItem.getMenuId(),
+                                                                   orderLineItem.getQuantity() * 1_000))
+                        .collect(Collectors.toList());
             }
         };
     }

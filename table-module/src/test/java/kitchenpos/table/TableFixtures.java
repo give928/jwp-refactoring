@@ -32,7 +32,7 @@ public class TableFixtures {
     }
 
     public static OrderTableValidator aOrderTableValidator() {
-        return new OrderTableValidator(aTableMessageStream()) {
+        return new OrderTableValidator(aTableEventPublisher()) {
             @Override
             public boolean changeEmpty(OrderTable orderTable) {
                 return true;
@@ -41,10 +41,10 @@ public class TableFixtures {
     }
 
     public static TableGroupValidator aTableGroupValidator() {
-        return new TableGroupValidator(aTableMessageStream());
+        return new TableGroupValidator(aTableEventPublisher());
     }
 
-    public static TableEventPublisher aTableMessageStream() {
+    public static TableEventPublisher aTableEventPublisher() {
         return new TableEventPublisher() {
             @Override
             public boolean sendOrderTableEmptyChangeMessage(OrderTable orderTable) {

@@ -22,7 +22,8 @@ public class MenuKafkaConsumer {
 
     private static final String MENU_IDS_PROPERTY_NAME = "menuIds";
     private static final String MENU_ID_PROPERTY_NAME = "menuId";
-    private static final String REPLY_EXISTS_MENUS_MESSAGE_FORMAT = "{\"menuIds\":%s,\"exists\":%s}";
+    private static final String REPLY_MENUS_MESSAGE_FORMAT = "{\"menuIds\":%s,\"menus\":[%s]}";
+    public static final String REPLAY_MENU_MESSAGE_FORMAT = "{\"id\":%d,\"name\":\"%s\",\"price\":%s}";
 
     private final ObjectMapper objectMapper;
     private final MenuRepository menuRepository;
@@ -32,17 +33,18 @@ public class MenuKafkaConsumer {
         this.menuRepository = menuRepository;
     }
 
-    @KafkaListener(topics = "${kafka.topics.exists-menus}", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "${kafka.topics.get-menus}", containerFactory = "kafkaListenerContainerFactory")
     @SendTo
-    protected String existsMenusListener(@Payload String payload, Acknowledgment acknowledgment) {
+    protected String getMenusListener(@Payload String payload, Acknowledgment acknowledgment) {
         try {
-            log.info("MenuKafkaConsumer.existsMenusListener payload:{}", payload);
+            log.info("MenuKafkaConsumer.getMenusListener payload:{}", payload);
             JsonNode jsonNode = objectMapper.readTree(payload);
             List<Long> menuIds = mapMenuIds(jsonNode);
-            String replyMessage = String.format(REPLY_EXISTS_MENUS_MESSAGE_FORMAT,
+            String jsonMenus = getJsonMenus(menuIds);
+            String replyMessage = String.format(REPLY_MENUS_MESSAGE_FORMAT,
                                                 jsonNode.get(MENU_IDS_PROPERTY_NAME).toString(),
-                                                existsMenus(menuIds));
-            log.info("MenuKafkaConsumer.existsMenusListener replyMessage:{}", replyMessage);
+                                                jsonMenus);
+            log.info("MenuKafkaConsumer.getMenusListener replyMessage:{}", replyMessage);
             acknowledgment.acknowledge();
             return replyMessage;
         } catch (JsonProcessingException e) {
@@ -52,14 +54,19 @@ public class MenuKafkaConsumer {
 
     private List<Long> mapMenuIds(JsonNode jsonNode) {
         return StreamSupport.stream(jsonNode
-                                     .get(MENU_IDS_PROPERTY_NAME)
-                                     .spliterator(),
-                             false)
+                                            .get(MENU_IDS_PROPERTY_NAME)
+                                            .spliterator(),
+                                    false)
                 .map(j -> j.get(MENU_ID_PROPERTY_NAME).asLong())
                 .collect(Collectors.toList());
     }
 
-    private boolean existsMenus(List<Long> menuIds) {
-        return menuRepository.countByIdIn(menuIds) == menuIds.size();
+    private String getJsonMenus(List<Long> menuIds) {
+        return menuRepository.findByIdIn(menuIds)
+                .stream()
+                .map(menu -> String.format(REPLAY_MENU_MESSAGE_FORMAT, menu.getId(),
+                                           menu.getName(),
+                                           menu.getPrice().longValue()))
+                .collect(Collectors.joining(","));
     }
 }

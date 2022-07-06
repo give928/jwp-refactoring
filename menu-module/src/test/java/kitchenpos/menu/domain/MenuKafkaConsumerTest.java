@@ -34,7 +34,7 @@ class MenuKafkaConsumerTest {
 
     @DisplayName("메뉴 확인 메시지 스트림 리스너가 전체 메뉴들의 존재 여부를 반환한다.")
     @Test
-    void existsMenusListener() throws JsonProcessingException {
+    void getMenusListener() throws JsonProcessingException {
         // given
         MenuGroup menuGroup = menuGroupRepository.save(MenuGroup.of("메뉴그룹1"));
         Menu menu = menuRepository.save(aMenu1().id(null)
@@ -45,12 +45,12 @@ class MenuKafkaConsumerTest {
         String payload = String.format("{\"menuIds\":[%s]}", String.format("{\"menuId\":%d}", menu.getId()));
 
         // when
-        String replyMessage = menuKafkaConsumer.existsMenusListener(payload, acknowledgment);
+        String replyMessage = menuKafkaConsumer.getMenusListener(payload, acknowledgment);
 
         // then
         JsonNode jsonNode = objectMapper.readTree(replyMessage);
         assertThat(jsonNode.get("menuIds").get(0).get("menuId").asLong()).isEqualTo(menu.getId());
-        assertThat(jsonNode.get("exists").asBoolean()).isTrue();
+        assertThat(jsonNode.get("menus").get(0).get("id").asLong()).isPositive();
     }
 
     private final Acknowledgment acknowledgment = new Acknowledgment() {
