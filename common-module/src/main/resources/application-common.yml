@@ -1,0 +1,78 @@
+spring:
+  jpa:
+    open-in-view: false
+
+kafka:
+  topics:
+    check-order-status-completion-of-table: check-order-status-completion-of-table
+    reply-check-order-status-completion-of-table: reply-check-order-status-completion-of-table
+    check-order-status-completion-of-tables: check-order-status-completion-of-tables
+    reply-check-order-status-completion-of-tables: reply-check-order-status-completion-of-tables
+    exists-and-empty-table: exists-and-empty-table
+    reply-exists-and-empty-table: reply-exists-and-empty-table
+    exists-menus: exists-menus
+    reply-exists-menus: reply-exists-menus
+
+module:
+  product:
+    url: http://127.0.0.1:8081
+    list:
+      path: /api/products
+      method: GET
+    create:
+      path: /api/products
+      method: POST
+    findProductsByIdIn:
+      path: /api/products/in
+      method: GET
+  menu:
+    url: http://127.0.0.1:8082
+  table:
+    url: http://127.0.0.1:8083
+  order:
+    url: http://127.0.0.1:8084
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+logging:
+  level:
+    org.springframework.jdbc.core: trace
+    org.hibernate.type.descriptor.sql: trace
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+logging:
+  level:
+    org.springframework.jdbc.core: trace
+    org.hibernate.type.descriptor.sql: trace
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
