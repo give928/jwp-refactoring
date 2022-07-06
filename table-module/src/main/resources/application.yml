@@ -1,0 +1,79 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: table-module1
+  profiles:
+    active: local
+    include: common
+  jpa:
+    properties:
+      hibernate:
+        default_batch_fetch_size: 1000
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      group-id: "kitchenpos-kafka-group-${spring.application.name}"
+    listener:
+      ack-mode: manual
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:mem:kitchenpos-table-local;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+  h2:
+    console:
+      enabled: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:/db/migration
+  kafka:
+    port: 9092
+    bootstrap-servers: 127.0.0.1:${spring.kafka.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:kitchenpos-table-test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+  h2:
+    console:
+      enabled: true
+  flyway:
+    enabled: false
+  kafka:
+    port: 29092
+    bootstrap-servers: 127.0.0.1:${spring.kafka.port}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:h2:mem:kitchenpos-table-prod;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:/db/migration
+  kafka:
+    port: 9092
+    bootstrap-servers: 127.0.0.1:${spring.kafka.port}
