@@ -2,6 +2,7 @@ package kitchenpos.table.domain;
 
 import kitchenpos.table.TableFixtures;
 import kitchenpos.table.exception.GroupedOrderTableException;
+import kitchenpos.table.exception.OrderNotCompletionException;
 import kitchenpos.table.exception.OrderTableEmptyException;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,7 @@ class OrderTableTest {
     @Test
     void clearTableGroup() {
         // given
-        OrderTable orderTable = TableFixtures.aTableGroup1().getOrderTables().get(0);
+        OrderTable orderTable = aTableGroup1().getOrderTables().get(0);
 
         // when
         orderTable.ungroup();
@@ -65,7 +66,7 @@ class OrderTableTest {
         OrderTable orderTable = aOrderTable1();
 
         // when
-        orderTable.changeEmpty(orderTableValidator, false);
+        orderTable.changeEmpty(orderTableValidator, aTableEventPublisher(), false);
 
         // then
         assertThat(orderTable.isEmpty()).isFalse();
@@ -75,36 +76,43 @@ class OrderTableTest {
     @Test
     void cannotChangeEmptyNotNullTableGroup() {
         // given
-        OrderTable orderTable = TableFixtures.aTableGroup1().getOrderTables().get(0);
-        OrderTableValidator orderTableValidator = new OrderTableValidator(aTableEventPublisher());
+        OrderTable orderTable = aTableGroup1().getOrderTables().get(0);
+        OrderTableValidator orderTableValidator = new OrderTableValidator();
+        TableEventPublisher tableEventPublisher = aTableEventPublisher();
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(orderTableValidator, true);
+        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(orderTableValidator, tableEventPublisher, true);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(GroupedOrderTableException.class)
                 .hasMessageContaining(GroupedOrderTableException.MESSAGE);
     }
 
-    /*@DisplayName("주문 상태가 조리중이거나 식사인 경우에는 빈 테이블 여부를 변경할 수 없다.")
+    @DisplayName("주문 상태가 조리중이거나 식사인 경우에는 빈 테이블 여부를 변경할 수 없다.")
     @Test
     void cannotChangeEmptyOrdersInCookingOrMeal() {
         // given
         OrderTable orderTable = TableFixtures.aOrderTable().empty(false).build();
-        TableValidator tableValidator = new OrderTableValidator() {
+        OrderTableValidator orderTableValidator = new OrderTableValidator();
+        TableEventPublisher tableEventPublisher = new TableEventPublisher() {
             @Override
-            public boolean changeEmpty(OrderTable orderTable) {
-                throw new OrderNotCompletionException();
+            public boolean sendOrderTableEmptyChangeMessage(OrderTable orderTable) {
+                return false;
+            }
+
+            @Override
+            public boolean sendGroupTableMessage(TableGroup tableGroup) {
+                return true;
             }
         };
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(tableValidator, true);
+        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(orderTableValidator, tableEventPublisher, true);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(OrderNotCompletionException.class)
                 .hasMessageContaining(OrderNotCompletionException.MESSAGE);
-    }*/
+    }
 
     @DisplayName("방문 손님 수를 변경한다.")
     @Test

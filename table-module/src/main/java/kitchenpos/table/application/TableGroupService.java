@@ -19,13 +19,16 @@ public class TableGroupService {
     private final OrderTableRepository orderTableRepository;
     private final TableGroupRepository tableGroupRepository;
     private final TableGroupValidator tableGroupValidator;
+    private final TableEventPublisher tableEventPublisher;
 
     public TableGroupService(final OrderTableRepository orderTableRepository,
                              final TableGroupRepository tableGroupRepository,
-                             final TableGroupValidator tableGroupValidator) {
+                             final TableGroupValidator tableGroupValidator,
+                             final TableEventPublisher tableEventPublisher) {
         this.orderTableRepository = orderTableRepository;
         this.tableGroupRepository = tableGroupRepository;
         this.tableGroupValidator = tableGroupValidator;
+        this.tableEventPublisher = tableEventPublisher;
     }
 
     @Transactional
@@ -55,6 +58,6 @@ public class TableGroupService {
     public void ungroup(final Long tableGroupId) {
         TableGroup tableGroup = tableGroupRepository.findById(tableGroupId)
                 .orElseThrow(TableGroupNotFoundException::new);
-        tableGroupRepository.save(tableGroup.ungroup(tableGroupValidator));
+        tableGroupRepository.save(tableGroup.ungroup(tableEventPublisher));
     }
 }

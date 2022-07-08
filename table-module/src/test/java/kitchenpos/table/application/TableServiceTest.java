@@ -38,6 +38,9 @@ class TableServiceTest {
     @Mock
     private OrderTableValidator orderTableValidator;
 
+    @Mock
+    private TableEventPublisher tableEventPublisher;
+
     @InjectMocks
     private TableService tableService;
 
@@ -97,6 +100,7 @@ class TableServiceTest {
 
         given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
         given(orderTableRepository.save(orderTable1)).willReturn(orderTable1);
+        given(tableEventPublisher.sendOrderTableEmptyChangeMessage(orderTable1)).willReturn(true);
 
         // when
         OrderTableResponse orderTableResponse =
@@ -135,7 +139,7 @@ class TableServiceTest {
         OrderTable mockOrderTable = mock(orderTable.getClass());
 
         given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(mockOrderTable));
-        given(mockOrderTable.changeEmpty(orderTableValidator, true)).willThrow(OrderNotCompletionException.class);
+        given(mockOrderTable.changeEmpty(orderTableValidator, tableEventPublisher, true)).willThrow(OrderNotCompletionException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeEmpty(orderTable1.getId(),
@@ -145,7 +149,7 @@ class TableServiceTest {
         assertThatThrownBy(throwingCallable).isInstanceOf(OrderNotCompletionException.class);
 
         then(orderTableRepository).should(times(1)).findById(orderTable.getId());
-        then(mockOrderTable).should(times(1)).changeEmpty(orderTableValidator, true);
+        then(mockOrderTable).should(times(1)).changeEmpty(orderTableValidator, tableEventPublisher, true);
     }
 
     @DisplayName("주문 테이블에 방문한 손님 수를 등록하고 등록한 주문 테이블을 반환한다.")

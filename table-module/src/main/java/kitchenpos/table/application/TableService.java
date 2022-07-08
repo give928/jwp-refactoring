@@ -17,10 +17,13 @@ import java.util.stream.Collectors;
 public class TableService {
     private final OrderTableRepository orderTableRepository;
     private final OrderTableValidator orderTableValidator;
+    private final TableEventPublisher tableEventPublisher;
 
-    public TableService(final OrderTableRepository orderTableRepository, final OrderTableValidator orderTableValidator) {
+    public TableService(final OrderTableRepository orderTableRepository, final OrderTableValidator orderTableValidator,
+                        TableEventPublisher tableEventPublisher) {
         this.orderTableRepository = orderTableRepository;
         this.orderTableValidator = orderTableValidator;
+        this.tableEventPublisher = tableEventPublisher;
     }
 
     @Transactional
@@ -42,7 +45,7 @@ public class TableService {
 
         return OrderTableResponse.from(
                 orderTableRepository.save(
-                        savedOrderTable.changeEmpty(orderTableValidator, orderTableChangeEmptyRequest.isEmpty())));
+                        savedOrderTable.changeEmpty(orderTableValidator, tableEventPublisher, orderTableChangeEmptyRequest.isEmpty())));
     }
 
     @Transactional

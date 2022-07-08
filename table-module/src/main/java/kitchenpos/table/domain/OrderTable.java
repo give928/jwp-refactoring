@@ -1,5 +1,6 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.table.exception.OrderNotCompletionException;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
 import javax.persistence.*;
@@ -69,9 +70,17 @@ public class OrderTable extends AbstractAggregateRoot<OrderTable> {
         return this;
     }
 
-    public OrderTable changeEmpty(OrderTableValidator orderTableValidator, boolean empty) {
+    public OrderTable changeEmpty(OrderTableValidator orderTableValidator, TableEventPublisher tableEventPublisher, boolean empty) {
         orderTableValidator.changeEmpty(this);
+        publishChangeEmptyEvent(tableEventPublisher);
         return changeEmpty(empty);
+    }
+
+    private void publishChangeEmptyEvent(TableEventPublisher tableEventPublisher) {
+        boolean orderStatusCompletion = tableEventPublisher.sendOrderTableEmptyChangeMessage(this);
+        if (!orderStatusCompletion) {
+            throw new OrderNotCompletionException();
+        }
     }
 
     private OrderTable changeEmpty(boolean empty) {

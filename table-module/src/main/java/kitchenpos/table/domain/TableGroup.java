@@ -1,5 +1,6 @@
 package kitchenpos.table.domain;
 
+import kitchenpos.table.exception.OrderNotCompletionException;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.domain.AbstractAggregateRoot;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -60,10 +61,17 @@ public class TableGroup extends AbstractAggregateRoot<TableGroup> {
         return orderTables.get();
     }
 
-    public TableGroup ungroup(TableGroupValidator tableGroupValidator) {
-        tableGroupValidator.ungroup(this);
+    public TableGroup ungroup(TableEventPublisher tableEventPublisher) {
+        publishUngroupEvent(tableEventPublisher);
         orderTables.ungroup();
         return this;
+    }
+
+    private void publishUngroupEvent(TableEventPublisher tableEventPublisher) {
+        boolean orderStatusCompletion = tableEventPublisher.sendGroupTableMessage(this);
+        if (!orderStatusCompletion) {
+            throw new OrderNotCompletionException();
+        }
     }
 
     @Override

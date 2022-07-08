@@ -17,9 +17,6 @@ import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class OrderTableValidatorTest {
-    @Mock
-    private TableEventPublisher tableEventPublisher;
-
     @InjectMocks
     private OrderTableValidator orderTableValidator;
 
@@ -28,8 +25,6 @@ class OrderTableValidatorTest {
     void changeEmpty() {
         // given
         OrderTable orderTable = TableFixtures.aOrderTable1();
-
-        given(tableEventPublisher.sendOrderTableEmptyChangeMessage(orderTable)).willReturn(true);
 
         // when
         boolean valid = orderTableValidator.changeEmpty(orderTable);

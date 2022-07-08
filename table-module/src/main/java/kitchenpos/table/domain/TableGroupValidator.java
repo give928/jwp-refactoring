@@ -10,10 +10,10 @@ import java.util.List;
 public class TableGroupValidator {
     public static final int MIN_ORDER_TABLES = 2;
 
-    private final TableEventPublisher tableEventPublisher;
+    private final OrderTableValidator orderTableValidator;
 
-    public TableGroupValidator(TableEventPublisher tableEventPublisher) {
-        this.tableEventPublisher = tableEventPublisher;
+    public TableGroupValidator(OrderTableValidator orderTableValidator) {
+        this.orderTableValidator = orderTableValidator;
     }
 
     public boolean create(TableGroup tableGroup) {
@@ -41,30 +41,6 @@ public class TableGroupValidator {
     }
 
     private void validateOrderTables(List<OrderTable> orderTables) {
-        orderTables.forEach(this::changeTableGroup);
-    }
-
-    private void changeTableGroup(OrderTable orderTable) {
-        validateIfNotNullTableGroup(orderTable);
-        validateIfEmpty(orderTable, Boolean.FALSE);
-    }
-
-    private void validateIfNotNullTableGroup(OrderTable orderTable) {
-        if (orderTable.getTableGroup() != null) {
-            throw new GroupedOrderTableException();
-        }
-    }
-
-    private void validateIfEmpty(OrderTable orderTable, boolean empty) {
-        if (orderTable.isEmpty() == empty) {
-            throw OrderTableEmptyException.throwBy(empty);
-        }
-    }
-
-    public void ungroup(TableGroup tableGroup) {
-        boolean orderStatusCompletion = tableEventPublisher.sendGroupTableMessage(tableGroup);
-        if (!orderStatusCompletion) {
-            throw new OrderNotCompletionException();
-        }
+        orderTables.forEach(orderTableValidator::changeTableGroup);
     }
 }

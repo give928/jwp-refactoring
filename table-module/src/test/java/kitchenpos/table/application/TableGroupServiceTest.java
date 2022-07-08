@@ -41,6 +41,8 @@ class TableGroupServiceTest {
     private TableGroupRepository tableGroupRepository;
     @Mock
     private TableGroupValidator tableGroupValidator;
+    @Mock
+    private TableEventPublisher tableEventPublisher;
 
     @InjectMocks
     private TableGroupService tableGroupService;
@@ -154,6 +156,7 @@ class TableGroupServiceTest {
     void ungroup() {
         // given
         given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));
+        given(tableEventPublisher.sendGroupTableMessage(tableGroup1)).willReturn(true);
 
         // when
         tableGroupService.ungroup(tableGroup1.getId());
@@ -169,7 +172,7 @@ class TableGroupServiceTest {
         TableGroup mockTableGroup = mock(tableGroup1.getClass());
 
         given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(mockTableGroup));
-        given(mockTableGroup.ungroup(tableGroupValidator)).willThrow(OrderNotCompletionException.class);
+        given(mockTableGroup.ungroup(tableEventPublisher)).willThrow(OrderNotCompletionException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.ungroup(tableGroup1.getId());
@@ -178,7 +181,7 @@ class TableGroupServiceTest {
         assertThatThrownBy(throwingCallable).isInstanceOf(OrderNotCompletionException.class);
 
         then(tableGroupRepository).should(times(1)).findById(tableGroup1.getId());
-        then(mockTableGroup).should(times(1)).ungroup(tableGroupValidator);
+        then(mockTableGroup).should(times(1)).ungroup(tableEventPublisher);
     }
 
     private TableGroupRequest createTableGroupRequest(OrderTable... orderTables) {
