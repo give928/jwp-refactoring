@@ -2,9 +2,9 @@ package kitchenpos.table.application;
 
 import kitchenpos.table.domain.*;
 import kitchenpos.table.dto.OrderTableGroupRequest;
+import kitchenpos.table.dto.OrderTableResponse;
 import kitchenpos.table.dto.TableGroupRequest;
 import kitchenpos.table.dto.TableGroupResponse;
-import kitchenpos.table.exception.OrderNotCompletionException;
 import kitchenpos.table.exception.OrderTableEmptyException;
 import kitchenpos.table.exception.OrderTableNotFoundException;
 import kitchenpos.table.exception.RequiredOrderTablesOfTableGroupException;
@@ -30,8 +30,7 @@ import static kitchenpos.table.TableFixtures.aTableGroup1;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class TableGroupServiceTest {
@@ -41,8 +40,6 @@ class TableGroupServiceTest {
     private TableGroupRepository tableGroupRepository;
     @Mock
     private TableGroupValidator tableGroupValidator;
-    @Mock
-    private TableEventPublisher tableEventPublisher;
 
     @InjectMocks
     private TableGroupService tableGroupService;
@@ -105,7 +102,8 @@ class TableGroupServiceTest {
                 .collect(Collectors.toList());
         TableGroupRequest tableGroupRequest = new TableGroupRequest(orderTables);
 
-        given(tableGroupValidator.validateIfLessOrderTables(orderTableIds)).willThrow(RequiredOrderTablesOfTableGroupException.class);
+        given(tableGroupValidator.validateIfLessOrderTables(orderTableIds)).willThrow(
+                RequiredOrderTablesOfTableGroupException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.create(tableGroupRequest);
@@ -120,11 +118,12 @@ class TableGroupServiceTest {
         // given
         List<Long> orderTableIds = Arrays.asList(-1L, -2L);
         TableGroupRequest tableGroupRequest = new TableGroupRequest(orderTableIds.stream()
-                .map(OrderTableGroupRequest::new)
-                .collect(Collectors.toList()));
+                                                                            .map(OrderTableGroupRequest::new)
+                                                                            .collect(Collectors.toList()));
 
         given(orderTableRepository.findAllByIdIn(orderTableIds)).willReturn(Collections.emptyList());
-        given(tableGroupValidator.validateIfNotFoundOrderTables(orderTableIds, Collections.emptyList())).willThrow(OrderTableNotFoundException.class);
+        given(tableGroupValidator.validateIfNotFoundOrderTables(orderTableIds, Collections.emptyList())).willThrow(
+                OrderTableNotFoundException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.create(tableGroupRequest);
@@ -156,32 +155,36 @@ class TableGroupServiceTest {
     void ungroup() {
         // given
         given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));
-        given(tableEventPublisher.sendGroupTableMessage(tableGroup1)).willReturn(true);
 
         // when
         tableGroupService.ungroup(tableGroup1.getId());
 
         // then
-        assertThat(tableGroup1.getOrderTables()).extracting("tableGroup").containsExactly(null, null);
+        assertThat(tableGroup1.getOrderTables()).isEmpty();
     }
 
-    @DisplayName("주문 상태가 조리중이거나 식사인 경우에는 단체 지정을 해제할 수 없다.")
+    @DisplayName("단체 지정을 조회한다.")
     @Test
-    void invalidOrderStatus() {
+    void find() {
         // given
-        TableGroup mockTableGroup = mock(tableGroup1.getClass());
-
-        given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(mockTableGroup));
-        given(mockTableGroup.ungroup(tableEventPublisher)).willThrow(OrderNotCompletionException.class);
+        given(tableGroupRepository.findById(tableGroup1.getId())).willReturn(Optional.of(tableGroup1));
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> tableGroupService.ungroup(tableGroup1.getId());
+        TableGroupResponse tableGroupResponse = tableGroupService.find(tableGroup1.getId());
 
         // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(OrderNotCompletionException.class);
-
-        then(tableGroupRepository).should(times(1)).findById(tableGroup1.getId());
-        then(mockTableGroup).should(times(1)).ungroup(tableEventPublisher);
+        assertThat(tableGroupResponse.getId()).isEqualTo(tableGroup1.getId());
+        assertThat(tableGroupResponse.getCreatedDate()).isEqualTo(tableGroup1.getCreatedDate());
+        assertThat(tableGroupResponse.getOrderTables()
+                           .stream()
+                           .map(OrderTableResponse::getId)
+                           .sorted()
+                           .collect(Collectors.toList()))
+                .isEqualTo(tableGroup1.getOrderTables()
+                                   .stream()
+                                   .map(OrderTable::getId)
+                                   .sorted()
+                                   .collect(Collectors.toList()));
     }
 
     private TableGroupRequest createTableGroupRequest(OrderTable... orderTables) {

@@ -1,37 +1,28 @@
 package kitchenpos.table.acceptance;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
-import kitchenpos.common.AcceptanceTest;
+import kitchenpos.common.AcceptanceKafkaTest;
 import kitchenpos.common.utils.RestUtils;
+import kitchenpos.table.config.TestConfiguration;
 import kitchenpos.table.domain.OrderTable;
 import kitchenpos.table.dto.*;
 import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @DisplayName("단체 지정 관련 기능")
-@EmbeddedKafka(brokerProperties = {"listeners=PLAINTEXT://${spring.kafka.bootstrap-servers}", "port=${spring.kafka.port}"})
-public class TableGroupAcceptanceTest extends AcceptanceTest {
+public class TableGroupAcceptanceTest extends AcceptanceKafkaTest {
     private static final String URL = "/api/table-groups";
     private OrderTableResponse 빈_주문테이블1;
     private OrderTableResponse 빈_주문테이블2;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @BeforeEach
     public void setUp() {
@@ -41,12 +32,12 @@ public class TableGroupAcceptanceTest extends AcceptanceTest {
         빈_주문테이블1 = TableAcceptanceTest.주문_테이블_생성_요청(TableAcceptanceTest.빈_주문테이블1_요청).as(OrderTableResponse.class);
         빈_주문테이블2 = TableAcceptanceTest.주문_테이블_생성_요청(TableAcceptanceTest.빈_주문테이블2_요청).as(OrderTableResponse.class);
 
-        주문_모듈에서_주문_상태가_조리또는식사가_아님으로_수신받도록_설정();
+        주문_모듈에서_완료_주문_상태로_메시지_수신받도록_설정();
     }
 
     @DisplayName("주문 테이블을 단체 지정을 등록하고 등록한 단체 지정을 반환한다.")
     @Test
-    synchronized void create() {
+    void create() {
         // when
         ExtractableResponse<Response> 단체_지정_등록_응답 = 단체_지정_등록_요청(빈_주문테이블1, 빈_주문테이블2);
 
@@ -121,9 +112,23 @@ public class TableGroupAcceptanceTest extends AcceptanceTest {
         );
     }
 
+    @DisplayName("단체 지정을 조회한다.")
+    @Test
+    void find() {
+        // given
+        TableGroupResponse 단체_지정 = 단체_지정_등록되어_있음(빈_주문테이블1, 빈_주문테이블2).as(TableGroupResponse.class);
+
+        // when
+        ExtractableResponse<Response> 단체_지정_조회_응답 = 단체_지정_조회_요청(단체_지정);
+
+        // then
+        단체_지정_응답됨(단체_지정_조회_응답);
+        단체_지정_포함됨(단체_지정_조회_응답, 빈_주문테이블1, 빈_주문테이블2);
+    }
+
     @DisplayName("단체 지정을 해제한다.")
     @Test
-    synchronized void ungroup() {
+    void ungroup() {
         // given
         TableGroupResponse 단체_지정 = 단체_지정_등록되어_있음(빈_주문테이블1, 빈_주문테이블2).as(TableGroupResponse.class);
 
@@ -136,16 +141,26 @@ public class TableGroupAcceptanceTest extends AcceptanceTest {
 
     @DisplayName("주문 상태가 조리중이거나 식사인 경우에는 단체 지정을 해제할 수 없다.")
     @Test
-    synchronized void cannotUngroupOrderStatusInCookingOrMeal() {
+    void cannotUngroupOrderStatusInCookingOrMeal() {
         // given
         TableGroupResponse 단체_지정 = 단체_지정_등록되어_있음(빈_주문테이블1, 빈_주문테이블2).as(TableGroupResponse.class);
-        주문_모듈에서_주문_상태가_조리또는식사로_수신받도록_설정();
+        주문_모듈에서_조리또는식사_주문_상태로_메시지_수신받도록_설정();
 
         // when
         ExtractableResponse<Response> 단체_지정_해제_응답 = 단체_지정_해제_요청(단체_지정);
 
         // then
-        단체_지정_해제_실패됨(단체_지정_해제_응답);
+        단체_지정_해제됨(단체_지정_해제_응답);
+
+        // 메시지 통신하는 동안 0.5초 대기 후 0.5초 간격으로 10초동안 확인
+        await().pollDelay(Duration.ofMillis(500)).and().pollInterval(Duration.ofMillis(500)).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            // when
+            ExtractableResponse<Response> 단체_지정_조회_응답 = 단체_지정_조회_요청(단체_지정);
+
+            // then
+            단체_지정_응답됨(단체_지정_조회_응답);
+            단체_지정_해제_취소되어있음(단체_지정_조회_응답, 빈_주문테이블1, 빈_주문테이블2);
+        });
     }
 
     public static ExtractableResponse<Response> 단체_지정_등록_요청(OrderTableResponse... orderTableResponses) {
@@ -189,30 +204,23 @@ public class TableGroupAcceptanceTest extends AcceptanceTest {
         assertThat(response.statusCode()).isEqualTo(HttpStatus.NO_CONTENT.value());
     }
 
-    private void 단체_지정_해제_실패됨(ExtractableResponse<Response> response) {
-        assertThat(response.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    private ExtractableResponse<Response> 단체_지정_조회_요청(TableGroupResponse tableGroupResponse) {
+        return RestUtils.get(URL + "/" + tableGroupResponse.getId());
     }
 
-    private static String 주문_모듈_수신_메시지;
-    private static final String 주문_모듈_수신_메시지_완료 = "{\"orderTableIds\":%s,\"completion\":true}";
-    private static final String 주문_모듈_수신_메시지_조리_또는_식사 = "{\"orderTableIds\":%s,\"completion\":false}";
-
-    private void 주문_모듈에서_주문_상태가_조리또는식사가_아님으로_수신받도록_설정() {
-        주문_모듈_수신_메시지 = 주문_모듈_수신_메시지_완료;
+    private void 단체_지정_응답됨(ExtractableResponse<Response> response) {
+        assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
     }
 
-    private void 주문_모듈에서_주문_상태가_조리또는식사로_수신받도록_설정() {
-        주문_모듈_수신_메시지 = 주문_모듈_수신_메시지_조리_또는_식사;
+    private void 단체_지정_해제_취소되어있음(ExtractableResponse<Response> response, OrderTableResponse... orderTableResponses) {
+        단체_지정_포함됨(response, orderTableResponses);
     }
 
-    @KafkaListener(topics = "${kafka.topics.check-order-status-completion-of-tables}", containerFactory = "kafkaListenerContainerFactory")
-    @SendTo
-    protected String checkOrderStatusCompletionOfTablesListener(@Payload String payload, Acknowledgment acknowledgment)
-            throws JsonProcessingException {
-        acknowledgment.acknowledge();
-        return String.format(주문_모듈_수신_메시지,
-                             objectMapper.readTree(payload)
-                                     .get("orderTableIds")
-                                     .toString());
+    private void 주문_모듈에서_완료_주문_상태로_메시지_수신받도록_설정() {
+        TestConfiguration.UNCOMPLETED_ORDER = Boolean.FALSE;
+    }
+
+    private void 주문_모듈에서_조리또는식사_주문_상태로_메시지_수신받도록_설정() {
+        TestConfiguration.UNCOMPLETED_ORDER = Boolean.TRUE;
     }
 }

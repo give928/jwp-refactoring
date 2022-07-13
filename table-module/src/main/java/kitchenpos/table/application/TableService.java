@@ -17,13 +17,10 @@ import java.util.stream.Collectors;
 public class TableService {
     private final OrderTableRepository orderTableRepository;
     private final OrderTableValidator orderTableValidator;
-    private final TableEventPublisher tableEventPublisher;
 
-    public TableService(final OrderTableRepository orderTableRepository, final OrderTableValidator orderTableValidator,
-                        TableEventPublisher tableEventPublisher) {
+    public TableService(final OrderTableRepository orderTableRepository, final OrderTableValidator orderTableValidator) {
         this.orderTableRepository = orderTableRepository;
         this.orderTableValidator = orderTableValidator;
-        this.tableEventPublisher = tableEventPublisher;
     }
 
     @Transactional
@@ -45,7 +42,7 @@ public class TableService {
 
         return OrderTableResponse.from(
                 orderTableRepository.save(
-                        savedOrderTable.changeEmpty(orderTableValidator, tableEventPublisher, orderTableChangeEmptyRequest.isEmpty())));
+                        savedOrderTable.changeEmpty(orderTableValidator, orderTableChangeEmptyRequest.isEmpty())));
     }
 
     @Transactional
@@ -56,5 +53,10 @@ public class TableService {
 
         return OrderTableResponse.from(
                 savedOrderTable.changeNumberOfGuests(orderTableValidator, orderTableChangeNumberOfGuestRequest.getNumberOfGuests()));
+    }
+
+    public OrderTableResponse find(Long orderTableId) {
+        return OrderTableResponse.from(orderTableRepository.findById(orderTableId)
+                                               .orElseThrow(OrderTableNotFoundException::new));
     }
 }

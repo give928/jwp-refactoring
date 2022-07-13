@@ -1,40 +1,38 @@
 package kitchenpos.order.domain;
 
-import kitchenpos.order.exception.*;
+import kitchenpos.order.exception.OrderCompletionException;
+import kitchenpos.order.exception.OrderTableEmptyException;
+import kitchenpos.order.exception.OrderTableNotFoundException;
+import kitchenpos.order.exception.RequiredOrderLineItemException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Objects;
 
 @Component
-@Transactional(readOnly = true)
 public class OrderValidator {
-    private final OrderEventPublisher orderEventPublisher;
-
-    public OrderValidator(OrderEventPublisher orderEventPublisher) {
-        this.orderEventPublisher = orderEventPublisher;
-    }
-
-    public boolean create(Order order) {
+    public boolean place(Order order) {
         validateOrderLineItems(order);
-        validateOrderTable(order);
         return true;
-    }
-
-    private void validateOrderTable(Order order) {
-        OrderTableMessage orderTableMessage = orderEventPublisher.sendAndReceiveExistsAndNotEmptyTableMessage(order);
-        if (!orderTableMessage.isExists()) {
-            throw new OrderTableNotFoundException();
-        }
-        if (orderTableMessage.isEmpty()) {
-            throw new OrderTableEmptyException();
-        }
     }
 
     private void validateOrderLineItems(Order order) {
         if (CollectionUtils.isEmpty(order.getOrderLineItems())) {
             throw new RequiredOrderLineItemException();
+        }
+    }
+
+    public boolean created(OrderCreatedEventReceivedMessage eventReceivedMessage) {
+        validateIfInvalidOrderTable(eventReceivedMessage);
+        return true;
+    }
+
+    private void validateIfInvalidOrderTable(OrderCreatedEventReceivedMessage eventReceivedMessage) {
+        if (!eventReceivedMessage.isExists()) {
+            throw new OrderTableNotFoundException();
+        }
+        if (eventReceivedMessage.isEmpty()) {
+            throw new OrderTableEmptyException();
         }
     }
 

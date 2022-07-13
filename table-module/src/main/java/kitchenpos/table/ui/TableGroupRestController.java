@@ -23,6 +23,12 @@ public class TableGroupRestController {
         return ResponseEntity.created(uri).body(created);
     }
 
+    @GetMapping("/api/table-groups/{tableGroupId}")
+    public ResponseEntity<TableGroupResponse> find(@PathVariable final Long tableGroupId) {
+        final TableGroupResponse findTableGroupResponse = tableGroupService.find(tableGroupId);
+        return ResponseEntity.ok().body(findTableGroupResponse);
+    }
+
     @DeleteMapping("/api/table-groups/{tableGroupId}")
     public ResponseEntity<Void> ungroup(@PathVariable final Long tableGroupId) {
         tableGroupService.ungroup(tableGroupId);

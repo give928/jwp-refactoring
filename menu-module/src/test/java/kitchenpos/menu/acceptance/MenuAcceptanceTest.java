@@ -253,7 +253,7 @@ public class MenuAcceptanceTest extends AcceptanceTest {
     }
 
     @TestConfiguration
-    static class TestProductServiceConfiguration {
+    static class TestProductClientConfiguration {
         @Bean
         public ProductClient productClient() {
             return new TestProductClient(Arrays.asList(aProductResponse1(), aProductResponse2(), aProductResponse3(), aProductResponse4()));

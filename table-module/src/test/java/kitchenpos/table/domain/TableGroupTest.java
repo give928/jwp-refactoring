@@ -28,7 +28,7 @@ class TableGroupTest {
         TableGroup tableGroup = aTableGroup1();
 
         // when
-        tableGroup.ungroup(aTableEventPublisher());
+        tableGroup.ungroup();
 
         // then
         assertThat(tableGroup.getOrderTables()).hasSize(tableGroup.getOrderTables().size())

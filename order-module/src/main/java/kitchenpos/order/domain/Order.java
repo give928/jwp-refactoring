@@ -1,7 +1,7 @@
 package kitchenpos.order.domain;
 
-import kitchenpos.order.exception.OrderMenusNotFoundException;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.domain.AbstractAggregateRoot;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "orders")
-public class Order {
+public class Order extends AbstractAggregateRoot<Order> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,47 +32,32 @@ public class Order {
     protected Order() {
     }
 
-    private Order(Long id, Long orderTableId, OrderStatus orderStatus, LocalDateTime orderedTime,
-                  List<OrderLineItem> orderLineItems, OrderValidator orderValidator,
-                  OrderEventPublisher orderEventPublisher) {
+    private Order(Long id, Long orderTableId, LocalDateTime orderedTime, List<OrderLineItem> orderLineItems) {
+        this(id, orderTableId, null, orderedTime, orderLineItems);
+    }
+
+    private Order(Long id, Long orderTableId, OrderStatus orderStatus, LocalDateTime orderedTime, List<OrderLineItem> orderLineItems) {
         this.id = id;
         this.orderTableId = orderTableId;
         this.orderStatus = orderStatus;
         this.orderedTime = orderedTime;
-        this.orderLineItems = initOrderLineItems(orderLineItems, orderEventPublisher);
-        orderValidator.create(this);
-    }
-
-    private OrderLineItems initOrderLineItems(List<OrderLineItem> orderLineItems,
-                                              OrderEventPublisher orderEventPublisher) {
-        List<OrderMenuMessage> orderMenuMessages = orderEventPublisher.sendAndReceiveMenusMessage(orderLineItems);
-        orderLineItems.forEach(orderLineItem -> orderLineItem.initOrderMenu(
-                orderMenuMessages.stream()
-                        .filter(orderMenuMessage -> Objects.equals(orderMenuMessage.getId(), orderLineItem.getMenuId()))
-                        .findAny()
-                        .map(OrderMenuMessage::toOrderMenu)
-                        .orElseThrow(OrderMenusNotFoundException::new)));
-        return OrderLineItems.of(orderLineItems)
+        this.orderLineItems = OrderLineItems.of(orderLineItems)
                 .initOrder(this);
     }
 
-    public static Order of(Long orderTableId, List<OrderLineItem> orderLineItems, OrderValidator orderValidator,
-                           OrderEventPublisher orderEventPublisher) {
-        return of(null, orderTableId, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems, orderValidator,
-                  orderEventPublisher);
+    public static Order of(Long orderTableId, List<OrderLineItem> orderLineItems) {
+        return of(null, orderTableId, orderLineItems);
     }
 
-    public static Order of(Long id, Long orderTableId, List<OrderLineItem> orderLineItems,
-                           OrderValidator orderValidator, OrderEventPublisher orderEventPublisher) {
-        return of(id, orderTableId, OrderStatus.COOKING, LocalDateTime.now(), orderLineItems, orderValidator,
-                  orderEventPublisher);
+    public static Order of(Long id, Long orderTableId, List<OrderLineItem> orderLineItems) {
+        return new Order(id, orderTableId, LocalDateTime.now(), orderLineItems);
     }
 
-    public static Order of(Long id, Long orderTableId, OrderStatus orderStatus, LocalDateTime orderedTime,
-                           List<OrderLineItem> orderLineItems, OrderValidator orderValidator,
-                           OrderEventPublisher orderEventPublisher) {
-        return new Order(id, orderTableId, orderStatus, orderedTime, orderLineItems, orderValidator,
-                         orderEventPublisher);
+    public Order place(OrderValidator orderValidator) {
+        orderValidator.place(this);
+        this.orderStatus = OrderStatus.COOKING;
+        registerEvent(OrderCreatedEvent.from(this));
+        return this;
     }
 
     public Order changeOrderStatus(OrderValidator orderValidator, OrderStatus orderStatus) {
@@ -128,8 +113,6 @@ public class Order {
         private OrderStatus orderStatus;
         private LocalDateTime orderedTime;
         private List<OrderLineItem> orderLineItems;
-        private OrderValidator orderValidator;
-        private OrderEventPublisher orderEventPublisher;
 
         OrderBuilder() {
         }
@@ -159,19 +142,8 @@ public class Order {
             return this;
         }
 
-        public Order.OrderBuilder orderValidator(OrderValidator orderValidator) {
-            this.orderValidator = orderValidator;
-            return this;
-        }
-
-        public Order.OrderBuilder orderEventPublisher(OrderEventPublisher orderEventPublisher) {
-            this.orderEventPublisher = orderEventPublisher;
-            return this;
-        }
-
         public Order build() {
-            return new Order(this.id, this.orderTableId, this.orderStatus, this.orderedTime, this.orderLineItems,
-                             this.orderValidator, this.orderEventPublisher);
+            return new Order(this.id, this.orderTableId, this.orderStatus, this.orderedTime, this.orderLineItems);
         }
     }
 }

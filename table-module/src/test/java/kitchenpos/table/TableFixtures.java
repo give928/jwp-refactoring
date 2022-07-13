@@ -1,9 +1,10 @@
 package kitchenpos.table;
 
-import kitchenpos.table.domain.TableEventPublisher;
 import kitchenpos.table.domain.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class TableFixtures {
 
@@ -23,12 +24,12 @@ public class TableFixtures {
         return OrderTable.of(2L, null, 0, true);
     }
 
-    public static OrderTables aOrderTables1() {
-        return OrderTables.of(Arrays.asList(aOrderTable1(), aOrderTable2()));
+    public static List<OrderTable> aOrderTables() {
+        return new ArrayList<>(Arrays.asList(aOrderTable1(), aOrderTable2()));
     }
 
     public static TableGroup aTableGroup1() {
-        return TableGroup.of(1L, aOrderTables1().get(), aTableGroupValidator());
+        return TableGroup.of(1L, aOrderTables(), aTableGroupValidator());
     }
 
     public static OrderTableValidator aOrderTableValidator() {
@@ -42,19 +43,5 @@ public class TableFixtures {
 
     public static TableGroupValidator aTableGroupValidator() {
         return new TableGroupValidator(aOrderTableValidator());
-    }
-
-    public static TableEventPublisher aTableEventPublisher() {
-        return new TableEventPublisher() {
-            @Override
-            public boolean sendOrderTableEmptyChangeMessage(OrderTable orderTable) {
-                return true;
-            }
-
-            @Override
-            public boolean sendGroupTableMessage(TableGroup tableGroup) {
-                return true;
-            }
-        };
     }
 }

@@ -25,6 +25,11 @@ public class OrderRestController {
         return ResponseEntity.created(uri).body(created);
     }
 
+    @GetMapping("/api/orders/{id}")
+    public ResponseEntity<OrderResponse> find(@PathVariable final Long id) {
+        return ResponseEntity.ok().body(orderService.find(id));
+    }
+
     @GetMapping("/api/orders")
     public ResponseEntity<List<OrderResponse>> list() {
         return ResponseEntity.ok().body(orderService.list());

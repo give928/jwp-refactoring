@@ -1,31 +1,19 @@
 package kitchenpos.table.domain;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.List;
 
-import static kitchenpos.table.TableFixtures.aOrderTable1;
-import static kitchenpos.table.TableFixtures.aOrderTable2;
+import static kitchenpos.table.TableFixtures.aOrderTables;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OrderTablesTest {
-    private OrderTable orderTable1;
-    private OrderTable orderTable2;
-
-    @BeforeEach
-    void setUp() {
-        orderTable1 = aOrderTable1();
-        orderTable2 = aOrderTable2();
-    }
-
     @DisplayName("주문 테이블 일급 컬렉션을 생성한다.")
     @Test
     void create() {
         // given
-        List<OrderTable> orderTableList = Arrays.asList(orderTable1, orderTable2);
+        List<OrderTable> orderTableList = aOrderTables();
 
         // when
         OrderTables orderTables = OrderTables.of(orderTableList);
@@ -38,7 +26,7 @@ class OrderTablesTest {
     @Test
     void changeTableGroup() {
         // given
-        OrderTables orderTables = OrderTables.of(Arrays.asList(orderTable1, orderTable2));
+        OrderTables orderTables = OrderTables.of(aOrderTables());
         TableGroup tableGroup = new TableGroup();
 
         // when
@@ -53,7 +41,7 @@ class OrderTablesTest {
     @Test
     void ungroup() {
         // given
-        OrderTables orderTables = OrderTables.of(Arrays.asList(orderTable1, orderTable2));
+        OrderTables orderTables = OrderTables.of(aOrderTables());
         TableGroup tableGroup = new TableGroup();
         orderTables.group(tableGroup);
 
@@ -61,7 +49,6 @@ class OrderTablesTest {
         orderTables.ungroup();
 
         // then
-        assertThat(orderTables.get()).extracting("tableGroup")
-                .containsExactly(null, null);
+        assertThat(orderTables.get()).isEmpty();
     }
 }

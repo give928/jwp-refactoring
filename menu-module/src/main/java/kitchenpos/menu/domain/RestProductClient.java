@@ -16,14 +16,15 @@ public class RestProductClient implements ProductClient {
     @Value("${module.product.url}")
     private String productUrl;
 
-    @Value("${module.product.findProductsByIdIn.path}")
-    private String findProductsByIdInPath;
+    @Value("${module.product.list.path}")
+    private String productListPath;
 
     @Override
     public List<ProductResponse> getProducts(List<Long> productIds) {
-        ResponseEntity<List<ProductResponse>> responseEntity = RestUtils.get(productUrl, findProductsByIdInPath,
+        ResponseEntity<List<ProductResponse>> responseEntity = RestUtils.get(productUrl, productListPath,
                                                                              mapProductIdsParams(productIds),
-                                                                             new ParameterizedTypeReference<>() {});
+                                                                             new ParameterizedTypeReference<>() {
+                                                                             });
         return responseEntity.getBody();
     }
 

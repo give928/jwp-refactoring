@@ -16,6 +16,10 @@ public final class RestUtils {
     private RestUtils() {
     }
 
+    public static <T> ResponseEntity<T> get(String url, String path, ParameterizedTypeReference<T> responseType) {
+        return get(url, path, null, responseType);
+    }
+
     public static <T> ResponseEntity<T> get(String url, String path, MultiValueMap<String, String> queryParams,
                                             ParameterizedTypeReference<T> responseType) {
         URI uri = UriComponentsBuilder

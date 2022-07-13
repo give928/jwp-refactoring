@@ -1,6 +1,6 @@
 package kitchenpos.table.domain;
 
-import kitchenpos.table.exception.OrderNotCompletionException;
+import kitchenpos.table.exception.OrderTableEmptyRollbackException;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
 import javax.persistence.*;
@@ -12,7 +12,7 @@ public class OrderTable extends AbstractAggregateRoot<OrderTable> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_group_id", foreignKey = @ForeignKey(name = "fk_order_table_table_group"))
     private TableGroup tableGroup;
 
@@ -70,21 +70,22 @@ public class OrderTable extends AbstractAggregateRoot<OrderTable> {
         return this;
     }
 
-    public OrderTable changeEmpty(OrderTableValidator orderTableValidator, TableEventPublisher tableEventPublisher, boolean empty) {
+    public OrderTable changeEmpty(OrderTableValidator orderTableValidator, boolean empty) {
         orderTableValidator.changeEmpty(this);
-        publishChangeEmptyEvent(tableEventPublisher);
+        registerEvent(OrderTableChangedEmptyEvent.from(this));
         return changeEmpty(empty);
-    }
-
-    private void publishChangeEmptyEvent(TableEventPublisher tableEventPublisher) {
-        boolean orderStatusCompletion = tableEventPublisher.sendOrderTableEmptyChangeMessage(this);
-        if (!orderStatusCompletion) {
-            throw new OrderNotCompletionException();
-        }
     }
 
     private OrderTable changeEmpty(boolean empty) {
         this.empty = empty;
+        return this;
+    }
+
+    public OrderTable rollbackEmpty(boolean empty) {
+        if (this.empty != empty) {
+            throw new OrderTableEmptyRollbackException();
+        }
+        this.empty = !empty;
         return this;
     }
 
