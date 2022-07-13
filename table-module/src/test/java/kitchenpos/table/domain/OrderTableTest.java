@@ -49,7 +49,7 @@ class OrderTableTest {
     @Test
     void clearTableGroup() {
         // given
-        OrderTable orderTable = TableFixtures.aTableGroup1().getOrderTables().get(0);
+        OrderTable orderTable = aTableGroup1().getOrderTables().get(0);
 
         // when
         orderTable.ungroup();
@@ -75,8 +75,8 @@ class OrderTableTest {
     @Test
     void cannotChangeEmptyNotNullTableGroup() {
         // given
-        OrderTable orderTable = TableFixtures.aTableGroup1().getOrderTables().get(0);
-        OrderTableValidator orderTableValidator = new OrderTableValidator(aTableEventPublisher());
+        OrderTable orderTable = aTableGroup1().getOrderTables().get(0);
+        OrderTableValidator orderTableValidator = new OrderTableValidator();
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(orderTableValidator, true);
@@ -91,15 +91,22 @@ class OrderTableTest {
     void cannotChangeEmptyOrdersInCookingOrMeal() {
         // given
         OrderTable orderTable = TableFixtures.aOrderTable().empty(false).build();
-        TableValidator tableValidator = new OrderTableValidator() {
+        OrderTableValidator orderTableValidator = new OrderTableValidator();
+        MessageBroadcaster messageBroadcaster = new MessageBroadcaster() {
             @Override
-            public boolean changeEmpty(OrderTable orderTable) {
-                throw new OrderNotCompletionException();
+            public boolean sendOrderTableEmptyChangeMessage(OrderTable orderTable) {
+                return false;
+            }
+
+            @Override
+            public boolean sendGroupTableMessage(TableGroup tableGroup) {
+                return true;
             }
         };
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(tableValidator, true);
+        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeEmpty(orderTableValidator,
+                                                                                         messageBroadcaster, true);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(OrderNotCompletionException.class)
@@ -126,7 +133,8 @@ class OrderTableTest {
         OrderTable orderTable = aOrderTable1();
 
         // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeNumberOfGuests(orderTableValidator, 1);
+        ThrowableAssert.ThrowingCallable throwingCallable = () -> orderTable.changeNumberOfGuests(orderTableValidator,
+                                                                                                  1);
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class)

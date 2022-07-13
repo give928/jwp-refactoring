@@ -24,7 +24,7 @@ class TableGroupValidatorTest {
     private OrderTableValidator orderTableValidator;
 
     @Mock
-    private TableEventPublisher tableEventPublisher;
+    private MessageBroadcaster messageBroadcaster;
 
     @InjectMocks
     private TableGroupValidator tableGroupValidator;

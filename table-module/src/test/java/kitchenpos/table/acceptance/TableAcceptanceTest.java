@@ -1,11 +1,10 @@
 package kitchenpos.table.acceptance;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
-import kitchenpos.common.AcceptanceTest;
+import kitchenpos.common.AcceptanceKafkaTest;
 import kitchenpos.common.utils.RestUtils;
+import kitchenpos.table.config.TestConfiguration;
 import kitchenpos.table.dto.OrderTableChangeEmptyRequest;
 import kitchenpos.table.dto.OrderTableChangeNumberOfGuestRequest;
 import kitchenpos.table.dto.OrderTableRequest;
@@ -14,21 +13,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @DisplayName("주문 테이블 관련 기능")
-@EmbeddedKafka(brokerProperties = {"listeners=PLAINTEXT://${spring.kafka.bootstrap-servers}", "port=${spring.kafka.port}"})
-public class TableAcceptanceTest extends AcceptanceTest {
+public class TableAcceptanceTest extends AcceptanceKafkaTest {
     private static final String URL = "/api/tables";
     public static OrderTableRequest 빈_주문테이블1_요청 = new OrderTableRequest(0, true);
     public static OrderTableRequest 빈_주문테이블2_요청 = new OrderTableRequest(0, true);
@@ -43,7 +38,7 @@ public class TableAcceptanceTest extends AcceptanceTest {
         super.setUp();
 
         // given
-        주문_모듈에서_주문_상태가_조리또는식사가_아님으로_수신받도록_설정();
+        주문_모듈에서_완료_주문_상태로_메시지_수신받도록_설정();
     }
 
     @DisplayName("주문 테이블을 등록하고 등록한 주문 테이블을 반환한다.")
@@ -54,6 +49,19 @@ public class TableAcceptanceTest extends AcceptanceTest {
 
         // then
         주문_테이블_생성됨(주문_테이블_생성_응답, 빈_주문테이블1_요청);
+    }
+
+    @DisplayName("주문 테이블을 조회한다.")
+    @Test
+    void find() {
+        // given
+        OrderTableResponse 주문테이블 = 주문_테이블_등록되어_있음(빈_주문테이블1_요청).as(OrderTableResponse.class);
+
+        // when
+        ExtractableResponse<Response> 주문_테이블_조회_응답 = 주문_테이블_조회_요청(주문테이블);
+
+        // then
+        주문_테이블_응답됨(주문_테이블_조회_응답, 주문테이블);
     }
 
     @DisplayName("주문 테이블의 전체 목록을 조회한다.")
@@ -106,13 +114,23 @@ public class TableAcceptanceTest extends AcceptanceTest {
     void cannotUngroupOrderStatusInCookingOrMeal() {
         // given
         OrderTableResponse 주문테이블 = 주문_테이블_등록되어_있음(비어있지않은_주문테이블1_요청).as(OrderTableResponse.class);
-        주문_모듈에서_주문_상태가_조리또는식사로_수신받도록_설정();
+        주문_모듈에서_조리또는식사_주문_상태로_메시지_수신받도록_설정();
 
         // when
         ExtractableResponse<Response> 주문_테이블_빈_테이블_여부_변경_응답 = 주문_테이블_빈_테이블_여부_변경_요청(주문테이블, 비어있는_상태);
 
         // then
-        주문_테이블_빈_테이블_여부_변경_실패됨(주문_테이블_빈_테이블_여부_변경_응답);
+        주문_테이블_빈_테이블_여부_변경됨(주문_테이블_빈_테이블_여부_변경_응답, 비어있는_상태);
+
+        // 메시지 통신하는 동안 0.5초 대기 후 0.5초 간격으로 10초동안 확인
+        await().pollDelay(Duration.ofMillis(500)).and().pollInterval(Duration.ofMillis(500)).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            // when
+            ExtractableResponse<Response> 주문_테이블_조회_응답 = 주문_테이블_조회_요청(주문테이블);
+
+            // then
+            주문_테이블_응답됨(주문_테이블_조회_응답);
+            주문_테이블_빈_테이블_여부_변경_취소되어있음(주문_테이블_조회_응답, 비어있지_않은_상태);
+        });
     }
 
     @DisplayName("주문 테이블에 방문한 손님 수를 등록하고 등록한 주문 테이블을 반환한다.")
@@ -208,6 +226,11 @@ public class TableAcceptanceTest extends AcceptanceTest {
         assertThat(response.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
     }
 
+    private void 주문_테이블_빈_테이블_여부_변경_취소되어있음(ExtractableResponse<Response> response, boolean empty) {
+        OrderTableResponse orderTableResponse = response.as(OrderTableResponse.class);
+        assertThat(orderTableResponse.isEmpty()).isEqualTo(empty);
+    }
+
     public static ExtractableResponse<Response> 주문_테이블_손님_등록_요청(OrderTableResponse orderTableResponse,
                                                                 int numberOfGuests) {
         return RestUtils.put(URL + String.format("/%d/number-of-guests", orderTableResponse.getId()), new OrderTableChangeNumberOfGuestRequest(numberOfGuests));
@@ -222,25 +245,29 @@ public class TableAcceptanceTest extends AcceptanceTest {
         assertThat(response.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
     }
 
-    private static String 주문_모듈_수신_메시지;
-    private static final String 주문_모듈_수신_메시지_완료 = "{\"orderTableId\":%d,\"completion\":true}";
-    private static final String 주문_모듈_수신_메시지_조리_또는_식사 = "{\"orderTableId\":%d,\"completion\":false}";
-
-    private void 주문_모듈에서_주문_상태가_조리또는식사가_아님으로_수신받도록_설정() {
-        주문_모듈_수신_메시지 = 주문_모듈_수신_메시지_완료;
+    private ExtractableResponse<Response> 주문_테이블_조회_요청(OrderTableResponse orderTableResponse) {
+        return RestUtils.get(URL + "/" + orderTableResponse.getId());
     }
 
-    private void 주문_모듈에서_주문_상태가_조리또는식사로_수신받도록_설정() {
-        주문_모듈_수신_메시지 = 주문_모듈_수신_메시지_조리_또는_식사;
+    private void 주문_테이블_응답됨(ExtractableResponse<Response> response, OrderTableResponse createdOrderTableResponse) {
+        주문_테이블_응답됨(response);
+
+        OrderTableResponse orderTableResponse = response.as(OrderTableResponse.class);
+        assertThat(orderTableResponse.getId()).isEqualTo(createdOrderTableResponse.getId());
+        assertThat(orderTableResponse.getTableGroupId()).isEqualTo(createdOrderTableResponse.getTableGroupId());
+        assertThat(orderTableResponse.getNumberOfGuests()).isEqualTo(createdOrderTableResponse.getNumberOfGuests());
+        assertThat(orderTableResponse.isEmpty()).isEqualTo(createdOrderTableResponse.isEmpty());
     }
 
-    @KafkaListener(topics = "${kafka.topics.check-order-status-completion-of-table}", containerFactory = "kafkaListenerContainerFactory")
-    @SendTo
-    synchronized protected String checkOrderStatusCompletionOfTableListener(@Payload String payload, Acknowledgment acknowledgment)
-            throws JsonProcessingException {
-        acknowledgment.acknowledge();
-        return String.format(주문_모듈_수신_메시지, new ObjectMapper().readTree(payload)
-                .get("orderTableId")
-                .asLong());
+    private void 주문_테이블_응답됨(ExtractableResponse<Response> response) {
+        assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
+    }
+
+    private void 주문_모듈에서_완료_주문_상태로_메시지_수신받도록_설정() {
+        TestConfiguration.UNCOMPLETED_ORDER = Boolean.FALSE;
+    }
+
+    private void 주문_모듈에서_조리또는식사_주문_상태로_메시지_수신받도록_설정() {
+        TestConfiguration.UNCOMPLETED_ORDER = Boolean.TRUE;
     }
 }

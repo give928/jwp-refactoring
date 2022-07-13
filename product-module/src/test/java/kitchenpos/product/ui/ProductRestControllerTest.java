@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -74,7 +75,7 @@ class ProductRestControllerTest {
         // given
         List<ProductResponse> productResponses = Arrays.asList(productResponse1, productResponse2);
 
-        given(productService.list()).willReturn(productResponses);
+        given(productService.list(any())).willReturn(productResponses);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get(URL))

@@ -4,14 +4,12 @@ spring:
 
 kafka:
   topics:
-    check-order-status-completion-of-table: check-order-status-completion-of-table
-    reply-check-order-status-completion-of-table: reply-check-order-status-completion-of-table
-    check-order-status-completion-of-tables: check-order-status-completion-of-tables
-    reply-check-order-status-completion-of-tables: reply-check-order-status-completion-of-tables
-    exists-and-empty-table: exists-and-empty-table
-    reply-exists-and-empty-table: reply-exists-and-empty-table
-    get-menus: get-menus
-    reply-get-menus: reply-get-menus
+    order-created: order-created
+    reply-order-created: reply-order-created
+    order-table-changed-empty: order-table-changed-empty
+    table-ungrouped: table-ungrouped
+    order-uncompleted: order-uncompleted
+    orders-uncompleted: orders-uncompleted
 
 module:
   product:
@@ -22,15 +20,18 @@ module:
     create:
       path: /api/products
       method: POST
-    findProductsByIdIn:
-      path: /api/products/in
-      method: GET
   menu:
     url: http://127.0.0.1:8082
+    list:
+      path: /api/menus
+      method: GET
   table:
     url: http://127.0.0.1:8083
   order:
     url: http://127.0.0.1:8084
+    find:
+      path: /api/orders/{id}
+      method: GET
 
 ---
 spring:

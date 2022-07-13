@@ -7,7 +7,6 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 @Configuration
-@EnableKafka
 public class KafkaConfiguration {
     @Value("${spring.kafka.bootstrap-servers}")
     private List<String> bootstrapServers;
@@ -38,11 +36,8 @@ public class KafkaConfiguration {
     @Value("${spring.kafka.listener.ack-mode}")
     private ContainerProperties.AckMode ackMode;
 
-    @Value("${kafka.topics.reply-exists-and-empty-table}")
-    private String replyExistsAndNotEmptyTableTopic;
-
-    @Value("${kafka.topics.reply-get-menus}")
-    private String replyExistsMenusTopic;
+    @Value("${kafka.topics.reply-order-created}")
+    private String replyOrderCreatedTopic;
 
     @Bean
     public Map<String, Object> producerConfigs() {
@@ -60,6 +55,8 @@ public class KafkaConfiguration {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         return props;
     }
 
@@ -77,7 +74,6 @@ public class KafkaConfiguration {
     public ReplyingKafkaTemplate<String, String, String> replyKafkaTemplate(ProducerFactory<String, String> producerFactory,
                                                                             ConcurrentMessageListenerContainer<String, String> replyContainer) {
         return new ReplyingKafkaTemplate<>(producerFactory, replyContainer);
-
     }
 
     @Bean
@@ -86,8 +82,7 @@ public class KafkaConfiguration {
         factory.setReplyTemplate(kafkaTemplate());
         factory.getContainerProperties().setAckMode(ackMode);
 
-        ConcurrentMessageListenerContainer<String, String> repliesContainer = factory.createContainer(replyExistsAndNotEmptyTableTopic,
-                                                                                                      replyExistsMenusTopic);
+        ConcurrentMessageListenerContainer<String, String> repliesContainer = factory.createContainer(replyOrderCreatedTopic);
         repliesContainer.getContainerProperties().setGroupId(groupId);
         repliesContainer.setAutoStartup(false);
         return repliesContainer;
@@ -95,7 +90,7 @@ public class KafkaConfiguration {
 
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(consumerConfigs(), new StringDeserializer(), new StringDeserializer());
+        return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 
     @Bean

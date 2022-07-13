@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static kitchenpos.table.TableFixtures.aTableGroup1;
-import static kitchenpos.table.TableFixtures.aTableGroupValidator;
+import static kitchenpos.table.TableFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TableGroupTest {
@@ -29,7 +28,7 @@ class TableGroupTest {
         TableGroup tableGroup = aTableGroup1();
 
         // when
-        tableGroup.ungroup(aTableGroupValidator());
+        tableGroup.ungroup();
 
         // then
         assertThat(tableGroup.getOrderTables()).hasSize(tableGroup.getOrderTables().size())

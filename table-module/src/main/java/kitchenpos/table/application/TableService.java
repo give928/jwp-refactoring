@@ -54,4 +54,9 @@ public class TableService {
         return OrderTableResponse.from(
                 savedOrderTable.changeNumberOfGuests(orderTableValidator, orderTableChangeNumberOfGuestRequest.getNumberOfGuests()));
     }
+
+    public OrderTableResponse find(Long orderTableId) {
+        return OrderTableResponse.from(orderTableRepository.findById(orderTableId)
+                                               .orElseThrow(OrderTableNotFoundException::new));
+    }
 }

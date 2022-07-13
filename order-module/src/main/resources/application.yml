@@ -16,6 +16,11 @@ spring:
       auto-offset-reset: earliest
       enable-auto-commit: false
       group-id: "kitchenpos-kafka-group-${spring.application.name}"
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
     listener:
       ack-mode: manual
 

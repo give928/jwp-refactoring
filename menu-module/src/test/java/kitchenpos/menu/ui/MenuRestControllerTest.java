@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,7 +84,7 @@ class MenuRestControllerTest {
         // given
         List<MenuResponse> menuResponses = Arrays.asList(menuResponse1, menuResponse2);
 
-        given(menuService.list()).willReturn(menuResponses);
+        given(menuService.list(any())).willReturn(menuResponses);
 
         // when
         ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get(URL))

@@ -23,13 +23,20 @@ public class ProductService {
         return ProductResponse.from(productRepository.save(productRequest.toProduct()));
     }
 
-    public List<ProductResponse> list() {
+    public List<ProductResponse> list(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return list();
+        }
+        return listByIdIn(ids);
+    }
+
+    private List<ProductResponse> list() {
         return productRepository.findAll().stream()
                 .map(ProductResponse::from)
                 .collect(Collectors.toList());
     }
 
-    public List<ProductResponse> list(List<Long> ids) {
+    private List<ProductResponse> listByIdIn(List<Long> ids) {
         return productRepository.findByIdIn(ids).stream()
                 .map(ProductResponse::from)
                 .collect(Collectors.toList());

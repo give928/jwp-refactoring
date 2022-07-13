@@ -25,12 +25,7 @@ public class ProductRestController {
     }
 
     @GetMapping("/api/products")
-    public ResponseEntity<List<ProductResponse>> list() {
-        return ResponseEntity.ok().body(productService.list());
-    }
-
-    @GetMapping("/api/products/in")
-    public ResponseEntity<List<ProductResponse>> list2(@RequestParam(value = "id") List<Long> ids) {
+    public ResponseEntity<List<ProductResponse>> list(@RequestParam(value = "id", required = false) List<Long> ids) {
         return ResponseEntity.ok().body(productService.list(ids));
     }
 }

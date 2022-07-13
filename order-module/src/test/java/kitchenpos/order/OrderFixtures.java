@@ -1,25 +1,23 @@
 package kitchenpos.order;
 
-import kitchenpos.order.domain.OrderEventPublisher;
 import kitchenpos.order.domain.*;
 import kitchenpos.order.domain.Order.OrderBuilder;
+import kitchenpos.order.dto.MenuResponse;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class OrderFixtures {
-    public static Long aMenu1() {
-        return 1L;
+    public static OrderMenu aOrderMenu1() {
+        return OrderMenu.of(1L, "음식1", 1_000L);
     }
 
-    public static Long aMenu2() {
-        return 2L;
+    public static OrderMenu aOrderMenu2() {
+        return OrderMenu.of(2L, "음식2", 2_000L);
     }
 
-    public static Long aMenu3() {
-        return 3L;
+    public static OrderMenu aOrderMenu3() {
+        return OrderMenu.of(3L, "음식3", 3_000L);
     }
 
     public static Long aOrderTable1() {
@@ -31,15 +29,15 @@ public class OrderFixtures {
     }
 
     public static OrderLineItem aOrderLineItem1() {
-        return OrderLineItem.of(1L, null, aMenu1(), 1);
+        return OrderLineItem.of(1L, null, aOrderMenu1(), 1);
     }
 
     public static OrderLineItem aOrderLineItem2() {
-        return OrderLineItem.of(2L, null, aMenu2(), 1);
+        return OrderLineItem.of(2L, null, aOrderMenu2(), 1);
     }
 
     public static OrderLineItem aOrderLineItem3() {
-        return OrderLineItem.of(3L, null, aMenu3(), 1);
+        return OrderLineItem.of(3L, null, aOrderMenu3(), 1);
     }
 
     public static OrderLineItems aOrderLineItems1() {
@@ -56,9 +54,7 @@ public class OrderFixtures {
                 .orderTableId(aOrderTable1())
                 .orderStatus(OrderStatus.COOKING)
                 .orderedTime(LocalDateTime.now())
-                .orderLineItems(aOrderLineItems1().get())
-                .orderValidator(aOrderValidator())
-                .orderEventPublisher(aOrderEventPublisher());
+                .orderLineItems(aOrderLineItems1().get());
     }
 
     public static OrderBuilder aOrder2() {
@@ -67,38 +63,14 @@ public class OrderFixtures {
                 .orderTableId(aOrderTable2())
                 .orderStatus(OrderStatus.COOKING)
                 .orderedTime(LocalDateTime.now())
-                .orderLineItems(aOrderLineItems2().get())
-                .orderValidator(aOrderValidator())
-                .orderEventPublisher(aOrderEventPublisher());
+                .orderLineItems(aOrderLineItems2().get());
     }
 
     public static OrderValidator aOrderValidator() {
-        return new OrderValidator(aOrderEventPublisher()) {
+        return new OrderValidator() {
             @Override
-            public boolean create(Order order) {
+            public boolean place(Order order) {
                 return true;
-            }
-        };
-    }
-
-    public static List<OrderStatus> aNotCompletionOrderStatuses() {
-        return Arrays.asList(OrderStatus.COOKING, OrderStatus.MEAL);
-    }
-
-    public static OrderEventPublisher aOrderEventPublisher() {
-        return new OrderEventPublisher() {
-            @Override
-            public OrderTableMessage sendAndReceiveExistsAndNotEmptyTableMessage(Order order) {
-                return new OrderTableMessage(order.getId(), true, false);
-            }
-
-            @Override
-            public List<OrderMenuMessage> sendAndReceiveMenusMessage(List<OrderLineItem> orderLineItems) {
-                return orderLineItems.stream()
-                        .map(orderLineItem -> new OrderMenuMessage(orderLineItem.getMenuId(),
-                                                                   "음식" + orderLineItem.getMenuId(),
-                                                                   orderLineItem.getQuantity() * 1_000))
-                        .collect(Collectors.toList());
             }
         };
     }

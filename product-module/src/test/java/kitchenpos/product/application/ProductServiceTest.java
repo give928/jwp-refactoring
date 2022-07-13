@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -87,7 +88,7 @@ class ProductServiceTest {
         given(productRepository.findAll()).willReturn(Arrays.asList(product1, product2));
 
         // when
-        List<ProductResponse> productResponses = productService.list();
+        List<ProductResponse> productResponses = productService.list(Collections.emptyList());
 
         // then
         assertThat(productResponses).extracting("id").containsExactly(product1.getId(), product2.getId());

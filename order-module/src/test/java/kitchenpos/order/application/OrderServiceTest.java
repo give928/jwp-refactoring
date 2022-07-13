@@ -1,6 +1,9 @@
 package kitchenpos.order.application;
 
-import kitchenpos.order.domain.*;
+import kitchenpos.order.domain.Order;
+import kitchenpos.order.domain.OrderRepository;
+import kitchenpos.order.domain.OrderStatus;
+import kitchenpos.order.domain.OrderValidator;
 import kitchenpos.order.dto.OrderLineItemRequest;
 import kitchenpos.order.dto.OrderRequest;
 import kitchenpos.order.dto.OrderResponse;
@@ -37,11 +40,11 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
     @Mock
+    private OrderMapper orderMapper;
+    @Mock
     private OrderRepository orderRepository;
     @Mock
     private OrderValidator orderValidator;
-    @Mock
-    private OrderEventPublisher orderEventPublisher;
 
     @InjectMocks
     private OrderService orderService;
@@ -63,11 +66,11 @@ class OrderServiceTest {
     @Test
     void create() {
         // given
-        OrderRequest orderRequest = createOrderRequestBy(order1);
+        Order order = aOrder1().id(null).orderStatus(null).build();
+        OrderRequest orderRequest = createOrderRequestBy(order);
 
-        given(orderEventPublisher.sendAndReceiveMenusMessage(any()))
-                .willReturn(convertOrderMenuMessages(orderRequest));
-        given(orderValidator.create(any())).willReturn(true);
+        given(orderMapper.mapFrom(orderRequest)).willReturn(order);
+        given(orderValidator.place(order)).willReturn(true);
         given(orderRepository.save(any())).willReturn(order1);
 
         // when
@@ -87,8 +90,8 @@ class OrderServiceTest {
         // given
         OrderRequest orderRequest = new OrderRequest(order1.getOrderTableId(), orderLineItems);
 
-        given(orderEventPublisher.sendAndReceiveMenusMessage(any())).willReturn(convertOrderMenuMessages(orderRequest));
-        given(orderValidator.create(any())).willThrow(RequiredOrderLineItemException.class);
+        given(orderMapper.mapFrom(orderRequest)).willReturn(order1);
+        given(orderValidator.place(any())).willThrow(RequiredOrderLineItemException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
@@ -105,7 +108,7 @@ class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(order1.getOrderTableId(),
                                                      Collections.singletonList(new OrderLineItemRequest(menuId, 1)));
 
-        given(orderEventPublisher.sendAndReceiveMenusMessage(any())).willReturn(Collections.emptyList());
+        given(orderMapper.mapFrom(orderRequest)).willThrow(OrderMenusNotFoundException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
@@ -121,8 +124,8 @@ class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(-1L,
                                                      getOrderLineItemRequests(order1));
 
-        given(orderEventPublisher.sendAndReceiveMenusMessage(any())).willReturn(convertOrderMenuMessages(orderRequest));
-        given(orderValidator.create(any())).willThrow(OrderTableNotFoundException.class);
+        given(orderMapper.mapFrom(orderRequest)).willReturn(order1);
+        given(orderValidator.place(any())).willThrow(OrderTableNotFoundException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
@@ -137,8 +140,8 @@ class OrderServiceTest {
         // given
         OrderRequest orderRequest = new OrderRequest(1L, getOrderLineItemRequests(order1));
 
-        given(orderEventPublisher.sendAndReceiveMenusMessage(any())).willReturn(convertOrderMenuMessages(orderRequest));
-        given(orderValidator.create(any())).willThrow(OrderTableEmptyException.class);
+        given(orderMapper.mapFrom(orderRequest)).willReturn(order1);
+        given(orderValidator.place(any())).willThrow(OrderTableEmptyException.class);
 
         // when
         ThrowableAssert.ThrowingCallable throwingCallable = () -> orderService.create(orderRequest);
@@ -191,17 +194,6 @@ class OrderServiceTest {
         return order.getOrderLineItems().stream()
                 .map(orderLineItem -> new OrderLineItemRequest(orderLineItem.getMenuId(),
                                                                orderLineItem.getQuantity()))
-                .collect(Collectors.toList());
-    }
-
-    private List<OrderMenuMessage> convertOrderMenuMessages(OrderRequest orderRequest) {
-        return Optional.ofNullable(orderRequest.getOrderLineItems())
-                .orElse(Collections.emptyList())
-                .stream()
-                .map(orderLineItemRequest -> new OrderMenuMessage(
-                        orderLineItemRequest.getMenuId(),
-                        "음식" + orderLineItemRequest.getMenuId(),
-                        orderLineItemRequest.getQuantity() * 1_000))
                 .collect(Collectors.toList());
     }
 }

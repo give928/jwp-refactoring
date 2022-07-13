@@ -4,7 +4,6 @@ import kitchenpos.menu.dto.ProductResponse;
 import kitchenpos.menu.exception.InvalidMenuPriceException;
 import kitchenpos.menu.exception.ProductNotFoundException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
-@Transactional(readOnly = true)
 public class MenuValidator {
     private final ProductClient productClient;
 

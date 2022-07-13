@@ -26,6 +26,11 @@ public class TableRestController {
         return ResponseEntity.created(uri).body(created);
     }
 
+    @GetMapping("/api/tables/{orderTableId}")
+    public ResponseEntity<OrderTableResponse> find(@PathVariable final Long orderTableId) {
+        return ResponseEntity.ok().body(tableService.find(orderTableId));
+    }
+
     @GetMapping("/api/tables")
     public ResponseEntity<List<OrderTableResponse>> list() {
         return ResponseEntity.ok().body(tableService.list());

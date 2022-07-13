@@ -60,8 +60,14 @@ public class TableGroup extends AbstractAggregateRoot<TableGroup> {
         return orderTables.get();
     }
 
-    public TableGroup ungroup(TableGroupValidator tableGroupValidator) {
-        tableGroupValidator.ungroup(this);
+    public TableGroup group(List<OrderTable> orderTables) {
+        this.orderTables = OrderTables.of(orderTables);
+        this.orderTables.group(this);
+        return this;
+    }
+
+    public TableGroup ungroup() {
+        registerEvent(TableUngroupedEvent.from(this));
         orderTables.ungroup();
         return this;
     }
@@ -81,5 +87,14 @@ public class TableGroup extends AbstractAggregateRoot<TableGroup> {
     @Override
     public int hashCode() {
         return Objects.hash(getId());
+    }
+
+    @Override
+    public String toString() {
+        return "TableGroup{" +
+                "id=" + id +
+                ", createdDate=" + createdDate +
+                ", orderTables=" + orderTables +
+                '}';
     }
 }

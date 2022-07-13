@@ -1,12 +1,14 @@
 package kitchenpos.table.application;
 
-import kitchenpos.table.domain.*;
+import kitchenpos.table.domain.OrderTable;
+import kitchenpos.table.domain.OrderTableRepository;
+import kitchenpos.table.domain.OrderTableValidator;
+import kitchenpos.table.domain.TableGroup;
 import kitchenpos.table.dto.OrderTableChangeEmptyRequest;
 import kitchenpos.table.dto.OrderTableChangeNumberOfGuestRequest;
 import kitchenpos.table.dto.OrderTableRequest;
 import kitchenpos.table.dto.OrderTableResponse;
 import kitchenpos.table.exception.GroupedOrderTableException;
-import kitchenpos.table.exception.OrderNotCompletionException;
 import kitchenpos.table.exception.OrderTableEmptyException;
 import kitchenpos.table.exception.OrderTableNotFoundException;
 import org.assertj.core.api.ThrowableAssert;
@@ -22,13 +24,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static kitchenpos.table.TableFixtures.aOrderTable1;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class TableServiceTest {
@@ -97,6 +97,7 @@ class TableServiceTest {
 
         given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
         given(orderTableRepository.save(orderTable1)).willReturn(orderTable1);
+//        given(messageBroadcaster.sendOrderTableEmptyChangeMessage(orderTable1)).willReturn(true);
 
         // when
         OrderTableResponse orderTableResponse =
@@ -122,30 +123,6 @@ class TableServiceTest {
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(GroupedOrderTableException.class);
-    }
-
-    @DisplayName("주문 상태가 조리중이거나 식사인 경우에는 변경할 수 없다.")
-    @Test
-    void cannotChangeEmptyCookingOrMeal() {
-        // given
-        OrderTableChangeEmptyRequest orderTableChangeEmptyRequest = new OrderTableChangeEmptyRequest(true);
-        OrderTable orderTable =
-                OrderTable.of(orderTable1.getId(), orderTable1.getTableGroup(),
-                              orderTable1.getNumberOfGuests(), false);
-        OrderTable mockOrderTable = mock(orderTable.getClass());
-
-        given(orderTableRepository.findById(orderTable.getId())).willReturn(Optional.of(mockOrderTable));
-        given(mockOrderTable.changeEmpty(orderTableValidator, true)).willThrow(OrderNotCompletionException.class);
-
-        // when
-        ThrowableAssert.ThrowingCallable throwingCallable = () -> tableService.changeEmpty(orderTable1.getId(),
-                                                                                           orderTableChangeEmptyRequest);
-
-        // then
-        assertThatThrownBy(throwingCallable).isInstanceOf(OrderNotCompletionException.class);
-
-        then(orderTableRepository).should(times(1)).findById(orderTable.getId());
-        then(mockOrderTable).should(times(1)).changeEmpty(orderTableValidator, true);
     }
 
     @DisplayName("주문 테이블에 방문한 손님 수를 등록하고 등록한 주문 테이블을 반환한다.")
@@ -200,5 +177,21 @@ class TableServiceTest {
 
         // then
         assertThatThrownBy(throwingCallable).isInstanceOf(OrderTableEmptyException.class);
+    }
+
+    @DisplayName("주문 테이블을 조회한다.")
+    @Test
+    void find() {
+        // given
+        given(orderTableRepository.findById(orderTable1.getId())).willReturn(Optional.of(orderTable1));
+
+        // when
+        OrderTableResponse orderTableResponse = tableService.find(orderTable1.getId());
+
+        // then
+        assertThat(orderTableResponse.getId()).isEqualTo(orderTable1.getId());
+        assertThat(orderTableResponse.getTableGroupId()).isEqualTo(orderTable1.getTableGroup() != null ? orderTable1.getTableGroup().getId() : null);
+        assertThat(orderTableResponse.getNumberOfGuests()).isEqualTo(orderTable1.getNumberOfGuests());
+        assertThat(orderTableResponse.isEmpty()).isEqualTo(orderTable1.isEmpty());
     }
 }

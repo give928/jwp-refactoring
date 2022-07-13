@@ -23,6 +23,7 @@ dependencies {
     testFixturesImplementation 'io.rest-assured:rest-assured:3.3.0'
     testFixturesImplementation 'org.springframework.boot:spring-boot-starter-test'
     testFixturesImplementation 'com.tngtech.archunit:archunit-junit5-engine:0.23.1'
+    testFixturesImplementation 'org.springframework.kafka:spring-kafka-test'
 }
 
 test {

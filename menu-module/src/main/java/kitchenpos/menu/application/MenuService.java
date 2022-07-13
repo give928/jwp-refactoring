@@ -45,8 +45,23 @@ public class MenuService {
                 .collect(Collectors.toList());
     }
 
-    public List<MenuResponse> list() {
-        return menuRepository.findAll().stream()
+    public List<MenuResponse> list(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return list();
+        }
+        return listByIdIn(ids);
+    }
+
+    private List<MenuResponse> list() {
+        return menuRepository.findAll()
+                .stream()
+                .map(MenuResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    private List<MenuResponse> listByIdIn(List<Long> ids) {
+        return menuRepository.findByIdIn(ids)
+                .stream()
                 .map(MenuResponse::from)
                 .collect(Collectors.toList());
     }

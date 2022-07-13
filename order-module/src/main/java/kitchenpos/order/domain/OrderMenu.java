@@ -26,18 +26,10 @@ public class OrderMenu {
     protected OrderMenu() {
     }
 
-    private OrderMenu(Long id) {
-        this.id = id;
-    }
-
     private OrderMenu(Long id, String name, Long price) {
         this.id = id;
         this.name = Name.from(name);
         this.price = Price.from(BigDecimal.valueOf(price));
-    }
-
-    public static OrderMenu from(Long menuId) {
-        return new OrderMenu(menuId);
     }
 
     public static OrderMenu of(Long menuId, String name, Long price) {
@@ -48,12 +40,12 @@ public class OrderMenu {
         return id;
     }
 
-    public Name getMenuName() {
-        return name;
+    public String getMenuName() {
+        return name.get();
     }
 
-    public Price getMenuPrice() {
-        return price;
+    public BigDecimal getMenuPrice() {
+        return price.get();
     }
 
     @Override

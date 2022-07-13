@@ -6,11 +6,10 @@ import javax.persistence.OneToMany;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Embeddable
 public class OrderTables {
-    @OneToMany(mappedBy = "tableGroup", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "tableGroup", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<OrderTable> values;
 
     protected OrderTables() {
@@ -31,16 +30,11 @@ public class OrderTables {
 
     public void ungroup() {
         values.forEach(OrderTable::ungroup);
+        values.clear();
     }
 
     public List<OrderTable> get() {
         return Collections.unmodifiableList(values);
-    }
-
-    public List<Long> getIds() {
-        return values.stream()
-                .map(OrderTable::getId)
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -58,5 +52,12 @@ public class OrderTables {
     @Override
     public int hashCode() {
         return Objects.hash(values);
+    }
+
+    @Override
+    public String toString() {
+        return "OrderTables{" +
+                "values=" + values +
+                '}';
     }
 }
